@@ -18,9 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 28
-        versionName = "3.9.4-beta"
-
+        versionCode = 29
+        versionName = "3.9.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
