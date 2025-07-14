@@ -13,20 +13,14 @@ import org.luaj.lib.jse.CoerceJavaToLua
 
 object LuaUtil {
     fun shell(_G: Globals) {
-        // 如果存在 VarargFunction 或类似基类
+
+
         _G["shell"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): Varargs { // 重写的是 invoke 方法，接收 Varargs，返回 Varargs
-                // 检查第一个参数是否为字符串，通常用 checkjstring(1)
+            override fun invoke(args: Varargs): Varargs {
                 val cmd = args.checkjstring(1)
-
-                // 调用 ShellManager.shell 获取 Pair 返回值
                 val resultPair: Pair<String, Boolean> = ShellManager.shell(cmd)
-
-                // 将 Pair 的 first (执行结果) 和 second (是否成功) 转换为 LuaValue
                 val luaResultString = CoerceJavaToLua.coerce(resultPair.first)
                 val luaSuccessBoolean = CoerceJavaToLua.coerce(resultPair.second)
-
-                // 使用 varargsOf 返回两个 LuaValue，作为多返回值
                 return varargsOf(luaResultString, luaSuccessBoolean)
             }
         }
@@ -153,7 +147,6 @@ object LuaUtil {
                 return NIL
             }
         }
-
 
     }
 }

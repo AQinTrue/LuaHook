@@ -17,7 +17,7 @@ lifecycleViewmodelKtx = "2.9.1"
 material = "1.14.0-alpha02"
 activity = "1.10.1"
 constraintlayout = "2.2.1"
-okhttp = "5.0.0"
+okhttp = "5.1.0"
 preferenceKtx = "1.2.1"
 provider = "13.1.5"
 rippleComponentsAndroid = "a7b66126c6"
@@ -26,7 +26,7 @@ xphelper = "2.7"
 compileSdk = "36"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
-lint = "31.11.0"
+lint = "31.11.1"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
