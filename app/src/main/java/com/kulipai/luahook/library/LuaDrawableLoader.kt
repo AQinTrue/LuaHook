@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable

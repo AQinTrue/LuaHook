@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

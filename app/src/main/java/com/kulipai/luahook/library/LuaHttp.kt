@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

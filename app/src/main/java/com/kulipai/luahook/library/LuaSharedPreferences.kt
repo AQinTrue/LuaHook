@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 import android.content.Context
 import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences

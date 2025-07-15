@@ -6,9 +6,9 @@ import android.view.Gravity
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.kulipai.luahook.LuaLib.LuaActivity
-import com.kulipai.luahook.LuaLib.LuaImport
-import com.kulipai.luahook.LuaLib.LuaUtil
+import com.kulipai.luahook.library.LuaActivity
+import com.kulipai.luahook.library.LuaImport
+import com.kulipai.luahook.library.LuaUtil
 import com.kulipai.luahook.util.e
 import org.luaj.Globals
 import org.luaj.LuaValue
