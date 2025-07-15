@@ -22,6 +22,11 @@ android {
         versionName = "3.9.4-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags += ""
+            }
+        }
     }
 
     buildTypes {
@@ -49,6 +54,13 @@ android {
 
     aaptOptions {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 }
 

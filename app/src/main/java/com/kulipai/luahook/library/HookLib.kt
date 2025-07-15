@@ -1450,6 +1450,8 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                 }
             }
         }
+
+        globals["native"] = NativeLib().toLuaTable()
     }
 
 
