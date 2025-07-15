@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources

@@ -1,9 +1,9 @@
 package com.kulipai.luahook
 
-import com.kulipai.luahook.LuaLib.HookLib
-import com.kulipai.luahook.LuaLib.LuaActivity
-import com.kulipai.luahook.LuaLib.LuaImport
-import com.kulipai.luahook.LuaLib.LuaUtil
+import com.kulipai.luahook.library.HookLib
+import com.kulipai.luahook.library.LuaActivity
+import com.kulipai.luahook.library.LuaImport
+import com.kulipai.luahook.library.LuaUtil
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.IXposedHookLoadPackage

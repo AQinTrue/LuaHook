@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 import org.json.JSONObject
 import org.json.JSONArray
 import org.luaj.*

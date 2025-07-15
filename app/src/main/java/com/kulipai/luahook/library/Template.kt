@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 
 import org.luaj.LuaValue
 import org.luaj.lib.VarArgFunction

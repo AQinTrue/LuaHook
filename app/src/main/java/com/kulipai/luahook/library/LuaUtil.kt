@@ -1,4 +1,4 @@
-package com.kulipai.luahook.LuaLib
+package com.kulipai.luahook.library
 
 import com.kulipai.luahook.simplifyLuaError
 import com.kulipai.luahook.util.ShellManager
