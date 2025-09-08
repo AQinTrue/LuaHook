@@ -93,13 +93,18 @@ class LanguageLua private constructor() : Language() {
 
         super.addBasePackage(
             "xphelper",
-         package_XpHelper.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            package_XpHelper.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
 
         super.addBasePackage(
             "xsp",
             package_xsp.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        )
+
+        super.addBasePackage(
+            "native",
+            package_native.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         )
 
 
@@ -179,7 +184,8 @@ class LanguageLua private constructor() : Language() {
             "startsSystemServer|modulePath"
         private const val package_http = "get|post|upload|delete|put|postJson|head|download"
         private const val package_sp = "clear|getAll|remove|contains|get|set"
-        private const val package_XpHelper = "initContext|initZygote|setConfigPath|setConfigPassword|injectResourcesToContext|moduleApkPath"
+        private const val package_XpHelper =
+            "initContext|initZygote|setConfigPath|setConfigPassword|injectResourcesToContext|moduleApkPath"
         private const val package_xsp = "getAll|contains|get|reload"
         private const val package_DexKitBridge =
             "close|initFullCache|setThreadNum|getDexNum|exportDexFile|batchFindClassUsingStrings|batchFindMethodUsingStrings|findClass|findMethod|findField|getClassData|getMethodData|getFieldData|getCallMethods|getInvokeMethods|create"
@@ -189,6 +195,9 @@ class LanguageLua private constructor() : Language() {
         private const val package_res = "getRConstants|getColor|getString|getResourceId|getDrawable"
         private const val package_file =
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
+
+        private const val package_native =
+            "write|read|get_module_base"
 
 
         //	private final static String extFunctionTarget="activity|call|compile|dump|each|enum|import|loadbitmap|loadlayout|loadmenu|service|set|task|thread|timer";

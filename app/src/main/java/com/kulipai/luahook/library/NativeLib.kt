@@ -16,8 +16,6 @@ class NativeLib {
     external fun read(ptr: Long, size: Int): ByteArray?
     external fun write(ptr: Long, data: ByteArray): Boolean
 
-    external fun abced(ptr: Long)
-
     fun toLuaTable(): LuaTable {
         val table = LuaTable()
         table["get_module_base"] = object : VarArgFunction() {
