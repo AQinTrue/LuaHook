@@ -55,6 +55,7 @@ class AboutActivity : AppCompatActivity() {
     private val developerKuliPaiRow: MaterialCardView by lazy { findViewById(R.id.developer_kuli_pai_row) }
     private val padi: MaterialCardView by lazy { findViewById(R.id.padi) }
     private val eleven: MaterialCardView by lazy { findViewById(R.id.eleven) }
+    private val carrot: MaterialCardView by lazy { findViewById(R.id.carrot) }
     private val developerAnotherRow: MaterialCardView by lazy { findViewById(R.id.developer_another_row) }
 
     private val cardCheckUpdate: MaterialCardView by lazy { findViewById(R.id.card_check_update) }
@@ -107,11 +108,13 @@ class AboutActivity : AppCompatActivity() {
         val anotherDeveloperGithubUrl = "https://github.com/Samzhaohx"
         val padiGithub = "https://github.com/paditianxiu"
         val elevenGithub = "https://github.com/imconfident11"
+        val carrotGithub = "https://github.com/TrialCarrot"
         github_card.setOnClickListener { openGithubUrl(LuaHookGithubUrl) }
         developerKuliPaiRow.setOnClickListener { openGithubUrl(kuliPaiGithubUrl) }
         developerAnotherRow.setOnClickListener { openGithubUrl(anotherDeveloperGithubUrl) }
         padi.setOnClickListener { openGithubUrl(padiGithub) }
         eleven.setOnClickListener { openGithubUrl(elevenGithub) }
+        carrot.setOnClickListener { openGithubUrl(carrotGithub) }
 
         // --- 许可协议卡片功能 ---
 //        cardLicense.setOnClickListener {

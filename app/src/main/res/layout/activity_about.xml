@@ -274,6 +274,7 @@
 
                         </com.google.android.material.card.MaterialCardView>
 
+
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/eleven"
                             android:layout_width="match_parent"
@@ -281,7 +282,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             app:cardElevation="0dp"
-                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.BottomRounded"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.NoRounded"
                             app:strokeWidth="0dp">
 
                             <LinearLayout
@@ -321,6 +322,55 @@
                             </LinearLayout>
 
                         </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/carrot"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardElevation="0dp"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.Card.BottomRounded"
+                            app:strokeWidth="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp">
+
+                                <com.google.android.material.imageview.ShapeableImageView
+
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:layout_marginEnd="16dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/carrot"
+                                    app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical">
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Carrot"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                                    <com.google.android.material.textview.MaterialTextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="nativeHook、优化代码"
+                                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
 
 
                     </LinearLayout>

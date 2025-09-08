@@ -1,6 +1,7 @@
 #include <cstring>
 #include <jni.h>
 #include "xdl.h"
+#include <jni.h>
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_kulipai_luahook_library_NativeLib_get_1module_1base(JNIEnv *env, jobject thiz, jstring name) {
