@@ -74,11 +74,26 @@ class ToolAdapter(
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
                                 var p = ""
-                                if(param.trim().isNotEmpty()){
-                                    p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }+",\n"
+                                if (param.trim().isNotEmpty()) {
+                                    p = param.split(",")
+                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
                                 }
-                                val hookLua =
-                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+                                val hookLua = """
+                                    |hook {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  method = "$funcName",
+                                    |  params = {${p}},
+                                    |  before = function(it)
+                                    |    
+                                    |  end,
+                                    |  after = function(it)
+                                    |    
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+
+//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
@@ -122,12 +137,25 @@ class ToolAdapter(
                                 val param: String =
                                     view.findViewById<TextInputEditText>(R.id.param).text.toString()
                                 var p = ""
-                                if(param.trim().isNotEmpty()){
-                                    p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }+",\n"
+                                if (param.trim().isNotEmpty()) {
+                                    p = param.split(",")
+                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
                                 }
 
-                                val hookLua =
-                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+                                val hookLua = """
+                                    |hookctor  {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  params = {${p}},
+                                    |  before = function(it)
+                                    |    
+                                    |  end,
+                                    |  after = function(it)
+                                    |    
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+//                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
                                 editor.insert(editor.selectionStart, hookLua)
                                 dialog.dismiss()
                             }
@@ -191,49 +219,90 @@ class ToolAdapter(
                                     view.findViewById<TextInputEditText>(R.id.input).text.toString()
 
                                 try {
-                                    if(input.startsWith("invoke")) {
+                                    if (input.startsWith("invoke")) {
                                         val invokeInfo = parseDalvikInstruction(input)!!
-                                        var invokeLua =""
-                                        if(invokeInfo["methodName"] == "<init>") {
+                                        var invokeLua = ""
+                                        if (invokeInfo["methodName"] == "<init>") {
                                             invokeLua = """
                                                 imports "${invokeInfo["className"].toString()}"
-                                                ${invokeInfo["className"].toString().substringAfterLast(".")}()
+                                                ${
+                                                invokeInfo["className"].toString()
+                                                    .substringAfterLast(".")
+                                            }()
                                             """.trimIndent()
-                                        }else if(input.startsWith("invoke-static")) {
+                                        } else if (input.startsWith("invoke-static")) {
                                             invokeLua = """
                                                 imports "${invokeInfo["className"].toString()}"
-                                                ${invokeInfo["className"].toString().substringAfterLast(".")}.${invokeInfo["methodName"].toString()}()
+                                                ${
+                                                invokeInfo["className"].toString()
+                                                    .substringAfterLast(".")
+                                            }.${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
-                                        }else{
+                                        } else {
                                             invokeLua = """
                                                 imports "${invokeInfo["className"].toString()}"
-                                                ${invokeInfo["className"].toString().substringAfterLast(".")}().${invokeInfo["methodName"].toString()}()
+                                                ${
+                                                invokeInfo["className"].toString()
+                                                    .substringAfterLast(".")
+                                            }().${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
                                         }
                                         editor.insert(editor.selectionStart, invokeLua)
                                         dialog.dismiss()
 
-                                    }else{
+                                    } else {
 
                                         val methodInfo = parseMethodSignature(input)
                                         val par = methodInfo.parameterTypes
                                         par.size.toString().d()
                                         var p =
                                             if (par.isEmpty()) "" else "\n" + par.joinToString(",") { "\"${it.trim()}\"" } + ","
-                                        var hookLua: String = if (methodInfo.methodName == "<init>") {
-                                            "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
-                                        } else {
-                                            "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
-                                        }
+                                        var hookLua: String =
+                                            if (methodInfo.methodName == "<init>") {
+                                                """
+                                                    |hookctor  {
+                                                    |  class = "${methodInfo.className}",
+                                                    |  classloader = lpparam.classLoader,
+                                                    |  params = {$p},
+                                                    |  before = function(it)
+                                                    |    
+                                                    |  end,
+                                                    |  after = function(it)
+                                                    |    
+                                                    |  end,
+                                                    |}
+                                                """.trimMargin()
+//                                                "hookcotr(\"${methodInfo.className}\",\nlpparam.classLoader,$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                            } else {
+                                                """
+                                                    |hook {
+                                                    |  class = "${methodInfo.className}",
+                                                    |  classloader = lpparam.classLoader,
+                                                    |  method = "${methodInfo.methodName}",
+                                                    |  params = {$p},
+                                                    |  before = function(it)
+                                                    |    
+                                                    |  end,
+                                                    |  after = function(it)
+                                                    |    
+                                                    |  end,
+                                                    |}
+                                                """.trimMargin()
+
+//                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+                                            }
                                         editor.insert(editor.selectionStart, hookLua)
                                         dialog.dismiss()
                                     }
 
                                 } catch (_: Exception) {
-                                    Toast.makeText(context, context.resources.getString(R.string.param_err), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.resources.getString(R.string.param_err),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     return@setPositiveButton
                                 }
-
 
 
                             }
@@ -725,9 +794,6 @@ class ToolAdapter(
                             .show()
 
 
-
-
-
                     }
 
                     else -> {}
@@ -754,21 +820,24 @@ class ToolAdapter(
     }
 
 
-
     fun parseDalvikInstruction(instruction: String): Map<String, String>? {
         // 匹配 invoke-direct
-        val directPattern = Pattern.compile("invoke-direct \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
+        val directPattern =
+            Pattern.compile("invoke-direct \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
         // 匹配 invoke-virtual
-        val virtualPattern = Pattern.compile("invoke-virtual \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
+        val virtualPattern =
+            Pattern.compile("invoke-virtual \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
         // 匹配 invoke-static
-        val staticPattern = Pattern.compile("invoke-static \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
+        val staticPattern =
+            Pattern.compile("invoke-static \\{([^}]+)\\}, L([^;]+);->([^(]+)\\((.*)\\)(.*)\\s*?")
 
         val directMatcher = directPattern.matcher(instruction)
         if (directMatcher.matches()) {
             return mapOf(
                 "instructionType" to "invoke-direct",
                 "registers" to directMatcher.group(1), // p1
-                "className" to directMatcher.group(2)!!.replace('/', '.'), // Ljava/lang/StringBuilder -> java.lang.StringBuilder
+                "className" to directMatcher.group(2)!!
+                    .replace('/', '.'), // Ljava/lang/StringBuilder -> java.lang.StringBuilder
                 "methodName" to directMatcher.group(3), // <init>
                 "parameters" to directMatcher.group(4), // 参数类型，这里是空
                 "returnType" to directMatcher.group(5) // 返回类型，这里是 V
@@ -780,7 +849,8 @@ class ToolAdapter(
             return mapOf(
                 "instructionType" to "invoke-virtual",
                 "registers" to virtualMatcher.group(1), // p1
-                "className" to virtualMatcher.group(2)!!.replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "className" to virtualMatcher.group(2)!!
+                    .replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
                 "methodName" to virtualMatcher.group(3), // show
                 "parameters" to virtualMatcher.group(4), // 参数类型，这里是空
                 "returnType" to virtualMatcher.group(5) // 返回类型，这里是 V
@@ -792,7 +862,8 @@ class ToolAdapter(
             return mapOf(
                 "instructionType" to "invoke-static",
                 "registers" to staticMatcher.group(1), // p1, p2, v0
-                "className" to staticMatcher.group(2)!!.replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
+                "className" to staticMatcher.group(2)!!
+                    .replace('/', '.'), // Landroid/widget/Toast -> android.widget.Toast
                 "methodName" to staticMatcher.group(3), // makeText
                 "parameters" to staticMatcher.group(4), // 参数类型，Landroid/content/Context;Ljava/lang/CharSequence;I
                 "returnType" to staticMatcher.group(5) // 返回类型，Landroid/widget/Toast;
