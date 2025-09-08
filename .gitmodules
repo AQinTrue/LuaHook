@@ -1,0 +1,3 @@
+[submodule "xdl"]
+	path = app/src/main/cpp/xdl
+	url = https://github.com/hexhacking/xDL.git

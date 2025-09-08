@@ -1,9 +1,9 @@
 package com.kulipai.luahook
 
 import android.os.Bundle
-import com.kulipai.luahook.LuaLib.LuaActivity
-import com.kulipai.luahook.LuaLib.LuaImport
-import com.kulipai.luahook.LuaLib.LuaUtil
+import com.kulipai.luahook.library.LuaActivity
+import com.kulipai.luahook.library.LuaImport
+import com.kulipai.luahook.library.LuaUtil
 //import androidx.activity.enableEdgeToEdge
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
