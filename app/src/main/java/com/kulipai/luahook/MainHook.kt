@@ -5,6 +5,7 @@ import com.kulipai.luahook.library.LuaActivity
 import com.kulipai.luahook.library.LuaImport
 import com.kulipai.luahook.library.LuaUtil
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
@@ -22,25 +23,18 @@ import top.sacz.xphelper.dexkit.DexFinder
 
 
 class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
-    companion object {
-//        init {
-//            System.loadLibrary("dexkit")
-//        }
 
-        const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
-        const val PATH = "/data/local/tmp/LuaHook"
-    }
-
+    var MODULE_PACKAGE: String = ""
 
     lateinit var luaScript: String
-    lateinit var selectAppsString: String
 
-    lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
+        MODULE_PACKAGE = startupParam.modulePath.substringAfterLast("/").substringBefore("-")
+        MODULE_PACKAGE.d()
 
         XpHelper.initZygote(startupParam)
         suparam = startupParam
@@ -56,56 +50,18 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     fun LuaHook_init(lpparam: LPParam) {
 
-        selectAppsString = read("$PATH/apps.txt").replace("\n", "")
-
-        luaScript = read("$PATH/global.lua")
-
-        if (selectAppsString.isNotEmpty() && selectAppsString != "") {
-            selectAppsList = selectAppsString.split(",").toMutableList()
-        } else {
-            selectAppsList = mutableListOf()
-        }
-
+        luaScript = LuaCode.code
 
         //全局脚本
         try {
             //排除自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = CreateGlobals(lpparam, "[GLOBAL]").load(luaScript)
+                val chunk: LuaValue = CreateGlobals(lpparam, "[LuaHook]").load(luaScript)
                 chunk.call()
             }
         } catch (e: Exception) {
             val err = simplifyLuaError(e.toString())
-            "${lpparam.packageName}:[GLOBAL]:$err".e()
-        }
-
-
-//        app单独脚本
-
-        if (lpparam.packageName in selectAppsList) {
-
-            for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
-                try {
-                    if (v is Boolean) {
-                        CreateGlobals(
-                            lpparam,
-                            k
-                        ).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
-                            .call()
-                    } else if ((v is JSONArray)) {
-                        if (v[0] as Boolean) {
-                            CreateGlobals(
-                                lpparam,
-                                k
-                            ).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
-                                .call()
-                        }
-                    }
-                } catch (e: Exception) {
-                    val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$k:$err".e()
-                }
-            }
+            "${lpparam.packageName}:[LuaHook]:$err".e()
         }
 
     }

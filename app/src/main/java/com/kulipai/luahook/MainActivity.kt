@@ -1,309 +1,272 @@
 package com.kulipai.luahook
 
-import AViewModel
-import DataRepository.ShellInit
-import LanguageUtil
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.view.Menu
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.get
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.kulipai.luahook.activity.AppsEdit
-import com.kulipai.luahook.activity.EditActivity
-import com.kulipai.luahook.activity.SettingsActivity
-import com.kulipai.luahook.fragment.AppsFragment
-import com.kulipai.luahook.fragment.HomeFragment
-import com.kulipai.luahook.fragment.PluginsFragment
-import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.ShellManager
-import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.launch
-import rikka.shizuku.Shizuku
-import rikka.sui.Sui
 
+import android.os.Bundle
+import android.view.Gravity
+import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import com.kulipai.luahook.library.LuaActivity
+import com.kulipai.luahook.library.LuaImport
+import com.kulipai.luahook.library.LuaUtil
+import com.kulipai.luahook.util.e
+import org.luaj.Globals
+import org.luaj.LuaValue
+import org.luaj.lib.ZeroArgFunction
+import org.luaj.lib.jse.CoerceJavaToLua
+import org.luaj.lib.jse.JsePlatform
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
-
-
-
-    lateinit var thisLanguage: String
-
-    private val shizukuRequestCode = 100
-
-
-    private lateinit var settingsLauncher: ActivityResultLauncher<Intent>
-
-    private val bottomBar: BottomNavigationView by lazy { findViewById(R.id.bottomBar) }
-    private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
-    private val viewPager2: ViewPager2 by lazy { findViewById(R.id.viewPager2) }
-    private val viewModel by viewModels<AViewModel>()
-
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        LanguageUtil.applyLanguage(this)
-
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
-
-        setContentView(R.layout.activity_main)
 
 
-        viewModel.data.observe(this) {
-            //没有root则shizuku
-            if (Shell.isAppGrantedRoot() == false && Shizuku.getBinder() != null && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                Shizuku.addBinderReceivedListener(binderReceivedListener)
-                Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
-                updatePermissionStatus()
 
 
+        val script = LuaCode.code
+        val func = extractLuaFunctionByLabel(script, "set")
+        func?.let {
+            val funcLine = func.functionStartLine
+            val callfunc = getFunctionName(func.functionCode)
+            try {
+                createGlobals().load("${func.functionCode}\n$callfunc()").call()
+            } catch (e: Exception) {
+                val err = simplifyLuaError(e.toString(),funcLine)
+                val errText = TextView(this)
+                errText.text = err
+                errText.gravity = Gravity.CENTER
+                setContentView(errText)
+                "@set@:$err".e()
             }
         }
 
 
+    }
 
-        // 注册 ActivityResultLauncher
-        settingsLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            if (LanguageUtil.getCurrentLanguage(this)!=thisLanguage){
-                recreate()
+    fun read(path: String): String {
+        if (File(path).exists()) {
+            return File(path).readText()
+        }
+        return ""
+    }
+
+    fun getFunctionName(functionString: String): String? {
+        // 正则表达式匹配 'function ' 后面跟着的函数名
+        // 函数名由字母、数字和下划线组成，且不能以数字开头
+        val functionNamePattern = Regex("function\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(.*\\)")
+
+        val matchResult = functionNamePattern.find(functionString)
+
+        // 返回第一个捕获组，即函数名
+        return matchResult?.groups?.get(1)?.value
+    }
+
+    /**
+     * 函数提取结果
+     */
+    data class FunctionExtractionResult(
+        val functionCode: String,
+        val functionStartLine: Int // 函数头在原脚本中的行号（从1开始）
+    )
+
+    /**
+     * 提取Lua代码中带标签的函数
+     * 支持的标签格式：::label、@label、::label::、@label@、::label@、@label::
+     */
+    fun extractLuaFunctionByLabel(luaCode: String, label: String): FunctionExtractionResult? {
+        val lines = luaCode.split('\n')
+        val labelPattern = createLabelPattern(label)
+
+        // 查找标签位置
+        var labelLineIndex = -1
+        for (i in lines.indices) {
+            if (labelPattern.matches(lines[i].trim())) {
+                labelLineIndex = i
+                break
             }
         }
 
-        //setting
-        toolbar.menu.add(0, 1, 0, "Setting").setIcon(R.drawable.settings_24px).setShowAsAction(1)
+        if (labelLineIndex == -1) {
+            return null // 找不到标签
+        }
 
-        toolbar.setOnMenuItemClickListener {
-            when (it.itemId) {
-                1 -> {
-                    thisLanguage = LanguageUtil.getCurrentLanguage(this)
-                    val intent = Intent(this, SettingsActivity::class.java)
+        // 从标签后开始查找函数
+        var functionStartLine = -1
 
-                    settingsLauncher.launch(intent)
-                    true
+        for (i in (labelLineIndex + 1) until lines.size) {
+            val line = lines[i].trim()
+            if (line.isNotEmpty()) {
+                val functionMatch = Regex("""^\s*function\s+\w+\s*\(.*?\)\s*$""").find(lines[i])
+                if (functionMatch != null) {
+                    functionStartLine = i
+                    break
                 }
-
-                else -> true
             }
         }
 
-        //状态检查
-        val prefs = getSharedPreferences("status", MODE_PRIVATE)
-        val current = prefs.getString("current", "null")
-        if (current == "apps") {
-            val intent = Intent(this, AppsEdit::class.java)
-            intent.putExtra("packageName", prefs.getString("packageName", ""))
-            intent.putExtra("appName", prefs.getString("appName", ""))
-            startActivity(intent)
-            prefs.edit {
-                putString("current", "null")
-            }
-        } else if (current == "global") {
-            val intent = Intent(this, EditActivity::class.java)
-            startActivity(intent)
-            prefs.edit {
-                putString("current", "null")
-            }
+        if (functionStartLine == -1) {
+            return null // 找不到函数
         }
 
+        // 提取完整函数
+        val functionCode = extractCompleteFunction(lines, functionStartLine)
 
-        // 可以选择在这里观察是否加载完（调试用）
-        val app = application as MyApplication
-        lifecycleScope.launch {
-            app.getAppListAsync()
-            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-                val savedList = getStringList()
-                if (savedList.isEmpty()) {
-                    // 列表为空的逻辑
-                } else {
-                    MyApplication.instance.getAppInfoList(savedList)
-                    // 加载 appInfoList
-                }
-            }
-
-
-        }
-
-
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, 0, systemBars.right, 0)
-            insets
-        }
-
-
-        val menu: Menu = bottomBar.menu
-
-
-
-        menu.add(Menu.NONE, 0, 0, resources.getString(R.string.home))
-            .setIcon(R.drawable.home_24px)
-
-        menu.add(Menu.NONE, 1, 1, resources.getString(R.string.apps))
-            .setIcon(R.drawable.apps_24px)
-
-        menu.add(Menu.NONE, 2, 2, resources.getString(R.string.plugins))
-            .setIcon(R.drawable.extension_24px)
-
-
-        val fragmentList = listOf(
-            HomeFragment(),
-            AppsFragment(),
-            PluginsFragment(),
+        return FunctionExtractionResult(
+            functionCode = functionCode,
+            functionStartLine = functionStartLine + 1 // 转换为从1开始的行号
         )
+    }
 
-        // 创建 FragmentStateAdapter
-        val adapter = object : FragmentStateAdapter(this) {
-            override fun createFragment(position: Int): Fragment {
-                return fragmentList[position]
+    /**
+     * 创建标签匹配模式
+     */
+    private fun createLabelPattern(label: String): Regex {
+        val escapedLabel = Regex.escape(label)
+        // 匹配 ::label、@label、::label::、@label@、::label@、@label::
+        return Regex("^\\s*[:@]{1,2}$escapedLabel[:@]{0,2}\\s*$")
+    }
+
+    /**
+     * 提取完整的函数，处理嵌套结构
+     */
+    private fun extractCompleteFunction(lines: List<String>, startLine: Int): String {
+        val result = mutableListOf<String>()
+        var depth = 0
+        var i = startLine
+
+        while (i < lines.size) {
+            val line = lines[i]
+            val trimmedLine = line.trim()
+
+            result.add(line)
+
+            // 计算深度变化
+            depth += countOpeningKeywords(trimmedLine)
+            depth -= countClosingKeywords(trimmedLine)
+
+            // 如果是第一行（function声明），深度应该是1
+            if (i == startLine) {
+                depth = 1
             }
 
-            override fun getItemCount(): Int {
-                return fragmentList.size
+            // 如果深度回到0，说明函数结束
+            if (depth == 0) {
+                break
             }
+
+            i++
         }
 
-        viewPager2.adapter = adapter
+        return result.joinToString("\n")
+    }
 
-        //同步 BottomNavigationView 的选中状态
-        viewPager2.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                bottomBar.menu[position].isChecked = true
-                menu[0].setIcon(R.drawable.home_24px)
-                menu[2].setIcon(R.drawable.extension_24px)
+    /**
+     * 计算开启关键词的数量
+     */
+    private fun countOpeningKeywords(line: String): Int {
+        var count = 0
+        val keywords = listOf("function", "if", "for", "while", "repeat", "do")
 
-                if (position == 0) {
-                    menu[0].setIcon(R.drawable.home_fill_24px)
-                } else if (position == 2) {
+        // 移除字符串和注释
+        val cleanLine = removeStringsAndComments(line)
 
-                    menu[2].setIcon(R.drawable.extension_fill_24px)
+        for (keyword in keywords) {
+            // 使用单词边界匹配，避免匹配到变量名中的关键词
+            val pattern = Regex("\\b$keyword\\b")
+            count += pattern.findAll(cleanLine).count()
+        }
+
+        return count
+    }
+
+    /**
+     * 计算关闭关键词的数量
+     */
+    private fun countClosingKeywords(line: String): Int {
+        var count = 0
+        val keywords = listOf("end", "until")
+
+        // 移除字符串和注释
+        val cleanLine = removeStringsAndComments(line)
+
+        for (keyword in keywords) {
+            // 使用单词边界匹配
+            val pattern = Regex("\\b$keyword\\b")
+            count += pattern.findAll(cleanLine).count()
+        }
+
+        return count
+    }
+
+    /**
+     * 移除字符串和注释，避免在字符串中的关键词被误计算
+     */
+    private fun removeStringsAndComments(line: String): String {
+        var result = line
+
+        // 移除单行注释
+        val commentIndex = result.indexOf("--")
+        if (commentIndex != -1) {
+            result = result.substring(0, commentIndex)
+        }
+
+        // 移除字符串（简化处理，只处理双引号字符串）
+        result = result.replace(Regex("\"[^\"]*\""), "")
+        result = result.replace(Regex("'[^']*'"), "")
+
+        return result
+    }
 
 
-                }
+
+
+    fun createGlobals(): Globals {
+        val globals: Globals = JsePlatform.standardGlobals()
+
+        //加载Lua模块
+        globals["this"] = CoerceJavaToLua.coerce(this)
+        globals["enableEdgeToEdge"] = CoerceJavaToLua.coerce(object : ZeroArgFunction() {
+            override fun call(): LuaValue? {
+                enableEdgeToEdge()
+                return NIL
             }
         })
+        globals["activity"] = CoerceJavaToLua.coerce(this)
+        LuaActivity(this).registerTo(globals)
+        LuaUtil.loadBasicLib(globals)
+        LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
+        LuaUtil.shell(globals)
+        return globals
+    }
 
-        // 同步 ViewPager2 的页面
-        bottomBar.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                0 -> {
-                    viewPager2.currentItem = 0
-                    true
-                }
 
-                1 -> {
-                    viewPager2.currentItem = 1
-                    true
-                }
+    fun simplifyLuaError(raw: String,funcLine: Int): String {
+        val lines = raw.lines()
 
-                2 -> {
-                    viewPager2.currentItem = 2
-                    true
-                }
+        // 1. 优先提取第一条真正的错误信息（不是 traceback）
+        val primaryErrorLine = lines.firstOrNull { it.trim().matches(Regex(""".*:\d+ .+""")) }
 
-                else -> false
+        if (primaryErrorLine != null) {
+            val match = Regex(""".*:(\d+) (.+)""").find(primaryErrorLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line ${lineNum.toInt()+funcLine-1}: $msg"
             }
         }
 
-
-    }
-
-
-    fun getStringList(): MutableList<String> {
-//        val prefs = context.getSharedPreferences("MyAppPrefs", MODE_WORLD_READABLE)
-//        val serialized = prefs.getString(key, "") ?: ""
-        val serialized = LShare.read("/apps.txt")
-        return if (serialized != "") {
-            serialized.split(",").toMutableList()
-        } else {
-            mutableListOf()
-        }
-    }
-
-    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
-        updatePermissionStatus()
-    }
-    private val requestPermissionResultListener =
-        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-            if (requestCode == shizukuRequestCode) {
-                val granted = grantResult == PackageManager.PERMISSION_GRANTED
-                if (granted) {
-                    Toast.makeText(this, "Shizuku 权限已授予", Toast.LENGTH_SHORT).show()
-                    updatePermissionStatus()
-                } else {
-                    Toast.makeText(this, "Shizuku 权限被拒绝", Toast.LENGTH_SHORT).show()
-                    updatePermissionStatus()
-                }
+        // 2. 其次从 traceback 提取（防止所有匹配失败）
+        val fallbackLine = lines.find { it.trim().matches(Regex(""".*:\d+: .*""")) }
+        if (fallbackLine != null) {
+            val match = Regex(""".*:(\d+): (.+)""").find(fallbackLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line ${lineNum.toInt()+funcLine-1}: $msg"
             }
         }
 
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Shizuku.removeBinderReceivedListener(binderReceivedListener)
-        Shizuku.removeRequestPermissionResultListener(requestPermissionResultListener)
+        return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
     }
-
-    private fun isShizukuAvailable(): Boolean {
-        return Shizuku.pingBinder()
-    }
-
-    private fun checkShizukuPermission(): Boolean {
-        return if (Shizuku.isPreV11()) {
-//            permissionStatusTextView.text = "Shizuku 版本过低，不支持权限请求"
-            false
-        } else {
-            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
-    private fun requestShizukuPermission() {
-        if (!Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            Shizuku.requestPermission(shizukuRequestCode)
-        } else if (Shizuku.isPreV11()) {
-            Toast.makeText(this, "Shizuku 版本过低，请使用 ADB 启动", Toast.LENGTH_LONG).show()
-        } else {
-//            Toast.makeText(this, "Shizuku 权限已存在", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun updatePermissionStatus() {
-        if (!isShizukuAvailable()) {
-//            Toast.makeText(this, "Shizuku 服务未运行", Toast.LENGTH_SHORT).show()
-
-        } else if (checkShizukuPermission()) {
-//            Toast.makeText(this, "Shizuku 权限已授予2", Toast.LENGTH_SHORT).show()
-            ShellInit(applicationContext)
-
-            Sui.init(packageName)
-        } else {
-//            Toast.makeText(this, "Shizuku 权限未授予", Toast.LENGTH_SHORT).show()
-//            permissionStatusTextView.text = "Shizuku 权限未授予"
-//            executeCommandButton.isEnabled = false
-            requestShizukuPermission() // 尝试请求权限
-        }
-    }
-
 
 }
-
-

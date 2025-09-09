@@ -7,10 +7,9 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.RemoteException
 import android.util.Log
-import androidx.annotation.experimental.Experimental
-import com.kulipai.luahook.BuildConfig
 import com.kulipai.luahook.IUserService
 import com.kulipai.luahook.UserService
+import com.kulipai.luahook.BuildConfig
 import com.topjohnwu.superuser.Shell
 import rikka.shizuku.Shizuku
 

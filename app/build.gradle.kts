@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.kulipai.luahook"
+        applicationId = "com.kulipai.luahook1"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
         versionCode = 30

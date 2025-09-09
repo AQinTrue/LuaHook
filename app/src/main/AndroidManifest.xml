@@ -20,39 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="35">
-        <activity
-            android:name=".ErrorActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.MultiScriptActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.ScriptSetActivity"
-            android:exported="true" />
-        <activity
-            android:name=".Welcome"
-            android:exported="false" />
-        <activity
-            android:name=".activity.AboutActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SelectApps"
-            android:exported="false" />
-        <activity
-            android:name=".activity.AppsEdit"
-            android:exported="false" />
-        <activity
-            android:name=".activity.Manual"
-            android:exported="false" />
-        <activity
-            android:name=".activity.LogCatActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.EditActivity"
-            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
