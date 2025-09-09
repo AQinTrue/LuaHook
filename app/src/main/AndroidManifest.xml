@@ -53,7 +53,7 @@
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.kulipai.luahook.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
