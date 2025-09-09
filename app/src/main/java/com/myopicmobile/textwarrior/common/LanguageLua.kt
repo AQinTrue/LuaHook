@@ -248,7 +248,8 @@ class LanguageLua private constructor() : Language() {
             "Task",
             "callMethod",
             "getStaticField",
-            "setStaticField"
+            "setStaticField",
+            "native"
         )
 
         val names: Array<String?> =
