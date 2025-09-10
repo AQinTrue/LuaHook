@@ -22,6 +22,7 @@ import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
 import top.sacz.xphelper.XpHelper
 import java.io.File
+import kotlin.concurrent.thread
 
 lateinit var  LPParam_processName: String
 
@@ -139,7 +140,9 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
         suparam = createStartupParam(this.applicationInfo.sourceDir)
         XpHelper.initZygote(suparam)
 
-        LuaHook_init(ModuleInterfaceParamWrapper(lpparam))
+        thread {
+            LuaHook_init(ModuleInterfaceParamWrapper(lpparam))
+        }
 
     }
 
