@@ -197,7 +197,7 @@ class LanguageLua private constructor() : Language() {
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
 
         private const val package_native =
-            "write|read|get_module_base"
+            "write|read|get_module_base|module_base|sleep|resolve_symbol"
 
 
         //	private final static String extFunctionTarget="activity|call|compile|dump|each|enum|import|loadbitmap|loadlayout|loadmenu|service|set|task|thread|timer";

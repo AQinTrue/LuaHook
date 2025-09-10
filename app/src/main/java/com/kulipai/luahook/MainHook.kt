@@ -19,6 +19,7 @@ import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
+import kotlin.concurrent.thread
 
 
 class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
@@ -50,7 +51,11 @@ class MainHook: IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        LuaHook_init(LoadPackageParamWrapper(lpparam))
+
+        thread {
+            LuaHook_init(LoadPackageParamWrapper(lpparam))
+        }
+
     }
 
 
