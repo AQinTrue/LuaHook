@@ -60,6 +60,14 @@ class NativeLib {
             }
         }
 
+        table["sleep"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): Varargs? {
+                val millis = args.arg(1).tolong()
+                Thread.sleep(millis)
+                return NIL
+            }
+        }
+
         table["get_module_base"] = table["module_base"] // 被重命名的函数
 
         return table
