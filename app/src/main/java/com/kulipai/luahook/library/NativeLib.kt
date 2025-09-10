@@ -11,20 +11,16 @@ class NativeLib {
         System.loadLibrary("luahook")
     }
 
-    external fun get_module_base(name: String): Long
 
     external fun read(ptr: Long, size: Int): ByteArray?
     external fun write(ptr: Long, data: ByteArray): Boolean
 
+    external fun moduleBase(name: String): Long
+    external fun resolveSymbol(module: String, name: String): Long
+
     fun toLuaTable(): LuaTable {
         val table = LuaTable()
-        table["get_module_base"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): LuaValue {
-                val name = args.arg(1).tojstring()
-                val base = get_module_base(name)
-                return CoerceJavaToLua.coerce(base)
-            }
-        }
+
         table["read"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val ptr = args.arg(1).tolong()
@@ -36,6 +32,7 @@ class NativeLib {
                 return table
             }
         }
+
         table["write"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val ptr = args.arg(1).tolong()
@@ -46,6 +43,25 @@ class NativeLib {
                 return CoerceJavaToLua.coerce(write(ptr, bytes))
             }
         }
+
+        table["module_base"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val name = args.arg(1).tojstring()
+                val base = moduleBase(name)
+                return CoerceJavaToLua.coerce(base)
+            }
+        }
+
+        table["resolve_symbol"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val module = args.arg(1).tojstring()
+                val name = args.arg(2).tojstring()
+                return CoerceJavaToLua.coerce(resolveSymbol(module, name))
+            }
+        }
+
+        table["get_module_base"] = table["module_base"] // 被重命名的函数
+
         return table
     }
 }
