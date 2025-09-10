@@ -1,7 +1,7 @@
 #include <cstring>
 #include <jni.h>
+#include <sys/mman.h>
 #include "xdl.h"
-#include <jni.h>
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_kulipai_luahook_library_NativeLib_get_1module_1base(JNIEnv *env, jobject thiz, jstring name) {
@@ -37,6 +37,9 @@ Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlon
 
     jbyte *buffer = env->GetByteArrayElements(data, nullptr);
     if (!buffer) return JNI_FALSE;
+
+    int result = mprotect((void *) ptr, size, PROT_READ | PROT_WRITE | PROT_EXEC);
+    if (result != 0) return JNI_FALSE;
 
     std::memcpy((void *) ptr, buffer, size);
     env->ReleaseByteArrayElements(data, buffer, 0);  // 0: copy back and free
