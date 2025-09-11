@@ -22,9 +22,8 @@ import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
 import top.sacz.xphelper.XpHelper
 import java.io.File
-import kotlin.concurrent.thread
 
-lateinit var  LPParam_processName: String
+lateinit var LPParam_processName: String
 
 interface LPParam {
     val packageName: String
@@ -52,6 +51,7 @@ class ModuleInterfaceParamWrapper(val origin: XposedModuleInterface.PackageLoade
     override val isFirstApplication: Boolean get() = origin.isFirstPackage
 
 }
+
 fun read(path: String): String {
     if (File(path).exists()) {
         return File(path).readText()
@@ -107,7 +107,6 @@ fun simplifyLuaError(raw: String): String {
 }
 
 
-
 class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(base, param) {
     companion object {
 //        init {
@@ -126,12 +125,10 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
-
     //api 100
     init {
-        LPParam_processName=param.processName
+        LPParam_processName = param.processName
     }
-
 
 
     @SuppressLint("DiscouragedPrivateApi")
@@ -140,9 +137,8 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
         suparam = createStartupParam(this.applicationInfo.sourceDir)
         XpHelper.initZygote(suparam)
 
-        thread {
-            LuaHook_init(ModuleInterfaceParamWrapper(lpparam))
-        }
+        LuaHook_init(ModuleInterfaceParamWrapper(lpparam))
+
 
     }
 
@@ -204,8 +200,6 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
     }
 
 
-
-
     fun CreateGlobals(lpparam: LPParam, scriptName: String = ""): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
@@ -219,7 +213,6 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
 
         return globals
     }
-
 
 
     fun createStartupParam(modulePath: String): IXposedHookZygoteInit.StartupParam {
