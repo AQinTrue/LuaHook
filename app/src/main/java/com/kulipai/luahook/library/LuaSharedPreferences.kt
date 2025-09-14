@@ -1,5 +1,7 @@
 package com.kulipai.luahook.library
+
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences
 import org.luaj.LuaTable
@@ -22,19 +24,28 @@ object LuaSharedPreferences {
                     return error("Usage: sp.set(context, name, key, value)")
                 }
 
+                Log.d("11111", args.checkboolean(4).toString())
+                Log.d("11111", args.toboolean(4).toString())
+
                 // 从参数中获取 Context
                 val context = args.checkuserdata(1, Context::class.java) as Context
                 val name = args.checkjstring(2) // 参数索引后移
                 val key = args.checkjstring(3) // 参数索引后移
                 // value 是第四个参数，不需要单独取，直接通过 args.arg(4) 检查类型和值
 
+
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
                 prefs.edit {
 
                     when {
-                        args.isstring(4) -> putString(key, args.checkjstring(4)) // 参数索引后移
+                        args.isstring(4) -> {
+                            Log.d("LuaHookDebug", "str:")
+                            putString(key, args.checkjstring(4))
+                        } // 参数索引后移
                         args.isnumber(4) -> { // 参数索引后移
+                            Log.d("LuaHookDebug", "num:")
+
                             val num = args.checkdouble(4) // 参数索引后移
                             if (num % 1 == 0.0 && num >= Int.MIN_VALUE && num <= Int.MAX_VALUE) {
                                 putInt(key, num.toInt())
@@ -43,8 +54,12 @@ object LuaSharedPreferences {
                             }
                         }
 
-                        args.toboolean(4) -> putBoolean(key, args.checkboolean(4)) // 参数索引后移
-                        else -> return error("Unsupported value type for sp.set")
+                        args.arg(4).type() == TBOOLEAN  -> {
+                            putBoolean(key, args.checkboolean(4))
+                        } // 参数索引后移
+                        else -> {
+                            return FALSE
+                        }
                     }
 
                 }
@@ -64,7 +79,7 @@ object LuaSharedPreferences {
                 val context = args.checkuserdata(1, Context::class.java) as Context
                 val name = args.checkjstring(2) // 参数索引后移
                 val key = args.checkjstring(3) // 参数索引后移
-                // defaultValue 是第四个参数，args.arg(4)
+                // defaultValue 是第四个参数，args.arg(4)F
 
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
@@ -87,7 +102,7 @@ object LuaSharedPreferences {
                     )
 
                     // 如果默认值是布尔，按布尔获取
-                    args.toboolean(4) -> valueOf(
+                    args.arg(4).type() == TBOOLEAN -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4) // 使用传入的默认值
@@ -242,7 +257,7 @@ object LuaSharedPreferences {
                         )!!
                     )
 
-                    args.toboolean(4) -> valueOf(
+                    args.arg(4).type() == TBOOLEAN -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4)
