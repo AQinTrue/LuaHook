@@ -20,7 +20,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key, value (至少4个参数)
                 if (args.narg() < 4) {
-                    return error("Usage: sp.set(context, name, key, value)")
+                    return FALSE
                 }
 
                 // 从参数中获取 Context
