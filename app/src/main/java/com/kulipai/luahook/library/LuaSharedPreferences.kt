@@ -1,7 +1,6 @@
 package com.kulipai.luahook.library
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences
 import org.luaj.LuaTable
@@ -24,9 +23,6 @@ object LuaSharedPreferences {
                     return error("Usage: sp.set(context, name, key, value)")
                 }
 
-                Log.d("11111", args.checkboolean(4).toString())
-                Log.d("11111", args.toboolean(4).toString())
-
                 // 从参数中获取 Context
                 val context = args.checkuserdata(1, Context::class.java) as Context
                 val name = args.checkjstring(2) // 参数索引后移
@@ -40,13 +36,11 @@ object LuaSharedPreferences {
 
                     when {
                         args.isstring(4) -> {
-                            Log.d("LuaHookDebug", "str:")
                             putString(key, args.checkjstring(4))
-                        } // 参数索引后移
-                        args.isnumber(4) -> { // 参数索引后移
-                            Log.d("LuaHookDebug", "num:")
+                        }
 
-                            val num = args.checkdouble(4) // 参数索引后移
+                        args.isnumber(4) -> {
+                            val num = args.checkdouble(4)
                             if (num % 1 == 0.0 && num >= Int.MIN_VALUE && num <= Int.MAX_VALUE) {
                                 putInt(key, num.toInt())
                             } else {
@@ -54,7 +48,7 @@ object LuaSharedPreferences {
                             }
                         }
 
-                        args.arg(4).type() == TBOOLEAN  -> {
+                        args.arg(4).type() == TBOOLEAN -> {
                             putBoolean(key, args.checkboolean(4))
                         } // 参数索引后移
                         else -> {
