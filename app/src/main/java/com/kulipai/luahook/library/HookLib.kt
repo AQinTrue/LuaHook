@@ -1498,7 +1498,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         val baseClass = typeMap[baseType] ?: try {
             XposedHelpers.findClass(baseType, classLoader)
         } catch (_: ClassNotFoundException) {
-            "参数错误".d()
+            "Parameter error".d()
             return null
         }
 
@@ -1613,7 +1613,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
             }
         }
 
-        return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
+        return raw.lines().firstOrNull()?.take(100) ?: "Unknown error"
     }
 
 }

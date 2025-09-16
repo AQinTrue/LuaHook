@@ -3,6 +3,7 @@ package com.kulipai.luahook.library
 import android.content.Context
 import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences
+import org.luaj.LuaError
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.Varargs
@@ -20,7 +21,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key, value (至少4个参数)
                 if (args.narg() < 4) {
-                    return FALSE
+                    throw LuaError("Usage: sp.set(context, name, key, value)")
                 }
 
                 // 从参数中获取 Context
@@ -66,7 +67,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key, defaultValue (至少4个参数)
                 if (args.narg() < 4) {
-                    return error("Usage: sp.get(context, name, key, defaultValue)")
+                    throw LuaError("Usage: sp.get(context, name, key, defaultValue)")
                 }
 
                 // 从参数中获取 Context
@@ -124,7 +125,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key (至少3个参数)
                 if (args.narg() < 3) {
-                    return error("Usage: sp.contains(context, name, key)")
+                    throw LuaError("Usage: sp.contains(context, name, key)")
                 }
 
                 // 从参数中获取 Context
@@ -143,7 +144,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key (至少3个参数)
                 if (args.narg() < 3) {
-                    return error("Usage: sp.remove(context, name, key)")
+                    throw LuaError("Usage: sp.remove(context, name, key)")
                 }
 
                 // 从参数中获取 Context
@@ -163,7 +164,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name (至少2个参数)
                 if (args.narg() < 2) {
-                    return error("Usage: sp.getAll(context, name)")
+                    throw LuaError("Usage: sp.getAll(context, name)")
                 }
 
                 // 从参数中获取 Context
@@ -197,7 +198,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name (至少2个参数)
                 if (args.narg() < 2) {
-                    return error("Usage: sp.clear(context, name)")
+                    throw LuaError("Usage: sp.clear(context, name)")
                 }
 
                 // 从参数中获取 Context
@@ -231,7 +232,7 @@ object LuaSharedPreferences {
         xsp["get"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 4) {
-                    return error("Usage: xsp.get(packageName, name, key, defaultValue)")
+                    throw LuaError("Usage: xsp.get(packageName, name, key, defaultValue)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -275,7 +276,7 @@ object LuaSharedPreferences {
         xsp["contains"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 3) {
-                    return error("Usage: xsp.contains(packageName, name, key)")
+                    throw LuaError("Usage: xsp.contains(packageName, name, key)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -291,7 +292,7 @@ object LuaSharedPreferences {
         xsp["getAll"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 2) {
-                    return error("Usage: xsp.getAll(packageName, name)")
+                    throw LuaError("Usage: xsp.getAll(packageName, name)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -318,7 +319,7 @@ object LuaSharedPreferences {
         xsp["reload"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 2) {
-                    return error("Usage: xsp.reload(packageName, name)")
+                    throw LuaError("Usage: xsp.reload(packageName, name)")
                 }
 
                 val packageName = args.checkjstring(1)

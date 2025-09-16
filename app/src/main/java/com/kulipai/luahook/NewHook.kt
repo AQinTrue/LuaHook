@@ -103,7 +103,7 @@ fun simplifyLuaError(raw: String): String {
         }
     }
 
-    return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
+    return raw.lines().firstOrNull()?.take(100) ?: "Unknown error"
 }
 
 
