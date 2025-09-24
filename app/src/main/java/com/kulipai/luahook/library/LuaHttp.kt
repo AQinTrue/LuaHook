@@ -389,7 +389,7 @@ object LuaHttp{
                             if (!response.isSuccessful) {
                                 callback.call(
                                     valueOf(response.code),
-                                    valueOf("下载失败: ${response.message}")
+                                    valueOf("Download failed: ${response.message}")
                                 )
                                 return
                             }
@@ -428,7 +428,7 @@ object LuaHttp{
                         } catch (e: Exception) {
                             callback.call(
                                 valueOf(-1),
-                                valueOf("下载异常: ${e.message}")
+                                valueOf("Download exception: ${e.message}")
                             )
                         }
                     }
