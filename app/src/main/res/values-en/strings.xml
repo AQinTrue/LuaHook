@@ -122,4 +122,5 @@
     <string name="contribution_luahook">If you like this project and wish to support it, we\'d greatly appreciate your contributions! A Pull Request, a valuable discussion, or even a suggestion for a single line of code means more to us than financial donations. Of course, if you genuinely wish to show your appreciation through a monetary contribution, we are equally grateful.</string>
     <string name="repository">Repository</string>
     <string name="github_repo">Github open source repository address</string>
+    <string name="show_system_app">show SystemApps</string>
 </resources>

@@ -2,12 +2,15 @@ package com.kulipai.luahook.activity
 
 import android.graphics.Rect
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
@@ -23,32 +26,34 @@ import com.kulipai.luahook.adapter.SelectAppsAdapter
 import com.kulipai.luahook.fragment.AppInfo
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.XposedScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 class SelectApps : AppCompatActivity() {
 
-    var selectApps = mutableListOf<String>()
-    var searchJob: Job? = null
-    lateinit var availableAppsToShow: List<AppInfo>
-    lateinit var adapter: SelectAppsAdapter
-    var isLoaded = false
-
+    private var selectApps = mutableListOf<String>()
+    private var searchJob: Job? = null
+    private lateinit var allApps: List<AppInfo> // 全部 app
+    private lateinit var availableAppsToShow: List<AppInfo> // 当前显示 app
+    private lateinit var adapter: SelectAppsAdapter
+    private var isLoaded = false
+    private var showSystemApps = false // ← 是否显示系统应用的开关状态
 
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
     private val clearImage: ImageView by lazy { findViewById(R.id.clear_text) }
     private val searchbar: MaterialCardView by lazy { findViewById(R.id.searchbar) }
+    private val toolbar: Toolbar by lazy { findViewById(R.id.toolbar) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         DynamicColors.applyToActivityIfAvailable(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_select_apps)
+
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -59,25 +64,16 @@ class SelectApps : AppCompatActivity() {
         val selectedPackageNames = LShare.readStringList("/apps.txt")
         selectApps = selectedPackageNames.toMutableList()
 
-        adapter = SelectAppsAdapter(emptyList(), this, selectApps) // 先传空列表
+        adapter = SelectAppsAdapter(emptyList(), this, selectApps)
         rec.layoutManager = LinearLayoutManager(this)
         rec.adapter = adapter
 
         val app = application as MyApplication
         lifecycleScope.launch {
-            val apps = app.getAppListAsync()
-            //去除已选择app
-
-            val selectedPackagesSet: Set<String> = selectedPackageNames.toSet()
-            availableAppsToShow = apps.filter { appInfo ->
-                !selectedPackagesSet.contains(appInfo.packageName)
-                // 或者写成: appInfo.packageName !in selectedPackagesSet
-            }
-
-            adapter.updateData(availableAppsToShow)
+            allApps = app.getAppListAsync()
+            refreshAppList()
             isLoaded = true
         }
-
 
         rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
@@ -92,20 +88,17 @@ class SelectApps : AppCompatActivity() {
             }
         })
 
-
         searchbar.setOnClickListener {
             searchEdit.requestFocus()
-            // 显示软键盘
             val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
             imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
         }
 
-        //搜索
         searchEdit.doAfterTextChanged { s ->
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
                 if (isLoaded) {
-                    delay(100) // 延迟300ms
+                    delay(100)
                     filterAppList(s.toString().trim(), clearImage)
                 }
             }
@@ -118,17 +111,40 @@ class SelectApps : AppCompatActivity() {
 
         fab.setOnClickListener {
             LShare.writeStringList("/apps.txt", selectApps)
-            XposedScope.requestManyScope(this,
-                (selectApps-selectedPackageNames).toMutableList(),0)
+            XposedScope.requestManyScope(
+                this,
+                (selectApps - selectedPackageNames).toMutableList(),
+                0
+            )
             finish()
         }
     }
 
+    /** 重新根据 showSystemApps 筛选列表 */
+    private fun refreshAppList() {
+        val selectedPackagesSet = selectApps.toSet()
+        availableAppsToShow = allApps.filter { appInfo ->
+            !selectedPackagesSet.contains(appInfo.packageName) &&
+                    (showSystemApps || !isSystemApp(appInfo))
+        }
+        adapter.updateData(availableAppsToShow)
+    }
+
+    /** 判断是否是系统应用 */
+    private fun isSystemApp(appInfo: AppInfo): Boolean {
+        return try {
+            val pm = packageManager
+            val app = pm.getApplicationInfo(appInfo.packageName, 0)
+            (app.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     private fun filterAppList(query: String, clearImage: ImageView) {
         val filteredList = if (query.isEmpty()) {
             clearImage.visibility = View.INVISIBLE
-            availableAppsToShow // 显示全部
+            availableAppsToShow
         } else {
             clearImage.visibility = View.VISIBLE
             availableAppsToShow.filter {
@@ -139,5 +155,27 @@ class SelectApps : AppCompatActivity() {
         adapter.updateData(filteredList)
     }
 
+    /** 创建菜单 */
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_select_apps, menu)
+        menu?.findItem(R.id.action_show_system)?.isChecked = showSystemApps
+        return true
+    }
 
+    /** 菜单点击 */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_show_system -> {
+                showSystemApps = !showSystemApps
+                item.isChecked = showSystemApps
+                refreshAppList()
+                true
+            }
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 }

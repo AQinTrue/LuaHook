@@ -123,4 +123,5 @@
     <string name="contribution_luahook">如果你喜欢这个项目并想支持它，我们更希望能收到你的实际贡献！一次PR、一个有价值的 Discussion，甚至是 一行代码的建议，都比金钱更让我们感到有意义。当然，如果你真心想通过捐款来表达对作者的认可，我们也同样心怀感激。</string>
     <string name="repository">仓库</string>
     <string name="github_repo">Github开源仓库地址</string>
+    <string name="show_system_app">显示系统应用</string>
 </resources>
