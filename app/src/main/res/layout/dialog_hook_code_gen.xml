@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/hook_mode_layout"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:hint="选择 Hook 生成模式">
+
+        <AutoCompleteTextView
+            android:id="@+id/gen_code_mode_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <include
+        android:id="@+id/layout_hook_method"
+        layout="@layout/dialog_hook"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/layout_hookctor_method"
+        layout="@layout/dialog_hookctor"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/layout_change_return"
+        layout="@layout/dialog_change_return"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/layout_change_params"
+        layout="@layout/dialog_change_params"
+        android:visibility="gone" />
+</LinearLayout>

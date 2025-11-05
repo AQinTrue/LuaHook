@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/searchbar"
+        android:layout_margin="16dp"
+        style="@style/Widget.Material3.CardView.Elevated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="0.1dp"
+        >
+        <LinearLayout
+            android:gravity="center"
+            android:padding="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_marginStart="6dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+
+                android:contentDescription="@string/search"
+                android:src="@drawable/search_24px"/>
+            <EditText
+                android:singleLine="true"
+                android:id="@+id/search_bar_text_view"
+                android:layout_marginStart="12dp"
+                android:autofillHints=""
+                android:hint="@string/search"
+                android:background="@null"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                />
+
+            <ImageView
+                android:visibility="invisible"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:id="@+id/clear_text"
+                android:layout_marginEnd="12dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/close_24px"/>
+
+        </LinearLayout>
+
+
+    </com.google.android.material.card.MaterialCardView>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+
+<!--        <com.google.android.material.search.SearchBar-->
+
+<!--            android:id="@+id/searchBar"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Search" />-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rec"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="?attr/actionBarSize" />
+
+
+    </LinearLayout>
+
+<!--    <com.google.android.material.search.SearchView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:layout_anchor="@id/searchBar">-->
+<!--        &lt;!&ndash; Search suggestions/results go here (ScrollView, RecyclerView, etc.). &ndash;&gt;-->
+<!--    </com.google.android.material.search.SearchView>-->
+    <com.google.android.material.button.MaterialButton
+        android:rotation="45"
+        android:id="@+id/fab1"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="246dp"
+        app:icon="@drawable/new_window_24px" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:rotation="45"
+        android:id="@+id/fab2"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="190dp"
+        app:icon="@drawable/file_open_24px" />
+
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="124dp"
+        android:contentDescription="@string/push"
+        android:src="@drawable/add_24px" />
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
