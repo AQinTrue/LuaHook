@@ -225,6 +225,7 @@ class LanguageLua private constructor() : Language() {
             "suparam",
             "json",
             "imports",
+            "printStackTrace",
 //            "new",
 //            "newInstance",
 //            "getConstructor",

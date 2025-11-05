@@ -137,8 +137,7 @@ class AppsEdit : AppCompatActivity() {
 
         val tool =
             listOf(
-                resources.getString(R.string.hook_method),
-                resources.getString(R.string.hook_constructor),
+                resources.getString(R.string.gen_hook_code),
                 resources.getString(R.string.funcSign),
                 resources.getString(R.string.grammer_converse)
             )

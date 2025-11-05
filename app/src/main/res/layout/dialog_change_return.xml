@@ -4,12 +4,6 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <!--    <TextView-->
-    <!--        style="@style/TextAppearance.Material3.TitleLarge"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginStart="16dp"-->
-    <!--        android:text="Hook函数" />-->
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -54,56 +48,26 @@
             android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <CheckBox
-        android:id="@+id/checkBox_print_all_params"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:layout_width="wrap_content"
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/print_all_params" />
-
-    <CheckBox
-        android:id="@+id/checkBox_print_return"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
         android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
         android:layout_marginEnd="12dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/print_return" />
+        android:hint="@string/change_value">
 
-    <CheckBox
-        android:id="@+id/checkBox_print_stack"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/returns"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginStart="12dp"
+        android:layout_marginTop="0dp"
         android:layout_marginEnd="12dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/print_stack" />
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginTop="16dp"-->
-    <!--        android:layout_marginEnd="16dp"-->
-    <!--        android:gravity="end"-->
-    <!--        android:orientation="horizontal">-->
-
-    <!--        <com.google.android.material.button.MaterialButton-->
-    <!--            android:id="@+id/cancel"-->
-    <!--            style="@style/Widget.Material3.Button.TextButton"-->
-    <!--            android:layout_width="wrap_content"-->
-
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:text="取消" />-->
-
-    <!--        <com.google.android.material.button.MaterialButton-->
-    <!--            android:id="@+id/ok"-->
-    <!--            android:layout_width="wrap_content"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:text="确定" />-->
-    <!--    </LinearLayout>-->
+        android:text="例如:1 'abc' true" />
 </LinearLayout>

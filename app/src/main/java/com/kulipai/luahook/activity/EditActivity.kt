@@ -276,7 +276,7 @@ class EditActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
-        setContentView(R.layout.edit)
+        setContentView(R.layout.activity_global_edit)
         setSupportActionBar(toolbar)
 
         val symbolRecyclerView: RecyclerView = findViewById(R.id.symbolRecyclerView)

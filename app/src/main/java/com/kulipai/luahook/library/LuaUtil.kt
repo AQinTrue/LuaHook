@@ -3,6 +3,7 @@ package com.kulipai.luahook.library
 import com.kulipai.luahook.simplifyLuaError
 import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.d
+import com.kulipai.luahook.util.printStackTrace
 import org.luaj.Globals
 import org.luaj.LuaTable
 import org.luaj.LuaValue
@@ -128,6 +129,13 @@ object LuaUtil {
                 }
                 tableStringBuilder.append("}")
                 return tableStringBuilder.toString()
+            }
+        }
+
+        _G["printStackTrace"] = object : VarArgFunction() {
+            override fun invoke(): Varargs {
+                printStackTrace()
+                return NIL
             }
         }
 
