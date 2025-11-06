@@ -212,6 +212,7 @@ class LanguageLua private constructor() : Language() {
             "hook",
             "replace",
 //            "Xposed",
+            "tostring",
             "import",
             "log",
             "setField",
