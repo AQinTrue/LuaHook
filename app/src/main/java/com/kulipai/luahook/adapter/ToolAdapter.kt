@@ -591,6 +591,7 @@ class ToolAdapter(
                                                     |  end,
                                                     |  after = function(it)
                                                     |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
                                                     |  end,
                                                     |}
                                                 """.trimMargin()
