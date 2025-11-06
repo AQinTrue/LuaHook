@@ -26,5 +26,3 @@ fun printStackTrace() {
     }
     ("StackTrace\n$stackTraceStr").d()
 }
-
-

@@ -101,6 +101,7 @@ class ToolAdapter(
                                     |  end,
                                     |  after = function(it)
                                     |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
                                     |  end,
                                     |}
                                 """.trimMargin()
@@ -137,6 +138,7 @@ class ToolAdapter(
                                     |  end,
                                     |  after = function(it)
                                     |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
                                     |  end,
                                     |}
                                 """.trimMargin()
@@ -171,6 +173,7 @@ class ToolAdapter(
                                     |  replace = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
                                     |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
                                     |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
                                     |  end,
                                     |}
                                 """.trimMargin()

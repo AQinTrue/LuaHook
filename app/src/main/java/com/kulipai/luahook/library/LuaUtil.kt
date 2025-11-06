@@ -3,7 +3,6 @@ package com.kulipai.luahook.library
 import com.kulipai.luahook.simplifyLuaError
 import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.d
-import com.kulipai.luahook.util.printStackTrace
 import org.luaj.Globals
 import org.luaj.LuaTable
 import org.luaj.LuaValue
@@ -35,6 +34,18 @@ object LuaUtil {
         LuaResource.registerTo(_G)
         LuaSharedPreferences.registerTo(_G)
         LuaDrawableLoader().registerTo(_G)
+
+        // 打印堆栈
+        // 这个不能写在java层会栈溢出
+        _G.load("""
+            function printStackTrace()
+               import "java.lang.Throwable"
+               stackTrace = Throwable().stackTrace
+               for _,v in stackTrace do
+                  print("at "..tostring(v))
+               end
+            end
+        """.trimIndent()).call()
 
 
         _G["pcall"] = object : VarArgFunction() {
@@ -129,13 +140,6 @@ object LuaUtil {
                 }
                 tableStringBuilder.append("}")
                 return tableStringBuilder.toString()
-            }
-        }
-
-        _G["printStackTrace"] = object : VarArgFunction() {
-            override fun invoke(): Varargs {
-                printStackTrace()
-                return NIL
             }
         }
 
