@@ -63,8 +63,8 @@ class ToolAdapter(
                             "拦截执行",
                             "修改返回值",
                             "修改参数",
-                            "Hook静态变量",
-                            "Hook实例变量",
+//                            "Hook静态变量",
+//                            "Hook实例变量",
                         )
 
 
@@ -353,7 +353,7 @@ class ToolAdapter(
                             }
                             .show()
 
-
+/*
 //// bottomSheetDialog
 //                        val bottomSheetDialog = BottomSheetDialog(context)
 //                        bottomSheetDialog.setTitle("Hook方法")
@@ -378,48 +378,11 @@ class ToolAdapter(
 //                        }
 //                        bottomSheetDialog.show()
 
-//// dialog
-//                        MaterialAlertDialogBuilder(context)
-//                            .setTitle(context.resources.getString(R.string.hook_method))
-//                            .setView(view)
-//                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
-//                                val className: String =
-//                                    view.findViewById<TextInputEditText>(R.id.className).text.toString()
-//                                val funcName: String =
-//                                    view.findViewById<TextInputEditText>(R.id.funcName).text.toString()
-//                                val param: String =
-//                                    view.findViewById<TextInputEditText>(R.id.param).text.toString()
-//                                var p = ""
-//                                if (param.trim().isNotEmpty()) {
-//                                    p = param.split(",")
-//                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
-//                                }
-//                                val hookLua = """
-//                                    |hook {
-//                                    |  class = "$className",
-//                                    |  classloader = lpparam.classLoader,
-//                                    |  method = "$funcName",
-//                                    |  params = {${p}},
-//                                    |  before = function(it)
-//                                    |
-//                                    |  end,
-//                                    |  after = function(it)
-//                                    |
-//                                    |  end,
-//                                    |}
-//                                """.trimMargin()
-//
-////                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-//                                editor.insert(editor.selectionStart, hookLua)
-//                                dialog.dismiss()
-//                            }
-//                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
-//                                dialog.dismiss()
-//                            }
-//                            .show()
+ */
 
                     }
 
+                    /*
 //                    1 -> {
 //                        val view =
 //                            LayoutInflater.from(context).inflate(R.layout.dialog_hookctor, null)
@@ -481,11 +444,15 @@ class ToolAdapter(
 //                            }
 //                            .show()
 //                    }
+*/
 
                     1 -> {
 
                         val view =
                             LayoutInflater.from(context).inflate(R.layout.dialog_funcsign, null)
+
+                        /*
+
 
 //                        val bottomSheetDialog = BottomSheetDialog(context)
 //                        bottomSheetDialog.setTitle("Hook方法")
@@ -528,6 +495,7 @@ class ToolAdapter(
 //                            bottomSheetDialog.dismiss()
 //                        }
 //                        bottomSheetDialog.show()
+ */
                         MaterialAlertDialogBuilder(context)
                             .setTitle(context.resources.getString(R.string.import_smali))
                             .setView(view)

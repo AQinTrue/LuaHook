@@ -1,6 +1,6 @@
 package com.kulipai.luahook.fragment
 
-import AViewModel
+import com.kulipai.luahook.util.AViewModel
 import android.animation.Animator.AnimatorListener
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator

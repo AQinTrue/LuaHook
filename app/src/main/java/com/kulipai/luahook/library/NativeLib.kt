@@ -6,6 +6,10 @@ import org.luaj.Varargs
 import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 
+/**
+ * 提供native能力的hook
+ */
+
 class NativeLib {
     init {
         System.loadLibrary("luahook")

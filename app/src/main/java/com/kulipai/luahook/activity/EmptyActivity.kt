@@ -1,10 +1,9 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.activity
 
 import android.os.Bundle
 import com.kulipai.luahook.library.LuaActivity
 import com.kulipai.luahook.library.LuaImport
 import com.kulipai.luahook.library.LuaUtil
-//import androidx.activity.enableEdgeToEdge
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import org.luaj.Globals
@@ -15,6 +14,11 @@ import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.activity.BaseActivity
 import top.sacz.xphelper.dexkit.DexFinder
 
+/**
+ * EmptyActivity是一个注入到宿主应用内实现的一个页面
+ * 加载通过intent Extra的script传入的lua代码
+ */
+
 class EmptyActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +26,6 @@ class EmptyActivity : BaseActivity() {
 
         val data = intent.getStringExtra("script")
         CreateGlobals().load(data).call()
-
     }
 
     fun CreateGlobals(): Globals {

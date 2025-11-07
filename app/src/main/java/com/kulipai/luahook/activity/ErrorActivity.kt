@@ -1,8 +1,9 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
@@ -12,6 +13,7 @@ import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.card.MaterialCardView
+import com.kulipai.luahook.R
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -95,9 +97,9 @@ class ErrorActivity : AppCompatActivity() {
 
             ---
             设备信息：
-            制造商：${android.os.Build.MANUFACTURER}
-            型号：${android.os.Build.MODEL}
-            Android 版本：${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})
+            制造商：${Build.MANUFACTURER}
+            型号：${Build.MODEL}
+            Android 版本：${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
             应用版本：${try { packageManager.getPackageInfo(packageName, 0).versionName } catch (_: Exception) { "未知" }}
             包名：$packageName
             ---
@@ -116,7 +118,12 @@ class ErrorActivity : AppCompatActivity() {
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain" // 设置MIME类型为纯文本
-                putExtra(Intent.EXTRA_SUBJECT, "应用错误日志 - ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())}")
+                putExtra(
+                    Intent.EXTRA_SUBJECT, "应用错误日志 - ${
+                        SimpleDateFormat(
+                            "yyyy-MM-dd",
+                            Locale.getDefault()
+                        ).format(Date())}")
                 putExtra(Intent.EXTRA_TEXT, "请查看附件中的错误日志。") // 邮件或消息正文
                 putExtra(Intent.EXTRA_STREAM, fileUri) // 附加文件URI
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // 授予读取URI权限给接收应用

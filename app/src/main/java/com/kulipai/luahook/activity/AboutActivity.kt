@@ -43,6 +43,10 @@ import org.json.JSONObject
 import java.io.IOException
 import kotlin.math.abs
 
+/**
+ * 是github.com/Samzhaohx写的这个页面
+ */
+
 class AboutActivity : AppCompatActivity() {
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val appBar: AppBarLayout by lazy { findViewById(R.id.app_bar) }

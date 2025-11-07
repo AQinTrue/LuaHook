@@ -1,4 +1,4 @@
 // ShellResult.aidl
-package com.kulipai.luahook;
+package com.kulipai.luahook.shizuku;
 
 parcelable ShellResult;
