@@ -1,4 +1,5 @@
 package com.kulipai.luahook.library
+
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
@@ -24,6 +25,9 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * 加载网络/本地图片的Drawable
+ */
 
 class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) {
 

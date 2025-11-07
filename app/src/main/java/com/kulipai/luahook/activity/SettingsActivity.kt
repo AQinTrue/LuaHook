@@ -14,6 +14,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
+import com.kulipai.luahook.util.LanguageUtil
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -62,7 +63,9 @@ class SettingsActivity : AppCompatActivity() {
 
     fun showLanguagePickerDialog(context: Context) {
         val languages = arrayOf("English", "简体中文","繁體中文")
-        val languageCodes = arrayOf(LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE,LanguageUtil.LANGUAGE_CHINESE_TRADITIONAL)
+        val languageCodes = arrayOf(
+            LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE,
+            LanguageUtil.LANGUAGE_CHINESE_TRADITIONAL)
         val currentLanguage = LanguageUtil.getCurrentLanguage(context)
         val checkedItem = languageCodes.indexOf(currentLanguage)
 

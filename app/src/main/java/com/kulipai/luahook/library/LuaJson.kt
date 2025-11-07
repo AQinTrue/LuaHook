@@ -1,8 +1,13 @@
 package com.kulipai.luahook.library
+
 import org.json.JSONObject
 import org.json.JSONArray
 import org.luaj.*
 import org.luaj.lib.*
+
+/**
+ * json处理封装
+ */
 
 object LuaJson {
     fun registerTo(env: LuaValue): LuaValue {

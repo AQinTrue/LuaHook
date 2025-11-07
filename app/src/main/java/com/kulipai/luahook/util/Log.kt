@@ -2,6 +2,10 @@ package com.kulipai.luahook.util
 
 import android.util.Log
 
+/**
+ * 日志
+ */
+
 private val TAG = "LuaXposed"
 
 fun Throwable.log(text: String = "Throwable"): Throwable {

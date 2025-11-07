@@ -9,6 +9,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import top.sacz.xphelper.util.ActivityTools.runOnUiThread
 
+/**
+ * api100有的模块作用域管理
+ */
+
 object XposedScope {
     private var _service: XposedService? = null
     val service get() = _service

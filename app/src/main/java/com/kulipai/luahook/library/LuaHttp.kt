@@ -1,4 +1,5 @@
 package com.kulipai.luahook.library
+
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -16,6 +17,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+
+/**
+ * http封装
+ */
 
 object LuaHttp{
 

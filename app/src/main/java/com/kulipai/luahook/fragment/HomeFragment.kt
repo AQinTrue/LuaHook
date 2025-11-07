@@ -1,6 +1,6 @@
 package com.kulipai.luahook.fragment
 
-import AViewModel
+import com.kulipai.luahook.util.AViewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent

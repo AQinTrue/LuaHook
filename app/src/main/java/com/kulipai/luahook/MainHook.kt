@@ -1,9 +1,11 @@
 package com.kulipai.luahook
 
+import com.kulipai.luahook.library.LuaUtil.simplifyLuaError
 import com.kulipai.luahook.library.HookLib
 import com.kulipai.luahook.library.LuaActivity
 import com.kulipai.luahook.library.LuaImport
 import com.kulipai.luahook.library.LuaUtil
+import com.kulipai.luahook.util.LPParam
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -19,18 +21,22 @@ import org.luaj.lib.jse.JsePlatform
 import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
+import com.kulipai.luahook.util.LShare.read
+import com.kulipai.luahook.util.LShare.readMap
+import com.kulipai.luahook.util.LoadPackageParamWrapper
 
+
+/**
+ * MainHook是用于xposed api小于100的hook主类
+ * 加载lua脚本hook宿主
+ */
 
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
-    companion object {
-//        init {
-//            System.loadLibrary("dexkit")
-//        }
 
+    companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PATH = "/data/local/tmp/LuaHook"
     }
-
 
     lateinit var luaScript: String
     lateinit var selectAppsString: String
@@ -38,72 +44,61 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
-
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
-
         XpHelper.initZygote(startupParam)
         suparam = startupParam
-
     }
-
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-
-        LuaHook_init(LoadPackageParamWrapper(lpparam))
-
+        luaHookInit(LoadPackageParamWrapper(lpparam))
     }
 
-
-    fun LuaHook_init(lpparam: LPParam) {
-
+    fun luaHookInit(lpparam: LPParam) {
+        // 读取luahook启用的app
         selectAppsString = read("$PATH/apps.txt").replace("\n", "")
-
+        // 读取全局脚本
         luaScript = read("$PATH/global.lua")
-
         if (selectAppsString.isNotEmpty() && selectAppsString != "") {
             selectAppsList = selectAppsString.split(",").toMutableList()
         } else {
             selectAppsList = mutableListOf()
         }
 
-
-        //全局脚本
+        // 全局脚本
         try {
-            //排除自己
+            // 排除模块自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = CreateGlobals(lpparam, "[GLOBAL]").load(luaScript)
+                val chunk: LuaValue = createGlobals(lpparam, "[GLOBAL]").load(luaScript)
                 chunk.call()
             }
         } catch (e: Exception) {
+            // 捕获错误并美化输出
             val err = simplifyLuaError(e.toString())
             "${lpparam.packageName}:[GLOBAL]:$err".e()
         }
 
 
-//        app单独脚本
-
+        // app单独脚本
         if (lpparam.packageName in selectAppsList) {
 
-            for ((k, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
+            // 读取已保存的宿主app脚本的map
+            for ((scriptName, v) in readMap("$PATH/${LShare.AppConf}/${lpparam.packageName}.txt")) {
                 try {
-                    if (v is Boolean) {
-                        CreateGlobals(
-                            lpparam,
-                            k
-                        ).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
+
+                    if (v is Boolean) { // 兼容旧版luahook的存储格式
+                        createGlobals(lpparam, scriptName)
+                            .load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                             .call()
-                    } else if ((v is JSONArray)) {
+                    } else if ((v is JSONArray)) { // 新的格式，包含是否启用，描述和版本信息
                         if (v[0] as Boolean) {
-                            CreateGlobals(
-                                lpparam,
-                                k
-                            ).load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$k.lua"))
+                            createGlobals(lpparam, scriptName)
+                                .load(read("$PATH/${LShare.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                                 .call()
                         }
                     }
                 } catch (e: Exception) {
                     val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$k:$err".e()
+                    "${lpparam.packageName}:$scriptName:$err".e()
                 }
             }
         }
@@ -111,7 +106,8 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
 
-    fun CreateGlobals(lpparam: LPParam, scriptName: String = ""): Globals {
+    // 创建一个Hook的lua环境
+    fun createGlobals(lpparam: LPParam, scriptName: String = ""): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块

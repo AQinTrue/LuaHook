@@ -8,6 +8,10 @@ import org.luaj.LuaValue
 import org.luaj.Varargs
 import org.luaj.lib.VarArgFunction
 
+/**
+ * Task封装，协程中执行代码
+ */
+
 object LuaTask {
     fun registerTo(env: LuaValue) {
 
@@ -20,12 +24,8 @@ object LuaTask {
                     delay(time)
                     func.invoke()
                 }
-
                 return NIL
             }
-
         }
-
     }
-
 }

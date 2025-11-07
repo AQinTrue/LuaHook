@@ -1,4 +1,5 @@
 package com.kulipai.luahook.library
+
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.lib.OneArgFunction
@@ -9,7 +10,11 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
-object Luafile{
+/**
+ * file操作类，读写等各种文件封装
+ */
+
+object LuaFile{
 
     private val modName = "file"
     private var file = LuaTable()

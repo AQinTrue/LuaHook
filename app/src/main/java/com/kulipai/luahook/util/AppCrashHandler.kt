@@ -1,10 +1,12 @@
+package com.kulipai.luahook.util
 
 import android.content.Context
 import android.content.Intent
 import android.os.Process
-import com.kulipai.luahook.ErrorActivity
+import com.kulipai.luahook.activity.ErrorActivity
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.system.exitProcess
 
 /**
  * CustomCrashHandler 是一个自定义的未捕获异常处理器。
@@ -33,8 +35,8 @@ class AppCrashHandler(private val context: Context) : Thread.UncaughtExceptionHa
         val intent = Intent(context, ErrorActivity::class.java).apply {
             // 添加标志，确保在一个新的任务栈中启动，并清除旧的 activity 栈
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            putExtra(ErrorActivity.EXTRA_ERROR_MESSAGE, errorMessage)
-            putExtra(ErrorActivity.EXTRA_STACK_TRACE, stackTrace)
+            putExtra(ErrorActivity.Companion.EXTRA_ERROR_MESSAGE, errorMessage)
+            putExtra(ErrorActivity.Companion.EXTRA_STACK_TRACE, stackTrace)
         }
 
         // 启动 ErrorActivity
@@ -42,7 +44,7 @@ class AppCrashHandler(private val context: Context) : Thread.UncaughtExceptionHa
 
         // 终止当前进程，防止应用程序在显示错误后继续运行在不稳定的状态
         Process.killProcess(Process.myPid())
-        System.exit(1) // 退出 Java 虚拟机
+        exitProcess(1) // 退出 Java 虚拟机
     }
 
     /**

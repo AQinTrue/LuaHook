@@ -1,8 +1,8 @@
 package com.kulipai.luahook
 
-import AViewModel
-import DataRepository.ShellInit
-import LanguageUtil
+import com.kulipai.luahook.util.AViewModel
+import com.kulipai.luahook.util.DataRepository.shellInit
+import com.kulipai.luahook.util.LanguageUtil
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
         when {
             !isShizukuAvailable() -> Unit
             checkShizukuPermission() -> {
-                ShellInit(applicationContext)
+                shellInit(applicationContext)
                 Sui.init(packageName)
             }
             else -> requestShizukuPermission()
