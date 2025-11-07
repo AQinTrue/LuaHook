@@ -1,8 +1,10 @@
 package com.kulipai.luahook
-import DataRepository.ShellInit
-import LanguageUtil
+
+
 import android.app.Application
 import com.google.android.material.color.DynamicColors
+import com.kulipai.luahook.util.DataRepository.shellInit
+import com.kulipai.luahook.util.LanguageUtil
 import com.kulipai.luahook.util.XposedScope
 
 
@@ -12,7 +14,7 @@ class MyApplication : Application() {
         DynamicColors.applyToActivitiesIfAvailable(this)
         LanguageUtil.applyLanguage(this)
         // 预加载 shell，确保 MainActivity 能及时拿到状态
-        ShellInit(applicationContext)
+        shellInit(applicationContext)
         XposedScope.init()
     }
 }

@@ -1,6 +1,7 @@
 package com.kulipai.luahook.library
 
-import com.kulipai.luahook.LPParam
+import com.kulipai.luahook.library.LuaUtil.simplifyLuaError
+import com.kulipai.luahook.util.LPParam
 import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
 import de.robv.android.xposed.XC_MethodHook
@@ -25,6 +26,9 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
+/**
+ * 封装给lua用于hook的所有工具函数类等等
+ */
 
 class HookLib(private val lpparam: LPParam, private val scriptName: String = "") {
 
@@ -34,48 +38,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
         globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
         globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
-
-
-        // 已弃用
-        globals["arrayOf"] = object : VarArgFunction() {
-            override fun invoke(args: Varargs): LuaValue {
-                // Create a new ArrayList
-                val arrayList = ArrayList<Any?>()
-
-                // Add all arguments to the ArrayList
-                for (i in 1..args.narg()) {
-                    val arg = args.arg(i)
-
-                    // Convert Lua values to appropriate Java types
-                    val javaValue = when {
-                        arg.isnil() -> null
-                        arg.isboolean() -> arg.toboolean()
-                        arg.isint() -> arg.toint()
-                        arg.islong() -> arg.tolong()
-                        arg.isnumber() -> arg.todouble()
-                        arg.isstring() -> arg.tojstring()
-                        arg.istable() -> {
-                            // Convert table to ArrayList (for nested arrays)
-                            val nestedList = ArrayList<Any?>()
-                            val table = arg.checktable()
-                            for (j in 1..table.length()) {
-                                nestedList.add(fromLuaValue(table.get(j)))
-                            }
-                            nestedList
-                        }
-
-                        arg.isuserdata() -> arg.touserdata()
-                        else -> arg.toString()
-                    }
-
-                    arrayList.add(javaValue)
-                }
-
-                // Return the ArrayList wrapped as a LuaValue
-                return CoerceJavaToLua.coerce(arrayList)
-            }
-        }
-
 
         globals["lpparam"] = CoerceJavaToLua.coerce(lpparam)
 
@@ -131,7 +93,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
             }
         }
-
 
         globals["findClass"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
@@ -1498,7 +1459,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         val baseClass = typeMap[baseType] ?: try {
             XposedHelpers.findClass(baseType, classLoader)
         } catch (_: ClassNotFoundException) {
-            "参数错误".d()
+            "Parameter error".d()
             return null
         }
 
@@ -1587,33 +1548,6 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
         }
 
 
-    }
-
-    private fun simplifyLuaError(raw: String): String {
-        val lines = raw.lines()
-
-        // 1. 优先提取第一条真正的错误信息（不是 traceback）
-        val primaryErrorLine = lines.firstOrNull { it.trim().matches(Regex(""".*:\d+ .+""")) }
-
-        if (primaryErrorLine != null) {
-            val match = Regex(""".*:(\d+) (.+)""").find(primaryErrorLine)
-            if (match != null) {
-                val (lineNum, msg) = match.destructured
-                return "line $lineNum: $msg"
-            }
-        }
-
-        // 2. 其次从 traceback 提取（防止所有匹配失败）
-        val fallbackLine = lines.find { it.trim().matches(Regex(""".*:\d+: .*""")) }
-        if (fallbackLine != null) {
-            val match = Regex(""".*:(\d+): (.+)""").find(fallbackLine)
-            if (match != null) {
-                val (lineNum, msg) = match.destructured
-                return "line $lineNum: $msg"
-            }
-        }
-
-        return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
     }
 
 }

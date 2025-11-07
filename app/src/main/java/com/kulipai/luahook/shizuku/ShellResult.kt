@@ -1,7 +1,12 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.shizuku
 
 import android.os.Parcel
 import android.os.Parcelable
+
+/**
+ * shizuku有关
+ */
+
 
 data class ShellResult(val output: String, val success: Boolean) : Parcelable {
     constructor(parcel: Parcel) : this(

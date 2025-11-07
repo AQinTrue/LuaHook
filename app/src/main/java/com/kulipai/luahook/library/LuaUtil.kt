@@ -1,6 +1,5 @@
 package com.kulipai.luahook.library
 
-import com.kulipai.luahook.simplifyLuaError
 import com.kulipai.luahook.util.ShellManager
 import com.kulipai.luahook.util.d
 import org.luaj.Globals
@@ -10,6 +9,10 @@ import org.luaj.Varargs
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.VarArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
+
+/**
+ * 提供一些基础功能，通用功能，同时注册全部library库
+ */
 
 object LuaUtil {
     fun shell(_G: Globals) {
@@ -28,12 +31,24 @@ object LuaUtil {
 
     fun loadBasicLib(_G: Globals) {
         LuaHttp.registerTo(_G)
-        Luafile.registerTo(_G)
+        LuaFile.registerTo(_G)
         LuaJson.registerTo(_G)
         LuaTask.registerTo(_G)
         LuaResource.registerTo(_G)
         LuaSharedPreferences.registerTo(_G)
         LuaDrawableLoader().registerTo(_G)
+
+        // 打印堆栈
+        // 这个不能写在java层会栈溢出
+        _G.load("""
+            function printStackTrace()
+               import "java.lang.Throwable"
+               stackTrace = Throwable().stackTrace
+               for _,v in stackTrace do
+                  print("at "..tostring(v))
+               end
+            end
+        """.trimIndent()).call()
 
 
         _G["pcall"] = object : VarArgFunction() {
@@ -148,5 +163,34 @@ object LuaUtil {
             }
         }
 
+    }
+
+
+
+    fun simplifyLuaError(raw: String): String {
+        val lines = raw.lines()
+
+        // 1. 优先提取第一条真正的错误信息（不是 traceback）
+        val primaryErrorLine = lines.firstOrNull { it.trim().matches(Regex(""".*:\d+ .+""")) }
+
+        if (primaryErrorLine != null) {
+            val match = Regex(""".*:(\d+) (.+)""").find(primaryErrorLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line $lineNum: $msg"
+            }
+        }
+
+        // 2. 其次从 traceback 提取（防止所有匹配失败）
+        val fallbackLine = lines.find { it.trim().matches(Regex(""".*:\d+: .*""")) }
+        if (fallbackLine != null) {
+            val match = Regex(""".*:(\d+): (.+)""").find(fallbackLine)
+            if (match != null) {
+                val (lineNum, msg) = match.destructured
+                return "line $lineNum: $msg"
+            }
+        }
+
+        return raw.lines().firstOrNull()?.take(100) ?: "Unknown error"
     }
 }

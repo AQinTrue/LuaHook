@@ -1,10 +1,15 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.shizuku
 
 import android.os.RemoteException
 import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.io.IOException
+import java.io.InputStreamReader
 import kotlin.system.exitProcess
+
+/**
+ * shizuku有关
+ */
+
 
 class UserService : IUserService.Stub() {
 

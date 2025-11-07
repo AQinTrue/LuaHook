@@ -2,6 +2,10 @@ package com.kulipai.luahook.util
 
 import android.util.Log
 
+/**
+ * 日志
+ */
+
 private val TAG = "LuaXposed"
 
 fun Throwable.log(text: String = "Throwable"): Throwable {
@@ -19,4 +23,10 @@ fun String.e(text: String = "Error"): String {
     return this
 }
 
-
+fun printStackTrace() {
+    val stackTrace = Throwable().stackTrace
+    val stackTraceStr = stackTrace.joinToString("\n") { element ->
+        "at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})"
+    }
+    ("StackTrace\n$stackTraceStr").d()
+}

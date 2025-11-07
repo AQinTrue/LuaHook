@@ -1,17 +1,21 @@
 package com.kulipai.luahook.library
+
 import android.content.Context
 import androidx.core.content.edit
 import de.robv.android.xposed.XSharedPreferences
+import org.luaj.LuaError
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.Varargs
 import org.luaj.lib.VarArgFunction
 
+/**
+ * 封装 Android 原生的 SharedPreferences 给 Lua 使用
+ */
+
 object LuaSharedPreferences {
 
     fun registerTo(globals: LuaValue) {
-
-        // 封装 Android 原生的 SharedPreferences 给 Lua 使用
         val sp = LuaTable()
 
         // 设置值
@@ -19,7 +23,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key, value (至少4个参数)
                 if (args.narg() < 4) {
-                    return error("Usage: sp.set(context, name, key, value)")
+                    throw LuaError("Usage: sp.set(context, name, key, value)")
                 }
 
                 // 从参数中获取 Context
@@ -28,14 +32,18 @@ object LuaSharedPreferences {
                 val key = args.checkjstring(3) // 参数索引后移
                 // value 是第四个参数，不需要单独取，直接通过 args.arg(4) 检查类型和值
 
+
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
                 prefs.edit {
 
                     when {
-                        args.isstring(4) -> putString(key, args.checkjstring(4)) // 参数索引后移
-                        args.isnumber(4) -> { // 参数索引后移
-                            val num = args.checkdouble(4) // 参数索引后移
+                        args.isstring(4) -> {
+                            putString(key, args.checkjstring(4))
+                        }
+
+                        args.isnumber(4) -> {
+                            val num = args.checkdouble(4)
                             if (num % 1 == 0.0 && num >= Int.MIN_VALUE && num <= Int.MAX_VALUE) {
                                 putInt(key, num.toInt())
                             } else {
@@ -43,8 +51,12 @@ object LuaSharedPreferences {
                             }
                         }
 
-                        args.toboolean(4) -> putBoolean(key, args.checkboolean(4)) // 参数索引后移
-                        else -> return error("Unsupported value type for sp.set")
+                        args.arg(4).type() == TBOOLEAN -> {
+                            putBoolean(key, args.checkboolean(4))
+                        } // 参数索引后移
+                        else -> {
+                            return FALSE
+                        }
                     }
 
                 }
@@ -57,14 +69,14 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key, defaultValue (至少4个参数)
                 if (args.narg() < 4) {
-                    return error("Usage: sp.get(context, name, key, defaultValue)")
+                    throw LuaError("Usage: sp.get(context, name, key, defaultValue)")
                 }
 
                 // 从参数中获取 Context
                 val context = args.checkuserdata(1, Context::class.java) as Context
                 val name = args.checkjstring(2) // 参数索引后移
                 val key = args.checkjstring(3) // 参数索引后移
-                // defaultValue 是第四个参数，args.arg(4)
+                // defaultValue 是第四个参数，args.arg(4)F
 
                 val prefs =
                     context.getSharedPreferences(name, Context.MODE_PRIVATE) // 使用传入的 Context
@@ -87,7 +99,7 @@ object LuaSharedPreferences {
                     )
 
                     // 如果默认值是布尔，按布尔获取
-                    args.toboolean(4) -> valueOf(
+                    args.arg(4).type() == TBOOLEAN -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4) // 使用传入的默认值
@@ -115,7 +127,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key (至少3个参数)
                 if (args.narg() < 3) {
-                    return error("Usage: sp.contains(context, name, key)")
+                    throw LuaError("Usage: sp.contains(context, name, key)")
                 }
 
                 // 从参数中获取 Context
@@ -134,7 +146,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name, key (至少3个参数)
                 if (args.narg() < 3) {
-                    return error("Usage: sp.remove(context, name, key)")
+                    throw LuaError("Usage: sp.remove(context, name, key)")
                 }
 
                 // 从参数中获取 Context
@@ -154,7 +166,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name (至少2个参数)
                 if (args.narg() < 2) {
-                    return error("Usage: sp.getAll(context, name)")
+                    throw LuaError("Usage: sp.getAll(context, name)")
                 }
 
                 // 从参数中获取 Context
@@ -188,7 +200,7 @@ object LuaSharedPreferences {
             override fun invoke(args: Varargs): LuaValue {
                 // 需要 Context, name (至少2个参数)
                 if (args.narg() < 2) {
-                    return error("Usage: sp.clear(context, name)")
+                    throw LuaError("Usage: sp.clear(context, name)")
                 }
 
                 // 从参数中获取 Context
@@ -222,7 +234,7 @@ object LuaSharedPreferences {
         xsp["get"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 4) {
-                    return error("Usage: xsp.get(packageName, name, key, defaultValue)")
+                    throw LuaError("Usage: xsp.get(packageName, name, key, defaultValue)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -242,7 +254,7 @@ object LuaSharedPreferences {
                         )!!
                     )
 
-                    args.toboolean(4) -> valueOf(
+                    args.arg(4).type() == TBOOLEAN -> valueOf(
                         prefs.getBoolean(
                             key,
                             args.checkboolean(4)
@@ -266,7 +278,7 @@ object LuaSharedPreferences {
         xsp["contains"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 3) {
-                    return error("Usage: xsp.contains(packageName, name, key)")
+                    throw LuaError("Usage: xsp.contains(packageName, name, key)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -282,7 +294,7 @@ object LuaSharedPreferences {
         xsp["getAll"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 2) {
-                    return error("Usage: xsp.getAll(packageName, name)")
+                    throw LuaError("Usage: xsp.getAll(packageName, name)")
                 }
 
                 val packageName = args.checkjstring(1)
@@ -309,7 +321,7 @@ object LuaSharedPreferences {
         xsp["reload"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (args.narg() < 2) {
-                    return error("Usage: xsp.reload(packageName, name)")
+                    throw LuaError("Usage: xsp.reload(packageName, name)")
                 }
 
                 val packageName = args.checkjstring(1)

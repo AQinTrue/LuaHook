@@ -15,15 +15,10 @@ import org.luaj.LuaValue
 import org.luaj.lib.ZeroArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import org.luaj.lib.jse.JsePlatform
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-
-
 
         val script = LuaCode.code
         val func = extractLuaFunctionByLabel(script, "set")
@@ -43,13 +38,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-    }
-
-    fun read(path: String): String {
-        if (File(path).exists()) {
-            return File(path).readText()
-        }
-        return ""
     }
 
     fun getFunctionName(functionString: String): String? {
@@ -268,5 +256,6 @@ class MainActivity : AppCompatActivity() {
 
         return raw.lines().firstOrNull()?.take(100) ?: "未知错误"
     }
+
 
 }

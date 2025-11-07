@@ -1,6 +1,11 @@
+package com.kulipai.luahook.util
+
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import com.kulipai.luahook.util.ShellManager
+
+/**
+ * 一个ViewModel
+ */
 
 class AViewModel : ViewModel() {
     val data: LiveData<ShellManager.Mode> = DataRepository.ShellMode

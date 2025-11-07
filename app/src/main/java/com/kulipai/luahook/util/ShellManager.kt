@@ -7,11 +7,15 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.RemoteException
 import android.util.Log
-import com.kulipai.luahook.IUserService
-import com.kulipai.luahook.UserService
 import com.kulipai.luahook.BuildConfig
+import com.kulipai.luahook.shizuku.IUserService
+import com.kulipai.luahook.shizuku.UserService
 import com.topjohnwu.superuser.Shell
 import rikka.shizuku.Shizuku
+
+/**
+ * ShellManager
+ */
 
 object ShellManager {
 
@@ -25,7 +29,7 @@ object ShellManager {
     private var rootShell: Shell? = null
 
     /**
-     * 初始化，推荐在 Application.onCreate() 中调用
+     * 初始化，Application.onCreate() 中调用
      */
     fun init(context: Context, onInitialized: (() -> Unit)? = null) {
 

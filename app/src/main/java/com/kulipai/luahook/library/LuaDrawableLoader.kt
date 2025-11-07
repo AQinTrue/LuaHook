@@ -1,4 +1,5 @@
 package com.kulipai.luahook.library
+
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
@@ -24,6 +25,9 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * 加载网络/本地图片的Drawable
+ */
 
 class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) {
 
@@ -55,7 +59,7 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
                             }
                         }
                     } catch (e: Exception) {
-                        "异步回调处理异常: ${e.javaClass.name}".d()
+                        "DrawableLoader err: ${e.javaClass.name}".d()
                         throw LuaError(e)
                     }
                 }
@@ -75,7 +79,7 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
                 val drawable = DrawableHelper.loadDrawableFromFile(path, cache)
                 return if (drawable != null) CoerceJavaToLua.coerce(drawable) else NIL
             } catch (e: Exception) {
-                "loadDrawableFromFile Lua函数异常: ${e.javaClass.name}".d()
+                "loadDrawableFromFile err: ${e.javaClass.name}".d()
                 throw LuaError(e)
             }
         }
@@ -89,7 +93,7 @@ class LuaDrawableLoader(val handler: Handler = Handler(Looper.getMainLooper())) 
                 val clearAll = allValue.optboolean(false)
                 return valueOf(DrawableHelper.clearCache(key, clearAll))
             } catch (e: Exception) {
-                "clearDrawableCache Lua函数异常: ${e.javaClass.name}: ${e.message}".d()
+                "clearDrawableCache err: ${e.javaClass.name}: ${e.message}".d()
                 throw LuaError(e)
             }
         }
@@ -122,7 +126,7 @@ object DrawableHelper {
                 })
                 .build()
         } catch (e: Exception) {
-            "OkHttpClient初始化失败: ${e.javaClass.name}: ${e.message}".d()
+            "OkHttpClient Initialization failed: ${e.javaClass.name}: ${e.message}".d()
 //            throw LuaError(e)
             // 创建一个基本的OkHttpClient作为后备
             OkHttpClient()
@@ -138,7 +142,7 @@ object DrawableHelper {
         try {
             // 检查URL格式
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                "URL格式无效: $url".d()
+                "URL Invalid format: $url".d()
                 return null
             }
 
@@ -154,8 +158,8 @@ object DrawableHelper {
             val request = try {
                 Request.Builder().url(url).get().build()
             } catch (e: Exception) {
-                "创建请求对象失败: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Failed to create request object: ${e.javaClass.name}: ${e.message}".d()
+
                 return null
             }
 
@@ -163,19 +167,17 @@ object DrawableHelper {
             val response = try {
                 okHttpClient.newCall(request).execute()
             } catch (e: IOException) {
-                "执行同步请求IO异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Execution of synchronous request IO exception: ${e.javaClass.name}: ${e.message}".d()
                 return null
             } catch (e: Exception) {
-                "执行同步请求异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Exception during the execution of synchronous request: ${e.javaClass.name}: ${e.message}".d()
                 return null
             }
 
 //            "同步请求响应: code=${response.code}, message=${response.message}".d()
 
             if (!response.isSuccessful) {
-                "同步请求失败, 响应码: ${response.code}".d()
+                "Synchronous request failed, response code: ${response.code}".d()
                 return null
             }
 
@@ -186,15 +188,14 @@ object DrawableHelper {
             val bytes = try {
                 responseBody.bytes()
             } catch (e: Exception) {
-                "读取响应数据异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Abnormal response data read: ${e.javaClass.name}: ${e.message}".d()
                 return null
             }
 
 //            "成功获取图片数据: ${bytes.size} 字节".d()
 
             if (bytes.isEmpty()) {
-                "同步加载失败: 图片数据为空".d()
+                "Synchronous loading failed: image data is empty.".d()
                 return null
             }
 
@@ -205,13 +206,12 @@ object DrawableHelper {
                 }
                 BitmapFactory.decodeStream(ByteArrayInputStream(bytes), null, options)
             } catch (e: Exception) {
-                "解码Bitmap异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Bitmap decoding exception: ${e.javaClass.name}: ${e.message}".d()
                 return null
             }
 
             if (bitmap == null) {
-                "同步加载失败: 解码Bitmap失败".d()
+                "Synchronous loading failed: Decoding Bitmap failed".d()
                 return null
             }
 
@@ -221,8 +221,7 @@ object DrawableHelper {
             val drawable = try {
                 bitmap.toDrawable(Resources.getSystem())
             } catch (e: Exception) {
-                "创建BitmapDrawable异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Exception creating BitmapDrawable: ${e.javaClass.name}: ${e.message}".d()
                 bitmap.recycle()
                 return null
             }
@@ -233,8 +232,7 @@ object DrawableHelper {
                     memoryCache[url] = drawable
 //                    "已缓存Drawable: $url".d()
                 } catch (e: Exception) {
-                    "缓存Drawable异常: ${e.javaClass.name}: ${e.message}".d()
-                    e.printStackTrace()
+                    "Cache Drawable Exception: ${e.javaClass.name}: ${e.message}".d()
                     // 缓存失败不影响返回结果
                 }
             }
@@ -242,7 +240,7 @@ object DrawableHelper {
 //            "同步加载成功: $url".d()
             return drawable
         } catch (e: Throwable) {
-            "同步加载未捕获异常: ${e.javaClass.name}".d()
+            "Synchronous loading uncaught exceptions: ${e.javaClass.name}".d()
             throw LuaError(e)
         }
     }
@@ -254,7 +252,7 @@ object DrawableHelper {
         try {
             // 检查URL格式
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                "URL格式无效: $url".d()
+                "The URL format is invalid.: $url".d()
                 callback(null)
                 return
             }
@@ -272,8 +270,7 @@ object DrawableHelper {
             val request = try {
                 Request.Builder().url(url).get().build()
             } catch (e: Exception) {
-                "创建异步请求对象失败: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Failed to create asynchronous request object: ${e.javaClass.name}: ${e.message}".d()
                 callback(null)
                 return
             }
@@ -281,8 +278,7 @@ object DrawableHelper {
             // 执行异步请求
             okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    "异步请求失败: ${e.javaClass.name}: ${e.message}".d()
-                    e.printStackTrace()
+                    "Asynchronous request failed: ${e.javaClass.name}: ${e.message}".d()
                     callback(null)
                 }
 
@@ -291,7 +287,7 @@ object DrawableHelper {
 //                        "异步请求响应: code=${response.code}, message=${response.message}".d()
 
                         if (!response.isSuccessful) {
-                            "异步请求响应码异常: ${response.code}".d()
+                            "Abnormal asynchronous request response code: ${response.code}".d()
                             callback(null)
                             return
                         }
@@ -303,8 +299,7 @@ object DrawableHelper {
                         val bytes = try {
                             responseBody.bytes()
                         } catch (e: Exception) {
-                            "读取异步响应数据异常: ${e.javaClass.name}: ${e.message}".d()
-                            e.printStackTrace()
+                            "Error reading asynchronous response data: ${e.javaClass.name}: ${e.message}".d()
                             callback(null)
                             return
                         }
@@ -312,7 +307,7 @@ object DrawableHelper {
 //                        "成功获取异步图片数据: ${bytes.size} 字节".d()
 
                         if (bytes.isEmpty()) {
-                            "异步加载失败: 图片数据为空".d()
+                            "Asynchronous loading failed: image data is empty.".d()
                             callback(null)
                             return
                         }
@@ -324,14 +319,13 @@ object DrawableHelper {
                             }
                             BitmapFactory.decodeStream(ByteArrayInputStream(bytes), null, options)
                         } catch (e: Exception) {
-                            "解码异步Bitmap异常: ${e.javaClass.name}: ${e.message}".d()
-                            e.printStackTrace()
+                            "Decoding asynchronous Bitmap exception: ${e.javaClass.name}: ${e.message}".d()
                             callback(null)
                             return
                         }
 
                         if (bitmap == null) {
-                            "异步加载失败: 解码Bitmap失败".d()
+                            "Asynchronous loading failed: Bitmap decoding failed".d()
                             callback(null)
                             return
                         }
@@ -342,8 +336,7 @@ object DrawableHelper {
                         val drawable = try {
                             bitmap.toDrawable(Resources.getSystem())
                         } catch (e: Exception) {
-                            "创建异步BitmapDrawable异常: ${e.javaClass.name}: ${e.message}".d()
-                            e.printStackTrace()
+                            "Error creating asynchronous BitmapDrawable: ${e.javaClass.name}: ${e.message}".d()
                             bitmap.recycle()
                             callback(null)
                             return
@@ -355,8 +348,7 @@ object DrawableHelper {
                                 memoryCache[url] = drawable
 //                                "已缓存异步Drawable: $url".d()
                             } catch (e: Exception) {
-                                "缓存异步Drawable异常: ${e.javaClass.name}: ${e.message}".d()
-                                e.printStackTrace()
+                                "Cache asynchronous Drawable exception: ${e.javaClass.name}: ${e.message}".d()
                                 // 缓存失败不影响返回结果
                             }
                         }
@@ -364,14 +356,13 @@ object DrawableHelper {
 //                        "异步加载成功: $url".d()
                         callback(drawable)
                     } catch (e: Throwable) {
-                        "异步加载响应处理异常: ${e.javaClass.name}: ${e.message}".d()
-                        e.printStackTrace()
+                        "Asynchronous loading response handling exception: ${e.javaClass.name}: ${e.message}".d()
                         callback(null)
                     }
                 }
             })
         } catch (e: Throwable) {
-            "异步加载未捕获异常: ${e.javaClass.name}".d()
+            "Uncaught exception in asynchronous loading: ${e.javaClass.name}".d()
             throw LuaError(e)
         }
     }
@@ -389,7 +380,7 @@ object DrawableHelper {
 
             val file = File(path)
             if (!file.exists()) {
-                "文件不存在: $path".d()
+                "The file does not exist.: $path".d()
                 return null
             }
 
@@ -402,13 +393,12 @@ object DrawableHelper {
                 }
                 BitmapFactory.decodeFile(path, options)
             } catch (e: Exception) {
-                "解码本地文件异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Error decoding local file: ${e.javaClass.name}: ${e.message}".d()
                 return null
             }
 
             if (bitmap == null) {
-                "本地图片解码失败: $path".d()
+                "Local image decoding failed: $path".d()
                 return null
             }
 
@@ -418,8 +408,7 @@ object DrawableHelper {
             val drawable = try {
                 bitmap.toDrawable(Resources.getSystem())
             } catch (e: Exception) {
-                "创建本地BitmapDrawable异常: ${e.javaClass.name}: ${e.message}".d()
-                e.printStackTrace()
+                "Exception creating local BitmapDrawable: ${e.javaClass.name}: ${e.message}".d()
                 bitmap.recycle()
                 return null
             }
@@ -430,8 +419,7 @@ object DrawableHelper {
                     memoryCache[path] = drawable
 //                    "已缓存本地Drawable: $path".d()
                 } catch (e: Exception) {
-                    "缓存本地Drawable异常: ${e.javaClass.name}: ${e.message}".d()
-                    e.printStackTrace()
+                    "Exception creating local BitmapDrawable: ${e.javaClass.name}: ${e.message}".d()
                     // 缓存失败不影响返回结果
                 }
             }
@@ -439,7 +427,7 @@ object DrawableHelper {
 //            "本地图片加载成功: $path".d()
             return drawable
         } catch (e: Throwable) {
-            "本地加载未捕获异常: ${e.javaClass.name}".d()
+            "Local loading unhandled exception: ${e.javaClass.name}".d()
             throw LuaError(e)
         }
     }
@@ -455,18 +443,18 @@ object DrawableHelper {
             if (clearAll || key == null) {
                 val size = memoryCache.size
                 memoryCache.clear()
-                "清除所有缓存, 共 $size 项".d()
+                "Clear all caches, a total of $size items.".d()
                 true
             } else if (memoryCache.containsKey(key)) {
                 memoryCache.remove(key)
-                "清除缓存: $key".d()
+                "Clear cache: $key".d()
                 true
             } else {
-                "缓存不存在: $key".d()
+                "Cache does not exist: $key".d()
                 false
             }
         } catch (e: Exception) {
-            "清除缓存失败: ${e.javaClass.name}".d()
+            "Failed to clear cache: ${e.javaClass.name}".d()
             throw LuaError(e)
         }
     }
