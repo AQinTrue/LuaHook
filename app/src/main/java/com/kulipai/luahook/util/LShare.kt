@@ -30,7 +30,7 @@ object LShare {
 
 
     fun write(file: String, content: String): Boolean {
-        val path = "$DIR/$file"
+        val path = "$DIR$file"
 
         // 将内容编码为 Base64，然后解码写入文件
         val base64Content = Base64.encodeToString(
@@ -103,7 +103,7 @@ object LShare {
     }
 
     fun writeTmp(packageName: String, content: String): Boolean {
-        var tmpPath = "/tmp"
+        val tmpPath = "/tmp"
 
         if (isok && ensureDirectoryExists(DIR + tmpPath)) {
             return write("$tmpPath/$packageName.lua", content)

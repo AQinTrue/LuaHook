@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 30
-        versionName = "3.9.6-Beta1"
+        versionCode = 31
+        versionName = "3.9.6-Beta2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

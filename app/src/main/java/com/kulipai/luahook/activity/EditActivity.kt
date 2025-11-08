@@ -35,6 +35,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.LShare.read
 import java.io.File
 
 class EditActivity : AppCompatActivity() {
@@ -325,15 +326,9 @@ class EditActivity : AppCompatActivity() {
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
 
-        fun read(path: String): String {
-            if (File(path).exists()) {
-                return File(path).readText()
-            }
-            return ""
-        }
 
 
-        val luaScript = read("/data/local/tmp/LuaHook/global.lua")
+        val luaScript = read("/global.lua")
         if (luaScript == "") {
             val lua = """
         """.trimIndent()
