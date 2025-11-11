@@ -89,6 +89,11 @@ dependencies {
     implementation(libs.shizuku.api)
     implementation(libs.provider) // 如果你需要使用 ShizukuProvider
 
+    implementation(platform(libs.sora.editor.bom))
+    implementation(libs.sora.editor)
+    implementation(libs.sora.editor.language.textmate)
+    implementation(project(":androlua"))
+
     //Xposed service 100
     compileOnly(project(":libxposed:api"))
     implementation(project(":libxposed:service"))

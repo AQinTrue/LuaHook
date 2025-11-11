@@ -44,13 +44,23 @@
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
-
-
-        <com.androlua.LuaEditor
-
+        <io.github.rosemoe.sora.widget.CodeEditor
             android:id="@+id/editor"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            app:scrollbarThumbHorizontal="@drawable/scrollbar_thumb"
+            app:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+            app:scrollbarTrackHorizontal="@drawable/scrollbar_track"
+            app:scrollbarTrackVertical="@drawable/scrollbar_track"
+            app:lnPanelPosition="center"
+            app:lnPanelPositionMode="follow" />
+
+
+<!--        <com.androlua.LuaEditor-->
+
+<!--            android:id="@+id/editor"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent" />-->
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

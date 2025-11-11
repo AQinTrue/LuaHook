@@ -26,7 +26,8 @@ xphelper = "2.7"
 compileSdk = "36"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
-lint = "31.13.0"
+lint = "31.13.1"
+sora-editor = "0.23.7"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -55,6 +56,9 @@ xphelper = { module = "com.github.suzhelan:XpHelper", version.ref = "xphelper" }
 lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
 lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+sora-editor-bom = { group = "io.github.rosemoe", name = "editor-bom", version.ref = "sora-editor" }
+sora-editor = { group = "io.github.rosemoe", name = "editor" }
+sora-editor-language-textmate = { group = "io.github.rosemoe", name = "language-textmate" }
 
 [plugins]
 agp-lib = { id = "com.android.library", version.ref = "agp" }

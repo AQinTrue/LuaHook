@@ -18,11 +18,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.d
+import io.github.rosemoe.sora.widget.CodeEditor
 import java.util.regex.Pattern
 
 class ToolAdapter(
     private val symbols: List<String>,
-    private val editor: LuaEditor,
+    private val editor: CodeEditor,
     private val context: Context
 ) :
     RecyclerView.Adapter<ToolAdapter.ToolViewHolder>() {
@@ -37,8 +38,8 @@ class ToolAdapter(
             toolItem.setOnClickListener {
                 val symbol = symbols[bindingAdapterPosition]
                 if (editor.isSelected && symbol == "\"") {
-                    editor.insert(editor.selectionStart, symbol)
-                    editor.insert(editor.selectionEnd, symbol)
+//                    editor.insert(editor.selectionStart, symbol)
+//                    editor.insert(editor.selectionEnd, symbol)
                 }
                 when (bindingAdapterPosition) {
                     0 -> {
@@ -108,7 +109,7 @@ class ToolAdapter(
 
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                            editor.insert(editor.selectionStart, hookLua)
+//                            editor.insert(editor.selectionStart, hookLua)
                         }
 
                         fun genHookCtorMethod() {
@@ -143,7 +144,7 @@ class ToolAdapter(
                                     |}
                                 """.trimMargin()
 //                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                            editor.insert(editor.selectionStart, hookLua)
+//                            editor.insert(editor.selectionStart, hookLua)
                         }
 
                         fun genReplaceMethod() {
@@ -179,7 +180,7 @@ class ToolAdapter(
                                 """.trimMargin()
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                            editor.insert(editor.selectionStart, hookLua)
+//                            editor.insert(editor.selectionStart, hookLua)
                         }
 
                         fun genChangeReturn() {
@@ -212,7 +213,7 @@ class ToolAdapter(
                                 """.trimMargin()
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                            editor.insert(editor.selectionStart, hookLua)
+//                            editor.insert(editor.selectionStart, hookLua)
                         }
 
                         fun genChangeParams() {
@@ -254,7 +255,7 @@ class ToolAdapter(
                                 """.trimMargin()
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                            editor.insert(editor.selectionStart, hookLua)
+//                            editor.insert(editor.selectionStart, hookLua)
                         }
 
 
@@ -537,7 +538,7 @@ class ToolAdapter(
                                             }().${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
                                         }
-                                        editor.insert(editor.selectionStart, invokeLua)
+//                                        editor.insert(editor.selectionStart, invokeLua)
                                         dialog.dismiss()
 
                                     } else {
@@ -582,7 +583,7 @@ class ToolAdapter(
 
 //                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                             }
-                                        editor.insert(editor.selectionStart, hookLua)
+//                                        editor.insert(editor.selectionStart, hookLua)
                                         dialog.dismiss()
                                     }
 

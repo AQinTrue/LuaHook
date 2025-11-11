@@ -32,6 +32,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "LuaHook"
 include(":app")
+include(":androlua")
 
 include(":libxposed:interface")
 

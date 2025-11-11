@@ -36,6 +36,7 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.LShare.read
+import io.github.rosemoe.sora.widget.CodeEditor
 import java.io.File
 
 class EditActivity : AppCompatActivity() {
@@ -215,7 +216,7 @@ class EditActivity : AppCompatActivity() {
 
             3 -> {
                 // 格式化
-                editor.format()
+//                editor.format()
                 true
             }
 
@@ -239,7 +240,7 @@ class EditActivity : AppCompatActivity() {
             }
 
             9 -> {
-                editor.search()
+//                editor.search()
                 true
             }
 
@@ -248,7 +249,7 @@ class EditActivity : AppCompatActivity() {
         }
     }
 
-    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
+    private val editor: CodeEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }

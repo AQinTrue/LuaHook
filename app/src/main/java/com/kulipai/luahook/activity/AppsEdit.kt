@@ -32,9 +32,21 @@ import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
+import io.dingyi222666.sora.lua.AndroLuaLanguage
+import io.dingyi222666.sora.lua.WrapperLanguage
+import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer
+import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
+import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
+import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
+import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
+import io.github.rosemoe.sora.widget.CodeEditor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.eclipse.tm4e.core.registry.IThemeSource
 import java.io.File
 
 class AppsEdit : AppCompatActivity() {
@@ -43,7 +55,8 @@ class AppsEdit : AppCompatActivity() {
 
     //ui绑定区
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
-    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
+//    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
+    private val editor: CodeEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
@@ -135,7 +148,27 @@ class AppsEdit : AppCompatActivity() {
         symbolRecyclerView.adapter = SymbolAdapter(editor)
 
 
-        val tool =
+        //////////////////============sora=====================
+        setupTextmate()
+        resetColorScheme()
+        ensureTextmateTheme()
+        val language = TextMateLanguage.create(
+            "source.lua", true
+        )
+        val androLuaLanguage = AndroLuaLanguage()
+        val diagnosticsContainer = DiagnosticsContainer()
+        editor.diagnostics = diagnosticsContainer
+        androLuaLanguage.setOnDiagnosticListener {
+            /*  diagnosticsContainer.reset()
+              diagnosticsContainer.addDiagnostics(it)
+              editor.diagnostics = diagnosticsContainer*/
+        }
+
+
+        editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
+        //////////////////============sora=====================
+
+            val tool =
             listOf(
                 resources.getString(R.string.gen_hook_code),
                 resources.getString(R.string.funcSign),
@@ -161,7 +194,7 @@ class AppsEdit : AppCompatActivity() {
         val script =
             read("/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua")
 
-        editor.setText(script)
+        editor.setText(script,null)
 
         fab.setOnClickListener {
 
@@ -228,7 +261,7 @@ class AppsEdit : AppCompatActivity() {
 
             3 -> {
                 // 格式化
-                editor.format()
+//                editor.format()
                 true
             }
 
@@ -247,7 +280,7 @@ class AppsEdit : AppCompatActivity() {
             }
 
             9 -> {
-                editor.search()
+//                editor.search()
                 true
             }
 
@@ -446,6 +479,58 @@ class AppsEdit : AppCompatActivity() {
 
     private fun getFileUri(context: Context, file: File): Uri {
         return FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, file)
+    }
+
+    private fun setupTextmate() {
+        // Add assets file provider so that files in assets can be loaded
+        FileProviderRegistry.getInstance().addFileProvider(
+            AssetsFileResolver(
+                applicationContext.assets // use application context
+            )
+        )
+        loadDefaultThemes()
+        loadDefaultLanguages()
+    }
+
+    private /*suspend*/ fun loadDefaultThemes() /*= withContext(Dispatchers.IO)*/ {
+        val themes = arrayOf("darcula", "abyss", "quietlight", "solarized_drak")
+        val themeRegistry = ThemeRegistry.getInstance()
+        themes.forEach { name ->
+            val path = "textmate/$name.json"
+            themeRegistry.loadTheme(
+                ThemeModel(
+                    IThemeSource.fromInputStream(
+                        FileProviderRegistry.getInstance().tryGetInputStream(path), path, null
+                    ), name
+                ).apply {
+                    if (name != "quietlight") {
+                        isDark = true
+                    }
+                }
+            )
+        }
+
+        themeRegistry.setTheme("quietlight")
+    }
+
+    private /*suspend*/ fun loadDefaultLanguages() /*= withContext(Dispatchers.Main)*/ {
+        GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
+    }
+
+    private fun resetColorScheme() {
+        editor.apply {
+            val colorScheme = this.colorScheme
+            // reset
+            this.colorScheme = colorScheme
+        }
+    }
+
+    private fun ensureTextmateTheme() {
+        var editorColorScheme = editor.colorScheme
+        if (editorColorScheme !is TextMateColorScheme) {
+            editorColorScheme = TextMateColorScheme.create(ThemeRegistry.getInstance())
+            editor.colorScheme = editorColorScheme
+        }
     }
 
 
