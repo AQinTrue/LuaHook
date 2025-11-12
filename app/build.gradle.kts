@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 31
-        versionName = "3.9.6-soraEditor-Canary1"
+        versionCode = 32
+        versionName = "3.9.6-soraEditor-Canary2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
