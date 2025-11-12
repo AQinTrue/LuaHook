@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.TextPaint
@@ -28,7 +29,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.androlua.LuaEditor
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -36,7 +36,31 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.LShare.read
+import com.kulipai.luahook.util.isNightMode
+import com.myopicmobile.textwarrior.common.AutoIndent
+import com.myopicmobile.textwarrior.common.Flag
+import com.myopicmobile.textwarrior.common.LuaParser
+import io.github.rosemoe.sora.event.EditorKeyEvent
+import io.github.rosemoe.sora.event.KeyBindingEvent
+import io.github.rosemoe.sora.event.PublishSearchResultEvent
+import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer
+import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
+import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
+import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
+import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
+import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
+import io.github.rosemoe.sora.text.LineSeparator
 import io.github.rosemoe.sora.widget.CodeEditor
+import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
+import io.github.rosemoe.sora.widget.ext.EditorSpanInteractionHandler
+import io.github.rosemoe.sora.widget.getComponent
+import io.github.rosemoe.sora.widget.subscribeAlways
+import io.kulipai.sora.luaj.AndroLuaLanguage
+import io.kulipai.sora.luaj.WrapperLanguage
+import org.eclipse.tm4e.core.registry.IThemeSource
+import org.luaj.Globals
 import java.io.File
 
 class EditActivity : AppCompatActivity() {
@@ -240,6 +264,9 @@ class EditActivity : AppCompatActivity() {
             }
 
             9 -> {
+                LuaParser.lexer(editor.text, Globals(), Flag());
+                editor.setText(AutoIndent.format(editor.text, 2))
+
 //                editor.search()
                 true
             }
@@ -336,6 +363,79 @@ class EditActivity : AppCompatActivity() {
             saveScript(lua)
         }
 
+
+        //////////////////============sora=====================
+        val typeface = Typeface.createFromAsset(assets, "JetBrainsMono-Regular.ttf")
+        setupTextmate()
+        resetColorScheme()
+        ensureTextmateTheme()
+        val language = TextMateLanguage.create(
+            "source.lua", true
+        )
+        val androLuaLanguage = AndroLuaLanguage()
+        val diagnosticsContainer = DiagnosticsContainer()
+        editor.diagnostics = diagnosticsContainer
+        editor.apply {
+            typefaceText = typeface
+            props.stickyScroll = true
+            setLineSpacing(2f, 1.1f)
+            nonPrintablePaintingFlags =
+                CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or CodeEditor.FLAG_DRAW_LINE_SEPARATOR or CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION
+
+            // Update display dynamically
+            // Use CodeEditor#subscribeEvent to add listeners of different events to editor
+//            subscribeAlways<SelectionChangeEvent> {
+//                updatePositionText()
+//                completionAdapter.submitList(emptyList())
+//                completionTrigger.tryEmit(completionTrigger.value + 1)
+//            }
+            subscribeAlways<PublishSearchResultEvent> { updatePositionText() }
+//            subscribeAlways<ContentChangeEvent> {
+//                postDelayedInLifecycle(
+//                    ::updateBtnState,
+//                    50
+//                )
+//                completionAdapter.submitList(emptyList())
+//                completionTrigger.tryEmit(completionTrigger.value + 1)
+//            }
+//            subscribeAlways<SideIconClickEvent> {
+//                toast(R.string.tip_side_icon)
+//            }
+//            subscribeAlways<TextSizeChangeEvent> { event ->
+//                Log.d(
+//                    TAG,
+//                    "TextSizeChangeEvent onReceive() called with: oldTextSize = [${event.oldTextSize}], newTextSize = [${event.newTextSize}]"
+//                )
+//            }
+
+            subscribeAlways<KeyBindingEvent> { event ->
+                if (event.eventType == EditorKeyEvent.Type.DOWN) {
+//                    toast(
+//                        "Keybinding event: " + generateKeybindingString(event),
+//                        Toast.LENGTH_LONG
+//                    )
+                }
+            }
+
+            // Handle span interactions
+            EditorSpanInteractionHandler(this)
+            getComponent<EditorAutoCompletion>()
+                .setEnabledAnimation(true)
+        }
+        androLuaLanguage.setOnDiagnosticListener {
+            /*  diagnosticsContainer.reset()
+              diagnosticsContainer.addDiagnostics(it)
+              editor.diagnostics = diagnosticsContainer*/
+        }
+
+
+        editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
+        //////////////////============sora=====================
+
+
+
+
+
         editor.setText(luaScript)
 
         fab.setOnClickListener {
@@ -344,7 +444,141 @@ class EditActivity : AppCompatActivity() {
         }
 
 
+
+
+
     }
+
+
+
+
+
+    private fun setupTextmate() {
+        // Add assets file provider so that files in assets can be loaded
+        FileProviderRegistry.getInstance().addFileProvider(
+            AssetsFileResolver(
+                applicationContext.assets // use application context
+            )
+        )
+        loadDefaultThemes()
+        loadDefaultLanguages()
+    }
+
+    private /*suspend*/ fun loadDefaultThemes() /*= withContext(Dispatchers.IO)*/ {
+        val themes = arrayOf("darcula", "abyss", "quietlight", "solarized_drak")
+        val themeRegistry = ThemeRegistry.getInstance()
+        themes.forEach { name ->
+            val path = "textmate/$name.json"
+            themeRegistry.loadTheme(
+                ThemeModel(
+                    IThemeSource.fromInputStream(
+                        FileProviderRegistry.getInstance().tryGetInputStream(path), path, null
+                    ), name
+                ).apply {
+                    if (name != "quietlight") {
+                        isDark = true
+                    }
+                }
+            )
+        }
+        if (isNightMode(this)) {
+            themeRegistry.setTheme("abyss")
+
+        } else {
+            themeRegistry.setTheme("quietlight")
+
+        }
+    }
+
+    private /*suspend*/ fun loadDefaultLanguages() /*= withContext(Dispatchers.Main)*/ {
+        GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
+    }
+
+    private fun resetColorScheme() {
+        editor.apply {
+
+            val colorScheme = this.colorScheme
+            // reset
+            this.colorScheme = colorScheme
+        }
+    }
+
+    private fun ensureTextmateTheme() {
+        var editorColorScheme = editor.colorScheme
+        if (editorColorScheme !is TextMateColorScheme) {
+            editorColorScheme = TextMateColorScheme.create(ThemeRegistry.getInstance())
+            editor.colorScheme = editorColorScheme
+        }
+    }
+
+    /**
+     * Update editor position tracker text
+     */
+    private fun updatePositionText() {
+        val cursor = editor.cursor
+        var text =
+            (1 + cursor.leftLine).toString() + ":" + cursor.leftColumn + ";" + cursor.left + " "
+
+        text += if (cursor.isSelected) {
+            "(" + (cursor.right - cursor.left) + " chars)"
+        } else {
+            val content = editor.text
+            if (content.getColumnCount(cursor.leftLine) == cursor.leftColumn) {
+                "(<" + content.getLine(cursor.leftLine).lineSeparator.let {
+                    if (it == LineSeparator.NONE) {
+                        "EOF"
+                    } else {
+                        it.name
+                    }
+                } + ">)"
+            } else {
+                "(" + content.getLine(cursor.leftLine)
+                    .codePointStringAt(cursor.leftColumn)
+                    .escapeCodePointIfNecessary() + ")"
+            }
+        }
+
+        // Indicator for text matching
+        val searcher = editor.searcher
+        if (searcher.hasQuery()) {
+            val idx = searcher.currentMatchedPositionIndex
+            val count = searcher.matchedPositionCount
+            val matchText = if (count == 0) {
+                "no match"
+            } else if (count == 1) {
+                "1 match"
+            } else {
+                "$count matches"
+            }
+            text += if (idx == -1) {
+                "($matchText)"
+            } else {
+                "(${idx + 1} of $matchText)"
+            }
+        }
+
+//        binding.positionDisplay.text = text
+    }
+
+
+    fun CharSequence.codePointStringAt(index: Int): String {
+        val cp = Character.codePointAt(this, index)
+        return String(Character.toChars(cp))
+    }
+
+    fun String.escapeCodePointIfNecessary() =
+        when (this) {
+            "\n" -> "\\n"
+            "\t" -> "\\t"
+            "\r" -> "\\r"
+            " " -> "<ws>"
+            else -> this
+        }
+
+//    private fun updateBtnState() {
+//        undo?.isEnabled = binding.editor.canUndo()
+//        redo?.isEnabled = binding.editor.canRedo()
+//    }
 
 
 }

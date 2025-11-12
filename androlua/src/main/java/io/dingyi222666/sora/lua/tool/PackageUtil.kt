@@ -6,9 +6,8 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextPaint
 import android.text.style.UnderlineSpan
-import android.widget.Button
 import dalvik.system.DexFile
-import io.dingyi222666.sora.lua.CompletionName
+import io.kulipai.sora.luaj.CompletionName
 import io.dingyi222666.sora.lua.R
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import org.json.JSONObject

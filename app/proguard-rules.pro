@@ -28,7 +28,15 @@
 # 保留整个 LuaJ 库
 -keep class org.luaj.** { *; }
 -dontwarn org.luaj.**
+-keep class com.myopicmobile.** { *; }
 -keep class androidx.** { *; }
 -keep class com.google.android.material.** { *; }
 -keep class io.github.libxposed.** { *; }
 -keep class dx.** { *; }
+-dontwarn com.androlua.**
+-dontwarn kotlin.Cloneable$DefaultImpls
+-keep class org.eclipse.tm4e.languageconfiguration.internal.model.** { *; }
+-keep class org.joni.ast.** { *; }
+-keep class io.kulipai.sora.luaj.** { *; }
+-dontwarn io.kulipai.sora.luaj.**
+-keep class io.dingyi222666.sora.lua.tool.** { *; }

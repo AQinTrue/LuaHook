@@ -5,14 +5,14 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 
-import org.luaj.vm.LocVars;
-import org.luaj.vm.LuaString;
-import org.luaj.vm.LuaValue;
-import org.luaj.vm.Prototype;
-import org.luaj.vm.Upvaldesc;
-import org.luaj.vm.VarType;
-import org.luaj.vm.compiler.LexState;
-import org.luaj.vm.compiler.LuaC;
+
+import org.luaj.LocVars;
+import org.luaj.LuaString;
+import org.luaj.LuaValue;
+import org.luaj.Prototype;
+import org.luaj.Upvaldesc;
+import org.luaj.compiler.LexState;
+import org.luaj.compiler.LuaC;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import io.dingyi222666.sora.lua.CompletionName;
+import io.kulipai.sora.luaj.CompletionName;
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind;
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher;
 
@@ -95,10 +95,10 @@ public class LuaParser {
         javaVar.clear();
         globalist = new ArrayList<>();
         valueMap = new HashMap<>();
-        LexState.errormsg = null;
-        LexState.globals.clear();
-        LexState.lines.clear();
-        LexState.valueMap.clear();
+//        LexState.errormsg = null;
+//        LexState.globals.clear();
+//        LexState.lines.clear();
+//        LexState.valueMap.clear();
     }
 
     public static class Var {
@@ -155,66 +155,66 @@ public class LuaParser {
         }
     }
 
-    public static boolean lexer(CharSequence src, CompletionPublisher publisher) throws IOException {
-        Log.d("luaj", "lexer: start");
-        try {
-            //Prototype lex = LuaC.lexer(new CharInputSteam(src), "luaj");
-            Prototype lex = LuaC.lexer(src, "luaj", publisher);
-            localMap.clear();
-            varList.clear();
-            javaVar.clear();
-            lexer(lex);
-            if (LexState.erroridx < 0)
-                globalist = new ArrayList<>(LexState.globals);
-            valueMap = new HashMap<>(LexState.valueMap);
-            //Log.i("luaj", "lexer: "+valueMap);
-            return true;
-        } catch (Exception e) {
-            throw e;
-        }
-    }
+//    public static boolean lexer(CharSequence src, CompletionPublisher publisher) throws IOException {
+//        Log.d("luaj", "lexer: start");
+//        try {
+//            //Prototype lex = LuaC.lexer(new CharInputSteam(src), "luaj");
+//            Prototype lex = LuaC.lexer(src, "luaj", publisher);
+//            localMap.clear();
+//            varList.clear();
+//            javaVar.clear();
+//            lexer(lex);
+//            if (LexState.erroridx < 0)
+//                globalist = new ArrayList<>(LexState.globals);
+//            valueMap = new HashMap<>(LexState.valueMap);
+//            //Log.i("luaj", "lexer: "+valueMap);
+//            return true;
+//        } catch (Exception e) {
+//            throw e;
+//        }
+//    }
 
     public static HashMap<String, ArrayList<Pair>> getLocalMap() {
         return localMap;
     }
 
-    public static String typename(String n, LocVars l) {
-        VarType type = l.type;
-        // Log.d("luaj", "typename: " + n + ';' + l + l.type);
-        if (type == null)
-            return "";
-        // Log.d("luaj", "typename: " + n + ';' + type.typename);
-        int idx = type.typename.lastIndexOf(".");
-        if (idx < 1)
-            return type.typename;
-        String p = type.typename.substring(0, idx);
-        String c = type.typename.substring(idx + 1);
-        getJavaMethods(c, type.typename);
-        ArrayList<JavaVar> jv = javaVar.get(n);
-        if (jv == null) {
-            jv = new ArrayList<>();
-            javaVar.put(n.toLowerCase(), jv);
-        }
-        jv.add(new JavaVar(type.typename, l.startidx, l.endidx));
-        if (c.equals(n))
-            return p;
-        return c;
-    }
-
-    public static String typename(String n, Upvaldesc l) {
-        VarType type = l.type;
-        if (type == null)
-            return "";
-        //Log.i("luaj", "typename: " + n + ';' + type.typename);
-        int idx = type.typename.lastIndexOf(".");
-        if (idx < 1)
-            return type.typename;
-        String p = type.typename.substring(0, idx);
-        String c = type.typename.substring(idx + 1);
-        if (c.equals(n))
-            return p;
-        return c;
-    }
+//    public static String typename(String n, LocVars l) {
+//        VarType type = l.type;
+//        // Log.d("luaj", "typename: " + n + ';' + l + l.type);
+//        if (type == null)
+//            return "";
+//        // Log.d("luaj", "typename: " + n + ';' + type.typename);
+//        int idx = type.typename.lastIndexOf(".");
+//        if (idx < 1)
+//            return type.typename;
+//        String p = type.typename.substring(0, idx);
+//        String c = type.typename.substring(idx + 1);
+//        getJavaMethods(c, type.typename);
+//        ArrayList<JavaVar> jv = javaVar.get(n);
+//        if (jv == null) {
+//            jv = new ArrayList<>();
+//            javaVar.put(n.toLowerCase(), jv);
+//        }
+//        jv.add(new JavaVar(type.typename, l.startidx, l.endidx));
+//        if (c.equals(n))
+//            return p;
+//        return c;
+//    }
+//
+//    public static String typename(String n, Upvaldesc l) {
+//        VarType type = l.type;
+//        if (type == null)
+//            return "";
+//        //Log.i("luaj", "typename: " + n + ';' + type.typename);
+//        int idx = type.typename.lastIndexOf(".");
+//        if (idx < 1)
+//            return type.typename;
+//        String p = type.typename.substring(0, idx);
+//        String c = type.typename.substring(idx + 1);
+//        if (c.equals(n))
+//            return p;
+//        return c;
+//    }
 
     private static void getJavaMethods(String c, String typename) {
         ArrayList<Method> ms = javaMethodMap.get(typename);
@@ -257,34 +257,34 @@ public class LuaParser {
 
     }
 
-    private static void lexer(Prototype p) {
-        if (p == null)
-            return;
-        LocVars[] ls = p.locvars;
-        int np = p.numparams;
-        Upvaldesc[] us = p.upvalues;
-        for (Upvaldesc l : us) {
-            String n = l.name.tojstring();
-            varList.add(new Var(n, " :upval", l.type == null ? null : l.type.typename, p.startidx, p.endidx));
-        }
-        for (int i = 0; i < ls.length; i++) {
-            LocVars l = ls[i];
-            String n = l.varname.tojstring();
-            if (i < np) {
-                varList.add(new Var(n, " :arg", l.type == null ? null : l.type.typename, l.startidx, l.endidx));
-            } else {
-                typename(n, l);
-                varList.add(new Var(n, " :local", l.type == null ? null : l.type.typename, l.startidx, l.endidx));
-            }
-            ArrayList<Pair> a = localMap.computeIfAbsent(n, k -> new ArrayList<>());
-            a.add(new Pair(l.startidx, l.endidx));
-        }
-
-        Prototype[] ps = p.p;
-        for (Prototype l : ps) {
-            lexer(l);
-        }
-    }
+//    private static void lexer(Prototype p) {
+//        if (p == null)
+//            return;
+//        LocVars[] ls = p.locvars;
+//        int np = p.numparams;
+//        Upvaldesc[] us = p.upvalues;
+//        for (Upvaldesc l : us) {
+//            String n = l.name.tojstring();
+//            varList.add(new Var(n, " :upval", l.type == null ? null : l.type.typename, p.startidx, p.endidx));
+//        }
+//        for (int i = 0; i < ls.length; i++) {
+//            LocVars l = ls[i];
+//            String n = l.varname.tojstring();
+//            if (i < np) {
+//                varList.add(new Var(n, " :arg", l.type == null ? null : l.type.typename, l.startidx, l.endidx));
+//            } else {
+//                typename(n, l);
+//                varList.add(new Var(n, " :local", l.type == null ? null : l.type.typename, l.startidx, l.endidx));
+//            }
+//            ArrayList<Pair> a = localMap.computeIfAbsent(n, k -> new ArrayList<>());
+//            a.add(new Pair(l.startidx, l.endidx));
+//        }
+//
+//        Prototype[] ps = p.p;
+//        for (Prototype l : ps) {
+//            lexer(l);
+//        }
+//    }
 
     private static ArrayList<String> userWord = new ArrayList<>();
 

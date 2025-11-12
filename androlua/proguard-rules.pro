@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class io.kulipai.sora.luaj.** { *; }
+-dontwarn io.kulipai.sora.luaj.**
+-keep class io.dingyi222666.sora.lua.tool.** { *; }
+-keep class com.myopicmobile.** { *; }
+-dontwarn org.luaj.**
+-dontwarn com.androlua.**
+-keep class org.joni.ast.** { *; }

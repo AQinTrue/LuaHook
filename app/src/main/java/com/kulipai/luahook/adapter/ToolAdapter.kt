@@ -12,7 +12,6 @@ import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -109,7 +108,7 @@ class ToolAdapter(
 
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-//                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
                         }
 
                         fun genHookCtorMethod() {
@@ -145,6 +144,8 @@ class ToolAdapter(
                                 """.trimMargin()
 //                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
 //                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
                         }
 
                         fun genReplaceMethod() {
@@ -181,6 +182,8 @@ class ToolAdapter(
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
 //                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
                         }
 
                         fun genChangeReturn() {
@@ -214,6 +217,8 @@ class ToolAdapter(
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
 //                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
                         }
 
                         fun genChangeParams() {
@@ -256,6 +261,8 @@ class ToolAdapter(
 
 //                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
 //                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
                         }
 
 
@@ -539,6 +546,8 @@ class ToolAdapter(
                                             """.trimIndent()
                                         }
 //                                        editor.insert(editor.selectionStart, invokeLua)
+                                        editor.insertText( invokeLua,editor.left)
+
                                         dialog.dismiss()
 
                                     } else {
@@ -584,6 +593,8 @@ class ToolAdapter(
 //                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                             }
 //                                        editor.insert(editor.selectionStart, hookLua)
+                                        editor.insertText( hookLua,editor.left)
+
                                         dialog.dismiss()
                                     }
 

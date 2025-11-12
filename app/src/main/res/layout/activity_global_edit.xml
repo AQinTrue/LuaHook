@@ -31,7 +31,7 @@
         android:orientation="horizontal"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <com.androlua.LuaEditor
+        <io.github.rosemoe.sora.widget.CodeEditor
 
             android:id="@+id/editor"
             android:layout_width="match_parent"

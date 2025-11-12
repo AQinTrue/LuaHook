@@ -19,7 +19,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
         versionCode = 31
-        versionName = "3.9.6-Beta2"
+        versionName = "3.9.6-soraEditor-Canary1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -72,8 +72,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-
+//    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(fileTree(mapOf("dir" to "${rootProject.projectDir}/libs", "include" to listOf("*.jar"))))
     implementation(libs.okhttp)
     compileOnly(fileTree("compileOnly"))
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

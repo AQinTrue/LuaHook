@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.R
 import io.github.rosemoe.sora.widget.CodeEditor
@@ -56,11 +55,11 @@ class SymbolAdapter(private val editor: CodeEditor) :
         init {
             symbolItem.setOnClickListener {
                 val symbol = symbols[bindingAdapterPosition]
-                var idx = editor.offsetX+editor.offsetY
+                var idx = editor.left
 
                 if (editor.isSelected && symbol == "\"") {
-                    editor.insertText( symbol,editor.offsetX)
-                    editor.insertText(symbol, editor.offsetX)
+                    editor.insertText( symbol,editor.left)
+                    editor.insertText(symbol, editor.right)
                 }
                 when (symbol) {
                     "log" -> {editor.insertText(
@@ -68,11 +67,18 @@ class SymbolAdapter(private val editor: CodeEditor) :
                         idx
 
                     )
-                        editor.setSelection(editor.offsetX,editor.offsetY)
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+4)
                     }
 
-                    "lp" -> editor.insertText("lpparam",idx, )
-                    else -> editor.insertText(symbol,idx )
+                    "lp" -> {
+                        editor.insertText("lpparam",idx)
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+"lpparam".length)
+
+                    }
+                    else -> {
+                        editor.insertText(symbol,idx )
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+symbol.length)
+                    }
                 }
 
 

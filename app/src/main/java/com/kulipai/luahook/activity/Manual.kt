@@ -17,11 +17,11 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
-import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
 import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.ManAdapter
+import io.github.rosemoe.sora.widget.CodeEditor
 
 
 class Manual : AppCompatActivity(), OnCardExpandListener {
@@ -29,7 +29,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
     private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
     private val container: CoordinatorLayout by lazy { findViewById(R.id.main) }
     private val detail: MaterialCardView by lazy { findViewById(R.id.detail) }
-    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
+    private val editor: CodeEditor by lazy { findViewById(R.id.editor) }
 
     private var currentCard: View? = null
 
