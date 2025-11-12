@@ -40,6 +40,7 @@ import com.kulipai.luahook.util.isNightMode
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
+import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.EditorKeyEvent
 import io.github.rosemoe.sora.event.KeyBindingEvent
 import io.github.rosemoe.sora.event.PublishSearchResultEvent
@@ -61,9 +62,12 @@ import io.kulipai.sora.luaj.AndroLuaLanguage
 import io.kulipai.sora.luaj.WrapperLanguage
 import org.eclipse.tm4e.core.registry.IThemeSource
 import org.luaj.Globals
+import org.luaj.lib.jse.JsePlatform
 import java.io.File
 
 class EditActivity : AppCompatActivity() {
+
+    private val errMessage: TextView by lazy { findViewById(R.id.errMessage) }
 
 
     private fun getAppVersionName(context: Context): String {
@@ -389,6 +393,18 @@ class EditActivity : AppCompatActivity() {
 //                completionAdapter.submitList(emptyList())
 //                completionTrigger.tryEmit(completionTrigger.value + 1)
 //            }
+            subscribeAlways<ContentChangeEvent> {
+                val c = "=".repeat( 99)
+                val err = JsePlatform.standardGlobals().load("_,err = load([$c[${editor.text}]$c]);return err").call()
+                if (err.toString() == "nil") {
+                    errMessage.visibility = View.GONE
+                }else
+                {
+                    errMessage.text = err.toString()
+                    errMessage.visibility = View.VISIBLE
+
+                }
+            }
             subscribeAlways<PublishSearchResultEvent> { updatePositionText() }
 //            subscribeAlways<ContentChangeEvent> {
 //                postDelayedInLifecycle(
