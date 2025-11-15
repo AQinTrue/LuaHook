@@ -168,9 +168,8 @@ class AppsEdit : AppCompatActivity() {
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         symbolRecyclerView.adapter = SymbolAdapter(editor)
 
-
         //////////////////============sora=====================
-        val typeface = Typeface.createFromAsset(assets, "JetBrainsMono-Regular.ttf")
+        val typeface = Typeface.createFromAsset(assets, "MapleMono-NF-CN-MediumItalic.ttf")
         setupTextmate()
         resetColorScheme()
         ensureTextmateTheme()
