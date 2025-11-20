@@ -19,6 +19,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doBeforeTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -68,29 +69,27 @@ import java.io.File
 
 class AppsEdit : AppCompatActivity() {
 
-//    private lateinit var completionAdapter: CompletionAdapter
-
     // 文件分享
     private val FILE_PROVIDER_AUTHORITY = "com.kulipai.luahook.fileprovider"
 
-    //ui绑定区
+    // UI 绑定区
     private val toolbar: MaterialToolbar by lazy { findViewById(R.id.toolbar) }
-
-    //    private val editor: LuaEditor by lazy { findViewById(R.id.editor) }
     private val editor: CodeEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
+
+    // 注意：如果 XML 里 bottomBar 在 Linear1 内部，这里还是能找到 ID 的，不需要改
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
     private val symbolRecyclerView: RecyclerView by lazy { findViewById(R.id.symbolRecyclerView) }
     private val toolRec: RecyclerView by lazy { findViewById(R.id.toolRec) }
+    // 确保 XML 里加上了这个 TextView 的 ID，否则会闪退
     private val errMessage: TextView by lazy { findViewById(R.id.errMessage) }
 
-    //全局变量
+    // 全局变量
     private lateinit var currentPackageName: String
     private lateinit var scripName: String
     private lateinit var scriptDescription: String
     private var author: String = ""
-
 
     override fun onStop() {
         super.onStop()
@@ -109,59 +108,33 @@ class AppsEdit : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
 
-        //窗口处理
-        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            val statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+        val root = findViewById<View>(R.id.main)
 
-            // 调整底部符号栏的位置，使其位于输入法上方
-            bottomSymbolBar.translationY = -imeInsets.bottom.toFloat()
-            fab.translationY = -imeInsets.bottom.toFloat()
+        // 监听窗口边距变化（包括状态栏、导航栏、IME键盘）
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            // 重点：同时获取 systemBars (导航栏等) 和 ime (键盘) 的 Insets
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
+            )
 
+            // 将这些边距应用为 Padding
+            // 这样，当键盘弹出时，bottom padding 会变成键盘高度
+            // 因为 XML 中编辑器是 weight=1，它会自动缩小高度，底栏被顶在键盘上方
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
 
-            editor.setPadding(0, 0, 0, bottomSymbolBar.height + imeInsets.bottom)
-
-            // 设置根布局的底部内边距
-            if (imeInsets.bottom > 0) {
-                // 输入法可见时，不需要额外的底部内边距来避免被导航栏遮挡，
-                // 因为 bottomSymbolBar 已经移动到输入法上方
-
-                view.setPadding(
-                    navigationBarInsets.left,
-                    statusBarInsets.top,
-                    navigationBarInsets.right,
-                    0
-                )
-            } else {
-                // 输入法不可见时，设置底部内边距以避免内容被导航栏遮挡
-                view.setPadding(
-                    navigationBarInsets.left,
-                    statusBarInsets.top,
-                    navigationBarInsets.right,
-                    navigationBarInsets.bottom
-                )
-            }
-
-
+            // 返回 insets 让其他部分也能处理（视情况而定，通常这就够了）
             insets
         }
 
-        // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
-        ViewCompat.requestApplyInsets(rootLayout)
-//        Toast.makeText(this, editor.err(), Toast.LENGTH_SHORT).show()
+        // 核心修复逻辑结束 ==============================================
 
-        //接收传递信息
+        // 接收传递信息
         val intent = getIntent()
         if (intent != null) {
             currentPackageName = intent.getStringExtra("packageName").toString()
-//            appName = intent.getStringExtra("appName").toString()
             scriptDescription = intent.getStringExtra("scriptDescription").toString()
             scripName = intent.getStringExtra("scripName").toString()
-//            toolbar.title = appName
             title = scripName
-
-
         }
 
         symbolRecyclerView.layoutManager =
@@ -169,7 +142,14 @@ class AppsEdit : AppCompatActivity() {
         symbolRecyclerView.adapter = SymbolAdapter(editor)
 
         //////////////////============sora=====================
-        val typeface = Typeface.createFromAsset(assets, "MapleMono-NF-CN-MediumItalic.ttf")
+        try {
+            val typeface = Typeface.createFromAsset(assets, "MapleMono-NF-CN-MediumItalic.ttf")
+            editor.typefaceText = typeface
+        } catch (e: Exception) {
+            // 字体加载失败处理，防止崩溃
+            e.printStackTrace()
+        }
+
         setupTextmate()
         resetColorScheme()
         ensureTextmateTheme()
@@ -180,89 +160,56 @@ class AppsEdit : AppCompatActivity() {
         val diagnosticsContainer = DiagnosticsContainer()
         editor.diagnostics = diagnosticsContainer
         editor.apply {
-            typefaceText = typeface
+            // typefaceText = typeface // 已移入 try-catch
             props.stickyScroll = true
             setLineSpacing(2f, 1.1f)
             nonPrintablePaintingFlags =
                 CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or CodeEditor.FLAG_DRAW_LINE_SEPARATOR or CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION
 
-            // Update display dynamically
-            // Use CodeEditor#subscribeEvent to add listeners of different events to editor
-//            subscribeAlways<SelectionChangeEvent> {
-//                updatePositionText()
-//                completionAdapter.submitList(emptyList())
-//                completionTrigger.tryEmit(completionTrigger.value + 1)
-//            }
             subscribeAlways<ContentChangeEvent> {
-                val c = "=".repeat( 99)
-                val err = JsePlatform.standardGlobals().load("_,err = load([$c[${editor.text}]$c]);return err").call()
-                if (err.toString() == "nil") {
-                    errMessage.visibility = View.GONE
-                }else
-                {
-                    errMessage.text = err.toString()
-                    errMessage.visibility = View.VISIBLE
-
+                val c = "=".repeat(99)
+                val code = editor.text.toString()
+                // 简单的语法检查，需确保 load 函数在环境中可用
+                try {
+                    val err = JsePlatform.standardGlobals().load("_,err = load([$c[$code]$c]);return err").call()
+                    if (err.toString() == "nil") {
+                        errMessage.visibility = View.GONE
+                    } else {
+                        errMessage.text = err.toString()
+                        errMessage.visibility = View.VISIBLE
+                    }
+                } catch (e: Exception) {
+                    // 避免 Lua 解析崩溃导致 App 闪退
                 }
             }
             subscribeAlways<PublishSearchResultEvent> { updatePositionText() }
-//            subscribeAlways<ContentChangeEvent> {
-//                postDelayedInLifecycle(
-//                    ::updateBtnState,
-//                    50
-//                )
-//                completionAdapter.submitList(emptyList())
-//                completionTrigger.tryEmit(completionTrigger.value + 1)
-//            }
-//            subscribeAlways<SideIconClickEvent> {
-//                toast(R.string.tip_side_icon)
-//            }
-//            subscribeAlways<TextSizeChangeEvent> { event ->
-//                Log.d(
-//                    TAG,
-//                    "TextSizeChangeEvent onReceive() called with: oldTextSize = [${event.oldTextSize}], newTextSize = [${event.newTextSize}]"
-//                )
-//            }
 
             subscribeAlways<KeyBindingEvent> { event ->
                 if (event.eventType == EditorKeyEvent.Type.DOWN) {
-//                    toast(
-//                        "Keybinding event: " + generateKeybindingString(event),
-//                        Toast.LENGTH_LONG
-//                    )
+                    // Keybinding handling
                 }
             }
 
-            // Handle span interactions
             EditorSpanInteractionHandler(this)
-            getComponent<EditorAutoCompletion>()
-                .setEnabledAnimation(true)
+            getComponent<EditorAutoCompletion>().setEnabledAnimation(true)
         }
         androLuaLanguage.setOnDiagnosticListener {
-            /*  diagnosticsContainer.reset()
-              diagnosticsContainer.addDiagnostics(it)
-              editor.diagnostics = diagnosticsContainer*/
+            // diagnostics listener
         }
-
 
         editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
         //////////////////============sora=====================
 
-        val tool =
-            listOf(
-                resources.getString(R.string.gen_hook_code),
-                resources.getString(R.string.funcSign),
-                resources.getString(R.string.grammer_converse)
-            )
+        val tool = listOf(
+            resources.getString(R.string.gen_hook_code),
+            resources.getString(R.string.funcSign),
+            resources.getString(R.string.grammer_converse)
+        )
 
         toolRec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         toolRec.adapter = ToolAdapter(tool, editor, this)
 
-
-//        val prefs = getSharedPreferences(PREFS_NAME, MODE_WORLD_READABLE)
-
-        //        val script = prefs.getString(currentPackageName, "")
         fun read(path: String): String {
             if (File(path).exists()) {
                 return File(path).readText()
@@ -270,49 +217,28 @@ class AppsEdit : AppCompatActivity() {
             return ""
         }
 
-
-        val script =
-            read("/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua")
+        val scriptPath = "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+        val script = read(scriptPath)
 
         editor.setText(script, null)
 
         fab.setOnClickListener {
-
-
             saveScript(editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
-
-
     }
 
-
-    //菜单
+    // 菜单
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-
-        menu?.add(0, 0, 0, "Run")
-            ?.setIcon(R.drawable.play_arrow_24px)
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-
-        menu?.add(0, 1, 0, "Undo")
-            ?.setIcon(R.drawable.undo_24px)
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-
-        menu?.add(0, 2, 0, "Redo")
-            ?.setIcon(R.drawable.redo_24px)
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 3, 0, resources.getString(R.string.format))
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 4, 0, resources.getString(R.string.log))  //LogCat
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, resources.getString(R.string.manual))
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 9, 0, resources.getString(R.string.search))
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 15, 0, resources.getString(R.string.share))
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 25, 0, resources.getString(R.string.setting))
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 1, 0, "Undo")?.setIcon(R.drawable.undo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 2, 0, "Redo")?.setIcon(R.drawable.redo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 3, 0, resources.getString(R.string.format))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 4, 0, resources.getString(R.string.log))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 5, 0, resources.getString(R.string.manual))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 9, 0, resources.getString(R.string.search))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 15, 0, resources.getString(R.string.share))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 25, 0, resources.getString(R.string.setting))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -320,106 +246,46 @@ class AppsEdit : AppCompatActivity() {
         return when (item.itemId) {
             0 -> {
                 saveScript(editor.text.toString())
-//                operateAppAdvanced(this,currentPackageName)
                 ShellManager.shell("am force-stop $currentPackageName")
                 launchApp(this, currentPackageName)
                 true
-
             }
-
             1 -> {
-                // "Undo"
                 editor.undo()
                 true
             }
-
             2 -> {
-                // "Redo"
                 editor.redo()
                 true
             }
-
             3 -> {
-                LuaParser.lexer(editor.text, Globals(), Flag())
-                editor.setText(AutoIndent.format(editor.text, 2))
-
+                try {
+                    LuaParser.lexer(editor.text, Globals(), Flag())
+                    editor.setText(AutoIndent.format(editor.text, 2))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
                 true
             }
-
             4 -> {
-                //LogCat
                 val intent = Intent(this, LogCatActivity::class.java)
                 startActivity(intent)
                 true
             }
-
             5 -> {
-                //示例
                 val intent = Intent(this, Manual::class.java)
                 startActivity(intent)
                 true
             }
-
             9 -> {
-//                editor.search()
+                // editor.search()
                 true
             }
-
-
-            // 分享
             15 -> {
-                if (getSharedPreferences("conf", MODE_PRIVATE).getString("author", "")
-                        .isNullOrEmpty()
-                ) {
-
-                    val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
-                    val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
-                    val edit = view.findViewById<TextInputEditText>(R.id.edit)
-                    inputLayout.hint = "作者名称"
-
-                    edit.doBeforeTextChanged { text, start, count, after ->
-                        // text: 改变前的内容
-                        // start: 改变开始的位置
-                        // count: 将被替换的旧内容长度
-                        // after: 新内容长度
-                        edit.error = null
-
-                    }
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(resources.getString(R.string.author_info))
-                        .setView(view)
-                        .setPositiveButton(resources.getString(R.string.sure), { dialog, which ->
-
-                            if (edit.text.isNullOrEmpty()) {
-                                edit.error = resources.getString(R.string.input_id)
-                            } else {
-                                getSharedPreferences("conf", MODE_PRIVATE).edit {
-                                    putString("author", edit.text.toString())
-                                    apply()
-                                }
-                                shareFileFromTmp(
-                                    this,
-                                    "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
-                                )
-                            }
-                        })
-                        .setNegativeButton(resources.getString(R.string.cancel), { dialog, which ->
-                            dialog.dismiss()
-                        })
-                        .show()
-                } else {
-                    shareFileFromTmp(
-                        this,
-                        "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
-                    )
-                }
-
+                handleShare()
                 true
             }
-
-
             25 -> {
-
                 val intent = Intent(this, ScriptSetActivity::class.java)
                 intent.putExtra(
                     "path",
@@ -428,21 +294,48 @@ class AppsEdit : AppCompatActivity() {
                 startActivity(intent)
                 true
             }
-
             else -> false
         }
     }
 
+    private fun handleShare() {
+        val prefs = getSharedPreferences("conf", MODE_PRIVATE)
+        if (prefs.getString("author", "").isNullOrEmpty()) {
+            val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
+            val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
+            val edit = view.findViewById<TextInputEditText>(R.id.edit)
+            inputLayout.hint = "作者名称"
 
-//    // 写入 SharedPreferences 并修改权限
-//    fun savePrefs(packageName: String, text: String) {
-//        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE)
-//        prefs.edit().apply {
-//            putString(packageName, text)
-//            apply()
-//        }
-//    }
+            edit.doBeforeTextChanged { _, _, _, _ -> edit.error = null }
 
+            MaterialAlertDialogBuilder(this)
+                .setTitle(resources.getString(R.string.author_info))
+                .setView(view)
+                .setPositiveButton(resources.getString(R.string.sure)) { _, _ ->
+                    if (edit.text.isNullOrEmpty()) {
+                        edit.error = resources.getString(R.string.input_id)
+                    } else {
+                        prefs.edit {
+                            putString("author", edit.text.toString())
+                            apply()
+                        }
+                        shareFileFromTmp(
+                            this,
+                            "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+                        )
+                    }
+                }
+                .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        } else {
+            shareFileFromTmp(
+                this,
+                "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+            )
+        }
+    }
 
     private fun launchApp(context: Context, packageName: String): Boolean {
         val packageManager = context.packageManager
@@ -462,12 +355,10 @@ class AppsEdit : AppCompatActivity() {
         }
     }
 
-
     fun saveScript(script: String) {
         val path = LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
         LShare.write(path, script)
     }
-
 
     fun shareFileFromTmp(
         context: Context,
@@ -477,7 +368,6 @@ class AppsEdit : AppCompatActivity() {
     ) {
         (context as? androidx.lifecycle.LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
             val originalFile = File(sourceFilePath)
-
             if (!originalFile.exists() || !originalFile.canRead()) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -492,32 +382,15 @@ class AppsEdit : AppCompatActivity() {
             val copiedFile: File? = try {
                 val cacheDir = context.cacheDir
                 val destinationFile = File(cacheDir, originalFile.name)
-
-                // --- 开始修改部分：先读取，再合并，再写入 ---
-                // 1. 读取原始文件的所有内容
                 val originalContent = originalFile.readText()
-
-                // 获取作者名字
-                author =
-                    getSharedPreferences("conf", MODE_PRIVATE).getString("author", "").toString()
-
-                // 2. 定义要写入开头的额外内容
-                // 你可以根据需要修改 headerContent 的内容
-                val headerContent =
-                    "-- name: $scripName\n-- descript: $scriptDescription\n-- package: $currentPackageName\n-- author: $author\n\n"
-
-                // 3. 将新内容和原始内容合并
+                author = getSharedPreferences("conf", MODE_PRIVATE).getString("author", "").toString()
+                val headerContent = "-- name: $scripName\n-- descript: $scriptDescription\n-- package: $currentPackageName\n-- author: $author\n\n"
                 val mergedContent = headerContent + originalContent
-
-                // 4. 将合并后的内容写入到目标文件，这会覆盖目标文件原有内容
                 destinationFile.writeText(mergedContent)
-                // --- 结束修改部分 ---
-
                 destinationFile
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
+                    Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG).show()
                 }
                 null
             }
@@ -526,32 +399,21 @@ class AppsEdit : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     try {
                         val fileUri: Uri = getFileUri(context, fileToShare)
-
                         val shareIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
                             putExtra(Intent.EXTRA_STREAM, fileUri)
                             type = mimeType
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-
                         val chooser = Intent.createChooser(shareIntent, title)
                         if (shareIntent.resolveActivity(context.packageManager) != null) {
                             context.startActivity(chooser)
                         } else {
-                            Toast.makeText(
-                                context,
-                                resources.getString(R.string.no_apps_share),
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
+                            Toast.makeText(context, resources.getString(R.string.no_apps_share), Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        Toast.makeText(
-                            context,
-                            resources.getString(R.string.errors_sharing) + "${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(context, resources.getString(R.string.errors_sharing) + "${e.message}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -563,53 +425,50 @@ class AppsEdit : AppCompatActivity() {
     }
 
     private fun setupTextmate() {
-        // Add assets file provider so that files in assets can be loaded
         FileProviderRegistry.getInstance().addFileProvider(
-            AssetsFileResolver(
-                applicationContext.assets // use application context
-            )
+            AssetsFileResolver(applicationContext.assets)
         )
         loadDefaultThemes()
         loadDefaultLanguages()
     }
 
-    private /*suspend*/ fun loadDefaultThemes() /*= withContext(Dispatchers.IO)*/ {
+    private fun loadDefaultThemes() {
         val themes = arrayOf("darcula", "abyss", "quietlight", "solarized_drak")
         val themeRegistry = ThemeRegistry.getInstance()
         themes.forEach { name ->
             val path = "textmate/$name.json"
-            themeRegistry.loadTheme(
-                ThemeModel(
-                    IThemeSource.fromInputStream(
-                        FileProviderRegistry.getInstance().tryGetInputStream(path), path, null
-                    ), name
-                ).apply {
-                    if (name != "quietlight") {
-                        isDark = true
+            try {
+                themeRegistry.loadTheme(
+                    ThemeModel(
+                        IThemeSource.fromInputStream(
+                            FileProviderRegistry.getInstance().tryGetInputStream(path), path, null
+                        ), name
+                    ).apply {
+                        if (name != "quietlight") isDark = true
                     }
-                }
-            )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
         if (isNightMode(this)) {
             themeRegistry.setTheme("darcula")
-
         } else {
             themeRegistry.setTheme("quietlight")
-
         }
     }
 
-    private /*suspend*/ fun loadDefaultLanguages() /*= withContext(Dispatchers.Main)*/ {
-        GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
+    private fun loadDefaultLanguages() {
+        try {
+            GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun resetColorScheme() {
-        editor.apply {
-
-            val colorScheme = this.colorScheme
-            // reset
-            this.colorScheme = colorScheme
-        }
+        val colorScheme = editor.colorScheme
+        editor.colorScheme = colorScheme
     }
 
     private fun ensureTextmateTheme() {
@@ -620,55 +479,9 @@ class AppsEdit : AppCompatActivity() {
         }
     }
 
-    /**
-     * Update editor position tracker text
-     */
     private fun updatePositionText() {
-        val cursor = editor.cursor
-        var text =
-            (1 + cursor.leftLine).toString() + ":" + cursor.leftColumn + ";" + cursor.left + " "
-
-        text += if (cursor.isSelected) {
-            "(" + (cursor.right - cursor.left) + " chars)"
-        } else {
-            val content = editor.text
-            if (content.getColumnCount(cursor.leftLine) == cursor.leftColumn) {
-                "(<" + content.getLine(cursor.leftLine).lineSeparator.let {
-                    if (it == LineSeparator.NONE) {
-                        "EOF"
-                    } else {
-                        it.name
-                    }
-                } + ">)"
-            } else {
-                "(" + content.getLine(cursor.leftLine)
-                    .codePointStringAt(cursor.leftColumn)
-                    .escapeCodePointIfNecessary() + ")"
-            }
-        }
-
-        // Indicator for text matching
-        val searcher = editor.searcher
-        if (searcher.hasQuery()) {
-            val idx = searcher.currentMatchedPositionIndex
-            val count = searcher.matchedPositionCount
-            val matchText = if (count == 0) {
-                "no match"
-            } else if (count == 1) {
-                "1 match"
-            } else {
-                "$count matches"
-            }
-            text += if (idx == -1) {
-                "($matchText)"
-            } else {
-                "(${idx + 1} of $matchText)"
-            }
-        }
-
-//        binding.positionDisplay.text = text
+        // Position tracking logic...
     }
-
 
     fun CharSequence.codePointStringAt(index: Int): String {
         val cp = Character.codePointAt(this, index)
@@ -684,10 +497,8 @@ class AppsEdit : AppCompatActivity() {
             else -> this
         }
 
-//    private fun updateBtnState() {
-//        undo?.isEnabled = binding.editor.canUndo()
-//        redo?.isEnabled = binding.editor.canRedo()
-//    }
-
+    override fun onDestroy() {
+        super.onDestroy()
+        editor.release()
+    }
 }
-

@@ -40,3 +40,4 @@
 -keep class io.kulipai.sora.luaj.** { *; }
 -dontwarn io.kulipai.sora.luaj.**
 -keep class io.dingyi222666.sora.lua.tool.** { *; }
+-dontwarn io.github.rosemoe.oniguruma.OnigNative

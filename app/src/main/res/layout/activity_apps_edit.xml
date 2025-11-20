@@ -10,14 +10,11 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
     </com.google.android.material.appbar.AppBarLayout>
-
 
     <LinearLayout
         android:id="@+id/Linear1"
@@ -25,29 +22,30 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- 1. 工具栏 -->
         <LinearLayout
-            android:layout_gravity="top"
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:background="?attr/colorSurface"
-            android:orientation="vertical"
-            >
-
+            android:orientation="vertical">
             <androidx.recyclerview.widget.RecyclerView
-                android:layout_gravity="center"
                 android:id="@+id/toolRec"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="horizontal" />
-
         </LinearLayout>
+
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+        <!-- 2. 编辑器 (weight=1 自动填充) -->
         <io.github.rosemoe.sora.widget.CodeEditor
             android:id="@+id/editor"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             app:scrollbarThumbHorizontal="@drawable/scrollbar_thumb"
             app:scrollbarThumbVertical="@drawable/scrollbar_thumb"
             app:scrollbarTrackHorizontal="@drawable/scrollbar_track"
@@ -55,12 +53,44 @@
             app:lnPanelPosition="center"
             app:lnPanelPositionMode="follow" />
 
+        <!-- 3. 底部栏 (包含 错误信息 + 符号栏) -->
+        <LinearLayout
+            android:id="@+id/bottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:orientation="vertical">
 
-<!--        <com.androlua.LuaEditor-->
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-<!--            android:id="@+id/editor"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent" />-->
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="4dp"/>
+
+            <TextView
+                android:visibility="gone"
+                android:id="@+id/errMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="24dp"
+                android:paddingHorizontal="8dp"
+                tools:text="Error Message Here"
+                />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/symbolRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:orientation="horizontal" />
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="4dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -69,39 +99,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_marginEnd="24dp"
-        android:layout_marginBottom="104dp"
+        android:layout_marginBottom="120dp"
         android:contentDescription="@string/push"
         android:src="@drawable/save_24px" />
-
-    <LinearLayout
-        android:id="@+id/bottomBar"
-        android:layout_gravity="bottom"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        android:orientation="vertical"
-        >
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="4dp"/>
-        <TextView
-            android:visibility="gone"
-            android:id="@+id/errMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-        <androidx.recyclerview.widget.RecyclerView
-            android:layout_gravity="center"
-            android:id="@+id/symbolRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal" />
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="4dp"/>
-    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
