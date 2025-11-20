@@ -591,7 +591,7 @@ class AppsEdit : AppCompatActivity() {
             )
         }
         if (isNightMode(this)) {
-            themeRegistry.setTheme("abyss")
+            themeRegistry.setTheme("darcula")
 
         } else {
             themeRegistry.setTheme("quietlight")
