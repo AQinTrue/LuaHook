@@ -21,6 +21,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
 import com.kulipai.luahook.R
 import com.kulipai.luahook.adapter.ManAdapter
+import com.kulipai.luahook.util.SoraEditorHelper.initEditor
 import io.github.rosemoe.sora.widget.CodeEditor
 
 
@@ -65,6 +66,8 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
             insets
         }
 
+        initEditor(editor)
+
 
         val title =
             listOf(
@@ -77,11 +80,10 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 resources.getString(R.string.Tag7),
                 resources.getString(R.string.Tag8),
                 resources.getString(R.string.Tag9),
-                resources.getString(R.string.Tag10),
                 resources.getString(R.string.Tag11),
                 resources.getString(R.string.Tag12),
                 resources.getString(R.string.Tag13),
-                resources.getString(R.string.Tag14),
+
 
             )
 
@@ -90,39 +92,50 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 lpparam.packageName
             """.trimIndent(),
             """
-                hook("class",--类名
-                lpparam.classLoader,--类加载器
-                "fun",--函数名
-                --"type",--参数类型例如"int","string","float","com.xxx"
-                function(it)--before修改参数
-                 --log(it.args[1])
-                 --it.args[1]=1  --修改参数1
-                end,
-                function(it)--after可以修改返回值
-                  --log(it.result)
-                  --it.result="1" --修改返回值
-                end)
+                hook {
+                  class = "com.xx",           -- 必填：目标类的全限定名字符串 或 Class 类型的类对象
+                  --classloader = lpparam.classLoader, -- 可选：用于加载类的 ClassLoader，不填默认 lpparam.classLoader
+                  method = "f1",              -- 必填：要 Hook 的方法名
+                  params = {"int", "String", findClass("com.my.class", lpparam.classLoader)}, -- 可选：一个 table，包含参数类型字符串或 Class 对象
+                  before = function(it)
+                    -- before hook：在原方法执行前执行
+                    print("进入 f1 方法前")
+                    it.args[0] = "xxx"  -- 修改参数0的值
+                  end,
+                  after = function(it)
+                    -- after hook：在原方法执行后执行
+                    print("离开 f1 方法后，返回值:", it.result)
+                    it.result = "yyy" -- 修改返回值
+                  end,
+                }
             """.trimIndent(),
             """
                 findClass("com.xxx",lpparam.classLoader)
             """.trimIndent(),
             """
-                invoke(类名,方法名,参数1,参数2,...)
+                -- 静态方法
+                class.fun()
+                
+                -- 示例
+                class().fun()
                 
                 --例如
-                hook("class",
-                lpparam.classLoader,
-                "fun",
-                "int",
-                function(it)
-                  invoke(it,"check",1)
-                end,
-                function(it)
-                end)
+                hook {
+                    class = "class", 
+                    classloader = lpparam.classLoader,
+                    method = "fun",
+                    params = {"int"},
+                    before = function(it)
+                        it.thisObject.check(1)
+                    end,
+                    after = function(it)
+                    
+                    end
+                }
                 
                 --例如
                 class = findClass("com.xxx",lpparam.classLoader)
-                invoke(class,"login","123","abc")
+                class.login("123","abc")
             """.trimIndent(),
             """
                 --获取
@@ -132,16 +145,19 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 setField(类,字段名,设置值)
                 
                  --例如
-                hook("class",
-                lpparam.classLoader,
-                "fun",
-                "int",
-                function(it)  --假设arg1是个类 == Class{"name":"hhi",isVip=0}
-                  log(getField(it.args[1],"name"))
-                  setField(it.args[1],"isVip",1)
-                end,
-                function(it)
-                end)
+                 hook {
+                    class = "class", 
+                    classloader = lpparam.classLoader,
+                    method = "fun",
+                    params = {"int"},
+                    before = function(it) --假设arg0是个类 == Class{"name":"hhi",isVip=0}
+                        log(getField(it.args[0],"name"))
+                        setField(it.args[0],"isVip",1)
+                    end,
+                    after = function(it)
+                    
+                    end
+                }
                 
             """.trimIndent(),
             """
@@ -169,7 +185,7 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
             """.trimIndent(),
             """
                 -- 方法1: 直接使用Java的File类
-                File("path"):isFile()
+                File("path").isFile()
                 -- ...
                 
                 -- 方法2: 使用分装函数file类
@@ -218,29 +234,15 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
                 print("编码结果:", encoded)
             """.trimIndent(),
             """
+                -- imports 优先引入宿主类，如果宿主找不到就是模块的类
+                -- import 引入模块的类，支持通配符*
                 --全局引入一个类
-                import "android.widget.Toast"
-                Toast:makeText(activity,"hello",1000):show()
+                imports "android.widget.Toast"
+                Toast.makeText(activity,"hello",1000).show()
                 
                 --自定义名称
-                AAA = import "android.widget.Toast"
-                AAA:makeText(activity,"hello",1000):show()
-            """.trimIndent(),
-            """
-                -- new用于基础构造函数
-                --构造File,在lua中不能直接用File("/data/../")
-                --需要用new
-                F = new("java.io.File","/data/...")
-                
-                -- URL
-                url = new("java.net.URL","https://www.google.com")
-                
-                -- 对于参数和构造函数不一致的情况
-                -- 比如这里activity是Context的一个子类，直接用new无法识别参数类型。需要如下构造
-                constructor = getConstructor(xxx:getClass(),"android.content.Context","int","int")
-                aaa = newInstance(constructor,activity,114,514)
-                
-                
+                AAA = imports "android.widget.Toast"
+                AAA.makeText(activity,"hello",1000).show()
             """.trimIndent(),
             """
                 -- 异步加载图片,isCache 是 是否启用缓存
@@ -320,31 +322,18 @@ class Manual : AppCompatActivity(), OnCardExpandListener {
             """.trimIndent(),
             """
                 -- 顾名思义 hook构造方法
-                hookcotr("com.ad2001.frida0x7.Checker",
-                lpparam.classLoader,
-                "int","int",
-                function(it)
-                  it.args[1]=666
-                  it.args[2]=777
-                end,
-                function(it)
-                  --log(it.result)
-                end)
-            """.trimIndent(),
-            """
-                -- 类似luajava的createProxy，它允许你在 Lua 中创建一个 Java 接口的代理对象。
-                -- 比如点击事件监听
-                local listenerInterface = findClass("android.view.View${'$'}OnClickListener", classLoader1)
-                local listenerImpl = {
-                  onClick = function(view) -- The argument 'view' will be passed from Java
-                    log("145141")
-                  end
+                hookctor {
+                    class = "class", 
+                    classloader = lpparam.classLoader,
+                    params = {"int"},
+                    before = function(it)
+                    
+                    end,
+                    after = function(it)
+                    
+                    end
                 }
-
-                local onClickListener = createProxy(listenerInterface, listenerImpl, classLoader1)
-
-                button:setOnClickListener(onClickListener)
-            """.trimIndent()
+            """.trimIndent(),
 
 
         )

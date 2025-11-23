@@ -74,6 +74,8 @@ import org.luaj.Globals
 import org.luaj.lib.jse.JsePlatform
 import java.io.File
 import androidx.core.view.isVisible
+import com.kulipai.luahook.util.SoraEditorHelper
+import com.kulipai.luahook.util.SoraEditorHelper.initLuaEditor
 
 class AppsEdit : AppCompatActivity() {
 
@@ -159,64 +161,8 @@ class AppsEdit : AppCompatActivity() {
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         symbolRecyclerView.adapter = SymbolAdapter(editor)
 
-        //////////////////============sora=====================
-        try {
-            val typeface = Typeface.createFromAsset(assets, "JetBrainsMono-Regular.ttf")
-            editor.typefaceText = typeface
-        } catch (e: Exception) {
-            // 字体加载失败处理，防止崩溃
-            e.printStackTrace()
-        }
-
-        setupTextmate()
-        resetColorScheme()
-        ensureTextmateTheme()
-        val language = TextMateLanguage.create(
-            "source.lua", true
-        )
-        val androLuaLanguage = AndroLuaLanguage()
-        val diagnosticsContainer = DiagnosticsContainer()
-        editor.diagnostics = diagnosticsContainer
-        editor.apply {
-            // typefaceText = typeface // 已移入 try-catch
-            props.stickyScroll = true
-            setLineSpacing(2f, 1.1f)
-            nonPrintablePaintingFlags =
-                CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or CodeEditor.FLAG_DRAW_LINE_SEPARATOR or CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION
-
-            subscribeAlways<ContentChangeEvent> {
-                val c = "=".repeat(99)
-                val code = editor.text.toString()
-                // 简单的语法检查，需确保 load 函数在环境中可用
-                try {
-                    val err = JsePlatform.standardGlobals().load("_,err = load([$c[$code]$c]);return err").call()
-                    if (err.toString() == "nil") {
-                        errMessage.visibility = View.GONE
-                    } else {
-                        errMessage.text = err.toString()
-                        errMessage.visibility = View.VISIBLE
-                    }
-                } catch (e: Exception) {
-                    // 避免 Lua 解析崩溃导致 App 闪退
-                }
-            }
-            subscribeAlways<PublishSearchResultEvent> { updatePositionText() }
-
-            subscribeAlways<KeyBindingEvent> { event ->
-                if (event.eventType == EditorKeyEvent.Type.DOWN) {
-                    // Keybinding handling
-                }
-            }
-
-            EditorSpanInteractionHandler(this)
-            getComponent<EditorAutoCompletion>().setEnabledAnimation(true)
-        }
-        androLuaLanguage.setOnDiagnosticListener {
-            // diagnostics listener
-        }
-
-        editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
-        //////////////////============sora=====================
+        // soraEditor
+        initLuaEditor(editor,errMessage)
 
         val tool = listOf(
             resources.getString(R.string.gen_hook_code),
@@ -450,78 +396,8 @@ class AppsEdit : AppCompatActivity() {
         return FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, file)
     }
 
-    private fun setupTextmate() {
-        FileProviderRegistry.getInstance().addFileProvider(
-            AssetsFileResolver(applicationContext.assets)
-        )
-        loadDefaultThemes()
-        loadDefaultLanguages()
-    }
 
-    private fun loadDefaultThemes() {
-        val themes = arrayOf("darcula", "abyss", "quietlight", "solarized_drak")
-        val themeRegistry = ThemeRegistry.getInstance()
-        themes.forEach { name ->
-            val path = "textmate/$name.json"
-            try {
-                themeRegistry.loadTheme(
-                    ThemeModel(
-                        IThemeSource.fromInputStream(
-                            FileProviderRegistry.getInstance().tryGetInputStream(path), path, null
-                        ), name
-                    ).apply {
-                        if (name != "quietlight") isDark = true
-                    }
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        if (isNightMode(this)) {
-            themeRegistry.setTheme("darcula")
-        } else {
-            themeRegistry.setTheme("quietlight")
-        }
-    }
 
-    private fun loadDefaultLanguages() {
-        try {
-            GrammarRegistry.getInstance().loadGrammars("textmate/languages.json")
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun resetColorScheme() {
-        val colorScheme = editor.colorScheme
-        editor.colorScheme = colorScheme
-    }
-
-    private fun ensureTextmateTheme() {
-        var editorColorScheme = editor.colorScheme
-        if (editorColorScheme !is TextMateColorScheme) {
-            editorColorScheme = TextMateColorScheme.create(ThemeRegistry.getInstance())
-            editor.colorScheme = editorColorScheme
-        }
-    }
-
-    private fun updatePositionText() {
-        // Position tracking logic...
-    }
-
-    fun CharSequence.codePointStringAt(index: Int): String {
-        val cp = Character.codePointAt(this, index)
-        return String(Character.toChars(cp))
-    }
-
-    fun String.escapeCodePointIfNecessary() =
-        when (this) {
-            "\n" -> "\\n"
-            "\t" -> "\\t"
-            "\r" -> "\\r"
-            " " -> "<ws>"
-            else -> this
-        }
 
     private fun initSearchPanel() {
         // 监听搜索框文本变化
