@@ -5,11 +5,16 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -35,6 +40,7 @@ import com.kulipai.luahook.adapter.SymbolAdapter
 import com.kulipai.luahook.adapter.ToolAdapter
 import com.kulipai.luahook.util.LShare
 import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.isNightMode
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
@@ -53,6 +59,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
 import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
 import io.github.rosemoe.sora.text.LineSeparator
 import io.github.rosemoe.sora.widget.CodeEditor
+import io.github.rosemoe.sora.widget.EditorSearcher
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
 import io.github.rosemoe.sora.widget.ext.EditorSpanInteractionHandler
 import io.github.rosemoe.sora.widget.getComponent
@@ -66,6 +73,7 @@ import org.eclipse.tm4e.core.registry.IThemeSource
 import org.luaj.Globals
 import org.luaj.lib.jse.JsePlatform
 import java.io.File
+import androidx.core.view.isVisible
 
 class AppsEdit : AppCompatActivity() {
 
@@ -77,6 +85,16 @@ class AppsEdit : AppCompatActivity() {
     private val editor: CodeEditor by lazy { findViewById(R.id.editor) }
     private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
     private val rootLayout: CoordinatorLayout by lazy { findViewById(R.id.main) }
+
+    // 1. 懒加载搜索视图控件
+    private val searchPanel: View by lazy { findViewById(R.id.search_panel) }
+    private val etSearch: EditText by lazy { findViewById(R.id.et_search) }
+    private val etReplace: EditText by lazy { findViewById(R.id.et_replace) }
+    private val btnPrev: View by lazy { findViewById(R.id.btn_search_prev) }
+    private val btnNext: View by lazy { findViewById(R.id.btn_search_next) }
+    private val btnClose: View by lazy { findViewById(R.id.btn_search_close) }
+    private val btnReplaceOne: View by lazy { findViewById(R.id.btn_replace_one) }
+    private val btnReplaceAll: View by lazy { findViewById(R.id.btn_replace_all) }
 
     // 注意：如果 XML 里 bottomBar 在 Linear1 内部，这里还是能找到 ID 的，不需要改
     private val bottomSymbolBar: LinearLayout by lazy { findViewById(R.id.bottomBar) }
@@ -143,7 +161,7 @@ class AppsEdit : AppCompatActivity() {
 
         //////////////////============sora=====================
         try {
-            val typeface = Typeface.createFromAsset(assets, "MapleMono-NF-CN-MediumItalic.ttf")
+            val typeface = Typeface.createFromAsset(assets, "JetBrainsMono-Regular.ttf")
             editor.typefaceText = typeface
         } catch (e: Exception) {
             // 字体加载失败处理，防止崩溃
@@ -226,6 +244,7 @@ class AppsEdit : AppCompatActivity() {
             saveScript(editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
+        initSearchPanel()
     }
 
     // 菜单
@@ -260,8 +279,11 @@ class AppsEdit : AppCompatActivity() {
             }
             3 -> {
                 try {
-                    LuaParser.lexer(editor.text, Globals(), Flag())
-                    editor.setText(AutoIndent.format(editor.text, 2))
+                    val startLine = editor.cursor.leftLine
+                    val luaCode = editor.text
+                    LuaParser.lexer(luaCode, Globals(), Flag())
+                    editor.setText(AutoIndent.format(luaCode, 2))
+                    editor.setSelection(startLine, 0)
                 } catch (e: Exception) {
                     Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -278,7 +300,11 @@ class AppsEdit : AppCompatActivity() {
                 true
             }
             9 -> {
-                // editor.search()
+                if (searchPanel.isVisible) {
+                    closeSearchPanel()
+                } else {
+                    openSearchPanel()
+                }
                 true
             }
             15 -> {
@@ -496,6 +522,105 @@ class AppsEdit : AppCompatActivity() {
             " " -> "<ws>"
             else -> this
         }
+
+    private fun initSearchPanel() {
+        // 监听搜索框文本变化
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val text = s.toString()
+                if (text.isNotEmpty()) {
+                    // search(text, options)
+                    // 参数2 SearchOptions: (ignoreCase, normal/regex)
+                    // 这里默认: 不区分大小写(false -> true才区分), 普通模式(false -> true才正则)
+                    // 如果你想完全精确搜索，可以根据需求调整 SearchOptions
+                    editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+                } else {
+                    editor.searcher.stopSearch()
+                }
+            }
+        })
+
+        // 监听键盘的"搜索"按钮
+        etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                editor.searcher.gotoNext()
+                true
+            } else {
+                false
+            }
+        }
+
+        // 上一个
+        btnPrev.setOnClickListener {
+            editor.searcher.gotoPrevious()
+        }
+
+        // 下一个
+        btnNext.setOnClickListener {
+            editor.searcher.gotoNext()
+        }
+
+        // 替换当前选中
+        btnReplaceOne.setOnClickListener {
+            if (editor.searcher.hasQuery()) {
+                val replaceText = etReplace.text.toString()
+                try {
+                    editor.searcher.replaceCurrentMatch(replaceText)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Replace failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 替换所有
+        btnReplaceAll.setOnClickListener {
+            if (editor.searcher.hasQuery()) {
+                val replaceText = etReplace.text.toString()
+                try {
+                    editor.searcher.replaceAll(replaceText)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Replace All failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 关闭面板
+        btnClose.setOnClickListener {
+            closeSearchPanel()
+        }
+    }
+
+    private fun openSearchPanel() {
+        searchPanel.visibility = View.VISIBLE
+        etSearch.requestFocus()
+        // 弹出键盘
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT)
+
+        // 如果之前有选中的文本，自动填入搜索框
+        if (editor.cursor.isSelected) {
+            val selectedText = editor.text.substring(editor.cursor.left, editor.cursor.right)
+            if (selectedText.length < 50 && !selectedText.contains("\n")) { // 限制长度防止填入大段代码
+                etSearch.setText(selectedText)
+                // 移动光标到末尾
+                etSearch.setSelection(selectedText.length)
+            }
+        }
+    }
+
+    private fun closeSearchPanel() {
+        searchPanel.visibility = View.GONE
+        editor.searcher.stopSearch()
+        // 关闭键盘
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+        // 焦点还给编辑器
+        editor.requestFocus()
+    }
+
+
 
     override fun onDestroy() {
         super.onDestroy()

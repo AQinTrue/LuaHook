@@ -6,8 +6,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Editable
 import android.text.SpannableString
 import android.text.TextPaint
+import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.util.TypedValue
@@ -15,6 +17,9 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -54,6 +59,7 @@ import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
 import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
 import io.github.rosemoe.sora.text.LineSeparator
 import io.github.rosemoe.sora.widget.CodeEditor
+import io.github.rosemoe.sora.widget.EditorSearcher
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion
 import io.github.rosemoe.sora.widget.ext.EditorSpanInteractionHandler
 import io.github.rosemoe.sora.widget.getComponent
@@ -63,9 +69,20 @@ import io.kulipai.sora.luaj.WrapperLanguage
 import org.eclipse.tm4e.core.registry.IThemeSource
 import org.luaj.Globals
 import org.luaj.lib.jse.JsePlatform
-import java.io.File
+import androidx.core.view.isVisible
 
 class EditActivity : AppCompatActivity() {
+
+
+    // 1. 懒加载搜索视图控件
+    private val searchPanel: View by lazy { findViewById(R.id.search_panel) }
+    private val etSearch: EditText by lazy { findViewById(R.id.et_search) }
+    private val etReplace: EditText by lazy { findViewById(R.id.et_replace) }
+    private val btnPrev: View by lazy { findViewById(R.id.btn_search_prev) }
+    private val btnNext: View by lazy { findViewById(R.id.btn_search_next) }
+    private val btnClose: View by lazy { findViewById(R.id.btn_search_close) }
+    private val btnReplaceOne: View by lazy { findViewById(R.id.btn_replace_one) }
+    private val btnReplaceAll: View by lazy { findViewById(R.id.btn_replace_all) }
 
     private val errMessage: TextView by lazy { findViewById(R.id.errMessage) }
 
@@ -224,7 +241,8 @@ class EditActivity : AppCompatActivity() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 6, 0, resources.getString(R.string.about))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 9, 0, resources.getString(R.string.search))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 9, 0, resources.getString(R.string.search))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         return true
     }
 
@@ -245,6 +263,15 @@ class EditActivity : AppCompatActivity() {
             3 -> {
                 // 格式化
 //                editor.format()
+                try {
+                    val startLine = editor.cursor.leftLine
+                    val luaCode = editor.text
+                    LuaParser.lexer(luaCode, Globals(), Flag())
+                    editor.setText(AutoIndent.format(luaCode, 2))
+                    editor.setSelection(startLine, 0)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
                 true
             }
 
@@ -268,8 +295,13 @@ class EditActivity : AppCompatActivity() {
             }
 
             9 -> {
-                LuaParser.lexer(editor.text, Globals(), Flag());
-                editor.setText(AutoIndent.format(editor.text, 2))
+                if (searchPanel.visibility == View.VISIBLE) {
+                    closeSearchPanel()
+                } else {
+                    openSearchPanel()
+                }
+//                LuaParser.lexer(editor.text, Globals(), Flag())
+//                editor.setText(AutoIndent.format(editor.text, 2))
 
 //                editor.search()
                 true
@@ -359,7 +391,6 @@ class EditActivity : AppCompatActivity() {
         ViewCompat.requestApplyInsets(rootLayout)
 
 
-
         val luaScript = read("/global.lua")
         if (luaScript == "") {
             val lua = """
@@ -394,12 +425,12 @@ class EditActivity : AppCompatActivity() {
 //                completionTrigger.tryEmit(completionTrigger.value + 1)
 //            }
             subscribeAlways<ContentChangeEvent> {
-                val c = "=".repeat( 99)
-                val err = JsePlatform.standardGlobals().load("_,err = load([$c[${editor.text}]$c]);return err").call()
+                val c = "=".repeat(99)
+                val err = JsePlatform.standardGlobals()
+                    .load("_,err = load([$c[${editor.text}]$c]);return err").call()
                 if (err.toString() == "nil") {
                     errMessage.visibility = View.GONE
-                }else
-                {
+                } else {
                     errMessage.text = err.toString()
                     errMessage.visibility = View.VISIBLE
 
@@ -449,9 +480,6 @@ class EditActivity : AppCompatActivity() {
         //////////////////============sora=====================
 
 
-
-
-
         editor.setText(luaScript)
 
         fab.setOnClickListener {
@@ -459,15 +487,106 @@ class EditActivity : AppCompatActivity() {
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
 
-
-
-
+        initSearchPanel()
 
     }
 
+    private fun initSearchPanel() {
+        // 监听搜索框文本变化
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val text = s.toString()
+                if (text.isNotEmpty()) {
+                    // search(text, options)
+                    // 参数2 SearchOptions: (ignoreCase, normal/regex)
+                    // 这里默认: 不区分大小写(false -> true才区分), 普通模式(false -> true才正则)
+                    // 如果你想完全精确搜索，可以根据需求调整 SearchOptions
+                    editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+                } else {
+                    editor.searcher.stopSearch()
+                }
+            }
+        })
 
+        // 监听键盘的"搜索"按钮
+        etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                editor.searcher.gotoNext()
+                true
+            } else {
+                false
+            }
+        }
 
+        // 上一个
+        btnPrev.setOnClickListener {
+            editor.searcher.gotoPrevious()
+        }
 
+        // 下一个
+        btnNext.setOnClickListener {
+            editor.searcher.gotoNext()
+        }
+
+        // 替换当前选中
+        btnReplaceOne.setOnClickListener {
+            if (editor.searcher.hasQuery()) {
+                val replaceText = etReplace.text.toString()
+                try {
+                    editor.searcher.replaceCurrentMatch(replaceText)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Replace failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 替换所有
+        btnReplaceAll.setOnClickListener {
+            if (editor.searcher.hasQuery()) {
+                val replaceText = etReplace.text.toString()
+                try {
+                    editor.searcher.replaceAll(replaceText)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Replace All failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 关闭面板
+        btnClose.setOnClickListener {
+            closeSearchPanel()
+        }
+    }
+
+    private fun openSearchPanel() {
+        searchPanel.visibility = View.VISIBLE
+        etSearch.requestFocus()
+        // 弹出键盘
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT)
+
+        // 如果之前有选中的文本，自动填入搜索框
+        if (editor.cursor.isSelected) {
+            val selectedText = editor.text.substring(editor.cursor.left, editor.cursor.right)
+            if (selectedText.length < 50 && !selectedText.contains("\n")) { // 限制长度防止填入大段代码
+                etSearch.setText(selectedText)
+                // 移动光标到末尾
+                etSearch.setSelection(selectedText.length)
+            }
+        }
+    }
+
+    private fun closeSearchPanel() {
+        searchPanel.visibility = View.GONE
+        editor.searcher.stopSearch()
+        // 关闭键盘
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+        // 焦点还给编辑器
+        editor.requestFocus()
+    }
 
     private fun setupTextmate() {
         // Add assets file provider so that files in assets can be loaded
@@ -498,7 +617,7 @@ class EditActivity : AppCompatActivity() {
             )
         }
         if (isNightMode(this)) {
-            themeRegistry.setTheme("abyss")
+            themeRegistry.setTheme("darcula")
 
         } else {
             themeRegistry.setTheme("quietlight")
@@ -590,6 +709,12 @@ class EditActivity : AppCompatActivity() {
             " " -> "<ws>"
             else -> this
         }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        editor.release()
+    }
+
 
 //    private fun updateBtnState() {
 //        undo?.isEnabled = binding.editor.canUndo()
