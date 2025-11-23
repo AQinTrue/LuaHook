@@ -8,18 +8,19 @@ import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionManager
-import com.androlua.LuaEditor
+
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
 import com.kulipai.luahook.activity.OnCardExpandListener
 import com.kulipai.luahook.R
+import io.github.rosemoe.sora.widget.CodeEditor
 
 class ManAdapter(
     private val title: List<String>,
     private val body: List<String>,
     private val root: CoordinatorLayout,
     private val details: MaterialCardView,
-    private val editor: LuaEditor,
+    private val editor: CodeEditor,
 
     private val listener: OnCardExpandListener
 ) :

@@ -9,11 +9,13 @@ import org.luaj.LuaValue
 import org.luaj.Varargs
 import org.luaj.lib.VarArgFunction
 
+/**
+ * 封装 Android 原生的 SharedPreferences 给 Lua 使用
+ */
+
 object LuaSharedPreferences {
 
     fun registerTo(globals: LuaValue) {
-
-        // 封装 Android 原生的 SharedPreferences 给 Lua 使用
         val sp = LuaTable()
 
         // 设置值

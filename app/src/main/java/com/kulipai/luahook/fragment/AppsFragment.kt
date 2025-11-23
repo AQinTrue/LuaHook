@@ -1,6 +1,6 @@
 package com.kulipai.luahook.fragment
 
-import AViewModel
+import com.kulipai.luahook.util.AViewModel
 import android.animation.Animator.AnimatorListener
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
@@ -123,7 +123,7 @@ class AppsFragment : Fragment() {
 
         var searchJob: Job? = null
         // 加载 Fragment 的布局
-        val view = inflater.inflate(R.layout.apps, container, false)
+        val view = inflater.inflate(R.layout.activity_main_apps, container, false)
         val rec: RecyclerView by lazy { view.findViewById(R.id.rec) }
         val fab1: MaterialButton by lazy { view.findViewById(R.id.fab1) }
         val fab2: MaterialButton by lazy { view.findViewById(R.id.fab2) }

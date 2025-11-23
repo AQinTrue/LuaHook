@@ -6,20 +6,23 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.kulipai.luahook.R
 import com.kulipai.luahook.util.d
+import io.github.rosemoe.sora.widget.CodeEditor
 import java.util.regex.Pattern
 
 class ToolAdapter(
     private val symbols: List<String>,
-    private val editor: LuaEditor,
+    private val editor: CodeEditor,
     private val context: Context
 ) :
     RecyclerView.Adapter<ToolAdapter.ToolViewHolder>() {
@@ -34,13 +37,332 @@ class ToolAdapter(
             toolItem.setOnClickListener {
                 val symbol = symbols[bindingAdapterPosition]
                 if (editor.isSelected && symbol == "\"") {
-                    editor.insert(editor.selectionStart, symbol)
-                    editor.insert(editor.selectionEnd, symbol)
+//                    editor.insert(editor.selectionStart, symbol)
+//                    editor.insert(editor.selectionEnd, symbol)
                 }
                 when (bindingAdapterPosition) {
                     0 -> {
-                        val view = LayoutInflater.from(context).inflate(R.layout.dialog_hook, null)
 
+
+                        val view = LayoutInflater.from(context)
+                            .inflate(R.layout.dialog_hook_code_gen, null)
+                        // 获取组件引用
+                        val genCodeMenu =
+                            view.findViewById<AutoCompleteTextView>(R.id.gen_code_mode_menu)
+                        val layoutHookMethod = view.findViewById<View>(R.id.layout_hook_method)
+                        val layoutHookCtorMethod =
+                            view.findViewById<View>(R.id.layout_hookctor_method)
+                        val layoutChangeReturn =
+                            view.findViewById<View>(R.id.layout_change_return)
+                        val layoutChangeParams =
+                            view.findViewById<View>(R.id.layout_change_params)
+                        // 定义下拉菜单的选项列表
+                        val hookModes = listOf(
+                            "Hook方法",
+                            "Hook构造方法",
+                            "拦截执行",
+                            "修改返回值",
+                            "修改参数",
+//                            "Hook静态变量",
+//                            "Hook实例变量",
+                        )
+
+
+                        fun genHookMethod() {
+
+                            val className: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.className).text.toString()
+                            val funcName: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.funcName).text.toString()
+                            val param: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.param).text.toString()
+
+
+                            val checkBox_print_all_params: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_all_params)
+                            val checkBox_print_return: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_return)
+                            val checkBox_print_stack: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_stack)
+                            var p = ""
+                            if (param.trim().isNotEmpty()) {
+                                p = param.split(",")
+                                    .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+                            }
+
+                            val hookLua = """
+                                    |hook {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  method = "$funcName",
+                                    |  params = {${p}},
+                                    |  before = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
+                                    |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
+                                    |  end,
+                                    |  after = function(it)
+                                    |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+
+
+//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+                            editor.insertText( hookLua,editor.left)
+                        }
+
+                        fun genHookCtorMethod() {
+                            val className: String =
+                                layoutHookCtorMethod.findViewById<TextInputEditText>(R.id.className).text.toString()
+                            val param: String =
+                                layoutHookCtorMethod.findViewById<TextInputEditText>(R.id.param).text.toString()
+                            val checkBox_print_all_params: CheckBox =
+                                layoutHookCtorMethod.findViewById<CheckBox>(R.id.checkBox_print_all_params)
+                            val checkBox_print_return: CheckBox =
+                                layoutHookCtorMethod.findViewById<CheckBox>(R.id.checkBox_print_return)
+                            val checkBox_print_stack: CheckBox =
+                                layoutHookCtorMethod.findViewById<CheckBox>(R.id.checkBox_print_stack)
+                            var p = ""
+                            if (param.trim().isNotEmpty()) {
+                                p = param.split(",")
+                                    .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+                            }
+
+                            val hookLua = """
+                                    |hookctor  {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  params = {${p}},
+                                    |  before = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
+                                    |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
+                                    |  end,
+                                    |  after = function(it)
+                                    |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+//                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
+                        }
+
+                        fun genReplaceMethod() {
+                            val className: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.className).text.toString()
+                            val funcName: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.funcName).text.toString()
+                            val param: String =
+                                layoutHookMethod.findViewById<TextInputEditText>(R.id.param).text.toString()
+                            val checkBox_print_all_params: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_all_params)
+                            val checkBox_print_return: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_return)
+                            val checkBox_print_stack: CheckBox =
+                                layoutHookMethod.findViewById<CheckBox>(R.id.checkBox_print_stack)
+                            var p = ""
+                            if (param.trim().isNotEmpty()) {
+                                p = param.split(",")
+                                    .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+                            }
+                            val hookLua = """
+                                    |replace {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  method = "$funcName",
+                                    |  params = {${p}},
+                                    |  replace = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
+                                    |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
+                                    |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+
+//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
+                        }
+
+                        fun genChangeReturn() {
+                            val className: String =
+                                layoutChangeReturn.findViewById<TextInputEditText>(R.id.className).text.toString()
+                            val funcName: String =
+                                layoutChangeReturn.findViewById<TextInputEditText>(R.id.funcName).text.toString()
+                            val param: String =
+                                layoutChangeReturn.findViewById<TextInputEditText>(R.id.param).text.toString()
+                            val returns: String =
+                                layoutChangeReturn.findViewById<TextInputEditText>(R.id.returns).text.toString()
+                            var p = ""
+                            if (param.trim().isNotEmpty()) {
+                                p = param.split(",")
+                                    .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+                            }
+                            val hookLua = """
+                                    |hook {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  method = "$funcName",
+                                    |  params = {${p}},
+                                    |  before = function(it)
+                                    |
+                                    |  end,
+                                    |  after = function(it)
+                                    |    it.result = $returns
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+
+//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
+                        }
+
+                        fun genChangeParams() {
+                            val className: String =
+                                layoutChangeParams.findViewById<TextInputEditText>(R.id.className).text.toString()
+                            val funcName: String =
+                                layoutChangeParams.findViewById<TextInputEditText>(R.id.funcName).text.toString()
+                            val param: String =
+                                layoutChangeParams.findViewById<TextInputEditText>(R.id.param).text.toString()
+                            val params: String =
+                                layoutChangeParams.findViewById<TextInputEditText>(R.id.params).text.toString()
+                            var p = ""
+                            if (param.trim().isNotEmpty()) {
+                                p = param.split(",")
+                                    .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+                            }
+                            var ps = "" // change params code list
+                            if (params.trim().isNotEmpty()) {
+                                ps = params.split(",").map { it.trim() }
+                                    .mapIndexed { index, element ->
+                                        // 拼接成您需要的格式
+                                        "    it.args[$index] = $element"
+                                    }.joinToString("\n")
+
+                            }
+                            val hookLua = """
+                                    |hook {
+                                    |  class = "$className",
+                                    |  classloader = lpparam.classLoader,
+                                    |  method = "$funcName",
+                                    |  params = {${p}},
+                                    |  before = function(it)
+                                    |$ps
+                                    |  end,
+                                    |  after = function(it)
+                                    |
+                                    |  end,
+                                    |}
+                                """.trimMargin()
+
+//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+//                            editor.insert(editor.selectionStart, hookLua)
+                            editor.insertText( hookLua,editor.left)
+
+                        }
+
+
+                        // 当前模式
+                        var mode = 0
+
+
+                        fun updateContentBasedOnMode(mode: Int) {
+                            // 隐藏所有布局
+                            layoutHookMethod.visibility = View.GONE
+                            layoutHookCtorMethod.visibility = View.GONE
+                            layoutChangeReturn.visibility = View.GONE
+                            layoutChangeParams.visibility = View.GONE
+
+
+                            when (mode) {
+                                //"Hook方法"
+                                0 -> {
+                                    layoutHookMethod.visibility = View.VISIBLE
+                                }
+                                //"Hook构造方法"
+                                1 -> {
+                                    layoutHookCtorMethod.visibility = View.VISIBLE
+                                }
+                                //"拦截执行"
+                                2 -> {
+                                    layoutHookMethod.visibility = View.VISIBLE
+                                }
+                                // 修改返回值
+                                3 -> {
+                                    layoutChangeReturn.visibility = View.VISIBLE
+                                }
+                                // 修改参数
+                                4 -> {
+                                    layoutChangeParams.visibility = View.VISIBLE
+                                }
+
+                            }
+                        }
+
+                        // 创建适配器并将其绑定到 AutoCompleteTextView
+                        val adapter = ArrayAdapter(
+                            context,
+                            // 使用 Material 库提供的简单下拉项布局
+                            android.R.layout.simple_dropdown_item_1line,
+                            hookModes
+                        )
+                        genCodeMenu.setAdapter(adapter)
+
+                        genCodeMenu.setOnItemClickListener { parent, view, position, id ->
+                            //val selectedMode = parent.getItemAtPosition(position).toString()
+                            mode = position
+                            updateContentBasedOnMode(position)
+                        }
+
+                        // 设置默认选中第一个项
+                        if (hookModes.isNotEmpty()) {
+                            val defaultMode = hookModes[0]
+                            genCodeMenu.setText(defaultMode, false) // false 表示不触发下拉
+
+                            // **【新增】初始化时调用，确保显示默认模式的布局**
+                            updateContentBasedOnMode(0)
+                        }
+
+
+                        MaterialAlertDialogBuilder(context)
+                            .setTitle(context.resources.getString(R.string.gen_hook_code))
+                            .setView(view)
+                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
+                                when (mode) {
+                                    0 -> {
+                                        genHookMethod()
+                                    }
+
+                                    1 -> {
+                                        genHookCtorMethod()
+                                    }
+
+                                    2 -> {
+                                        genReplaceMethod()
+                                    }
+
+                                    3 -> {
+                                        genChangeReturn()
+                                    }
+
+                                    4 -> {
+                                        genChangeParams()
+                                    }
+
+                                }
+                                dialog.dismiss()
+                            }
+                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
+                                dialog.dismiss()
+                            }
+                            .show()
+
+/*
+//// bottomSheetDialog
 //                        val bottomSheetDialog = BottomSheetDialog(context)
 //                        bottomSheetDialog.setTitle("Hook方法")
 //                        bottomSheetDialog.setContentView(view)
@@ -63,112 +385,82 @@ class ToolAdapter(
 //                            bottomSheetDialog.dismiss()
 //                        }
 //                        bottomSheetDialog.show()
-                        MaterialAlertDialogBuilder(context)
-                            .setTitle(context.resources.getString(R.string.hook_method))
-                            .setView(view)
-                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
-                                val className: String =
-                                    view.findViewById<TextInputEditText>(R.id.className).text.toString()
-                                val funcName: String =
-                                    view.findViewById<TextInputEditText>(R.id.funcName).text.toString()
-                                val param: String =
-                                    view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                var p = ""
-                                if (param.trim().isNotEmpty()) {
-                                    p = param.split(",")
-                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
-                                }
-                                val hookLua = """
-                                    |hook {
-                                    |  class = "$className",
-                                    |  classloader = lpparam.classLoader,
-                                    |  method = "$funcName",
-                                    |  params = {${p}},
-                                    |  before = function(it)
-                                    |    
-                                    |  end,
-                                    |  after = function(it)
-                                    |    
-                                    |  end,
-                                    |}
-                                """.trimMargin()
 
-//                                    "hook(\"$className\",\nlpparam.classLoader,\n\"$funcName\",\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                                editor.insert(editor.selectionStart, hookLua)
-                                dialog.dismiss()
-                            }
-                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
-                                dialog.dismiss()
-                            }
-                            .show()
+ */
+
                     }
+
+                    /*
+//                    1 -> {
+//                        val view =
+//                            LayoutInflater.from(context).inflate(R.layout.dialog_hookctor, null)
+//
+////                        val bottomSheetDialog = BottomSheetDialog(context)
+////                        bottomSheetDialog.setTitle("Hook构造方法")
+////                        bottomSheetDialog.setContentView(view)
+////                        val ok = view.findViewById<MaterialButton>(R.id.ok)
+////                        ok.setOnClickListener {
+////                            val className: String =
+////                                view.findViewById<TextInputEditText>(R.id.className).text.toString()
+////                            val param: String =
+////                                view.findViewById<TextInputEditText>(R.id.param).text.toString()
+////                            var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
+////
+////                            val hookLua =
+////                                "hookcotr(\"$className\",\nlpparam.classLoader,\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
+////                            editor.insert(editor.selectionStart, hookLua)
+////                            bottomSheetDialog.dismiss()
+////                        }
+////                        val cancel = view.findViewById<MaterialButton>(R.id.cancel)
+////                        cancel.setOnClickListener {
+////                            bottomSheetDialog.dismiss()
+////                        }
+////                        bottomSheetDialog.show()
+//                        MaterialAlertDialogBuilder(context)
+//                            .setTitle(context.resources.getString(R.string.hook_constructor))
+//                            .setView(view)
+//                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
+//                                val className: String =
+//                                    view.findViewById<TextInputEditText>(R.id.className).text.toString()
+//                                val param: String =
+//                                    view.findViewById<TextInputEditText>(R.id.param).text.toString()
+//                                var p = ""
+//                                if (param.trim().isNotEmpty()) {
+//                                    p = param.split(",")
+//                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
+//                                }
+//
+//                                val hookLua = """
+//                                    |hookctor  {
+//                                    |  class = "$className",
+//                                    |  classloader = lpparam.classLoader,
+//                                    |  params = {${p}},
+//                                    |  before = function(it)
+//                                    |
+//                                    |  end,
+//                                    |  after = function(it)
+//                                    |
+//                                    |  end,
+//                                    |}
+//                                """.trimMargin()
+////                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
+//                                editor.insert(editor.selectionStart, hookLua)
+//                                dialog.dismiss()
+//                            }
+//                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
+//                                dialog.dismiss()
+//                            }
+//                            .show()
+//                    }
+*/
 
                     1 -> {
-                        val view =
-                            LayoutInflater.from(context).inflate(R.layout.dialog_hookctotr, null)
-
-//                        val bottomSheetDialog = BottomSheetDialog(context)
-//                        bottomSheetDialog.setTitle("Hook构造方法")
-//                        bottomSheetDialog.setContentView(view)
-//                        val ok = view.findViewById<MaterialButton>(R.id.ok)
-//                        ok.setOnClickListener {
-//                            val className: String =
-//                                view.findViewById<TextInputEditText>(R.id.className).text.toString()
-//                            val param: String =
-//                                view.findViewById<TextInputEditText>(R.id.param).text.toString()
-//                            var p = param.split(",").joinToString(",") { "\"${it.trim()}\"" }
-//
-//                            val hookLua =
-//                                "hookcotr(\"$className\",\nlpparam.classLoader,\n$p,\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
-//                            editor.insert(editor.selectionStart, hookLua)
-//                            bottomSheetDialog.dismiss()
-//                        }
-//                        val cancel = view.findViewById<MaterialButton>(R.id.cancel)
-//                        cancel.setOnClickListener {
-//                            bottomSheetDialog.dismiss()
-//                        }
-//                        bottomSheetDialog.show()
-                        MaterialAlertDialogBuilder(context)
-                            .setTitle(context.resources.getString(R.string.hook_constructor))
-                            .setView(view)
-                            .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
-                                val className: String =
-                                    view.findViewById<TextInputEditText>(R.id.className).text.toString()
-                                val param: String =
-                                    view.findViewById<TextInputEditText>(R.id.param).text.toString()
-                                var p = ""
-                                if (param.trim().isNotEmpty()) {
-                                    p = param.split(",")
-                                        .joinToString(",") { "\"${it.trim()}\"" } + ",\n"
-                                }
-
-                                val hookLua = """
-                                    |hookctor  {
-                                    |  class = "$className",
-                                    |  classloader = lpparam.classLoader,
-                                    |  params = {${p}},
-                                    |  before = function(it)
-                                    |    
-                                    |  end,
-                                    |  after = function(it)
-                                    |    
-                                    |  end,
-                                    |}
-                                """.trimMargin()
-//                                    "hookcotr(\"$className\",\nlpparam.classLoader,\n${p}function(it)\n\nend,\nfunction(it)\n\nend)"
-                                editor.insert(editor.selectionStart, hookLua)
-                                dialog.dismiss()
-                            }
-                            .setNegativeButton(context.resources.getString(R.string.cancel)) { dialog, which ->
-                                dialog.dismiss()
-                            }
-                            .show()
-                    }
-
-                    2 -> {
 
                         val view =
                             LayoutInflater.from(context).inflate(R.layout.dialog_funcsign, null)
+
+                        /*
+
 
 //                        val bottomSheetDialog = BottomSheetDialog(context)
 //                        bottomSheetDialog.setTitle("Hook方法")
@@ -211,13 +503,19 @@ class ToolAdapter(
 //                            bottomSheetDialog.dismiss()
 //                        }
 //                        bottomSheetDialog.show()
+ */
                         MaterialAlertDialogBuilder(context)
                             .setTitle(context.resources.getString(R.string.import_smali))
                             .setView(view)
                             .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, which ->
                                 val input: String =
                                     view.findViewById<TextInputEditText>(R.id.input).text.toString()
-
+                                val checkBox_print_all_params: CheckBox =
+                                    view.findViewById<CheckBox>(R.id.checkBox_print_all_params)
+                                val checkBox_print_return: CheckBox =
+                                    view.findViewById<CheckBox>(R.id.checkBox_print_return)
+                                val checkBox_print_stack: CheckBox =
+                                    view.findViewById<CheckBox>(R.id.checkBox_print_stack)
                                 try {
                                     if (input.startsWith("invoke")) {
                                         val invokeInfo = parseDalvikInstruction(input)!!
@@ -247,7 +545,9 @@ class ToolAdapter(
                                             }().${invokeInfo["methodName"].toString()}()
                                             """.trimIndent()
                                         }
-                                        editor.insert(editor.selectionStart, invokeLua)
+//                                        editor.insert(editor.selectionStart, invokeLua)
+                                        editor.insertText( invokeLua,editor.left)
+
                                         dialog.dismiss()
 
                                     } else {
@@ -264,11 +564,12 @@ class ToolAdapter(
                                                     |  class = "${methodInfo.className}",
                                                     |  classloader = lpparam.classLoader,
                                                     |  params = {$p},
-                                                    |  before = function(it)
-                                                    |    
+                                                    |  before = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
+                                                    |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
                                                     |  end,
                                                     |  after = function(it)
-                                                    |    
+                                                    |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
+                                                    |    ${if (checkBox_print_stack.isChecked) "printStackTrace()" else ""}
                                                     |  end,
                                                     |}
                                                 """.trimMargin()
@@ -280,18 +581,20 @@ class ToolAdapter(
                                                     |  classloader = lpparam.classLoader,
                                                     |  method = "${methodInfo.methodName}",
                                                     |  params = {$p},
-                                                    |  before = function(it)
-                                                    |    
+                                                    |  before = function(it)${if (checkBox_print_all_params.isChecked || checkBox_print_return.isChecked || checkBox_print_stack.isChecked) "\n    log('==='..it.method.name..'()===')" else ""}
+                                                    |    ${if (checkBox_print_all_params.isChecked) "for i=0,#it.args-1 do\n      log('args['..tostring(i)..']='..tostring(it.args[i]))\n    end" else ""}
                                                     |  end,
                                                     |  after = function(it)
-                                                    |    
+                                                    |    ${if (checkBox_print_return.isChecked) "log('return='..tostring(it.result))" else ""}
                                                     |  end,
                                                     |}
                                                 """.trimMargin()
 
 //                                                "hook(\"${methodInfo.className}\",\nlpparam.classLoader,\n\"${methodInfo.methodName}\",$p\nfunction(it)\n\nend,\nfunction(it)\n\nend)"
                                             }
-                                        editor.insert(editor.selectionStart, hookLua)
+//                                        editor.insert(editor.selectionStart, hookLua)
+                                        editor.insertText( hookLua,editor.left)
+
                                         dialog.dismiss()
                                     }
 
@@ -313,7 +616,7 @@ class ToolAdapter(
                         view.findViewById<TextInputEditText>(R.id.input).setText(getClipboardText())
                     }
 
-                    3 -> {
+                    2 -> {
 
                         /**
                          * 判断当前位置的冒号是否是方法调用的冒号

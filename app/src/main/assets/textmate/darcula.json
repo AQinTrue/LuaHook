@@ -1,0 +1,220 @@
+{
+  "name": "darcula",
+  "type": "dark",
+  "semanticHighlighting": true,
+  "colors": {
+    "focusBorder": "#313335",
+    "pickerGroup.foreground": "#A9B7C6",
+    "pickerGroup.border": "#313335",
+    "list.activeSelectionForeground": "#A9B7C6",
+    "list.activeSelectionBackground": "#4B6EAF",
+    "list.hoverBackground": "#353535",
+    "list.inactiveSelectionBackground": "#3C3F41",
+    "list.highlightForeground": "#CC7832",
+    "selection.background": "#214283",
+    "editor.background": "#1C1B20",
+    "editor.foreground": "#A9B7C6",
+    "editorWhitespace.foreground": "#404040",
+    "editor.lineHighlightBackground": "#323232",
+    "editorLineNumber.activeForeground": "#A9B7C6",
+    "editorLineNumber.foreground": "#606366",
+    "editorCursor.foreground": "#BBBBBB",
+    "editor.selectionBackground": "#214283",
+    "minimap.selectionHighlight": "#214283",
+    "panel.background": "#1C1B20",
+    "panel.border": "#313335",
+    "sideBar.background": "#3C3F41",
+    "sideBarSectionHeader.background": "#313335",
+    "sideBar.foreground": "#A9B7C6",
+    "inputOption.activeBorder": "#5C5C5C",
+    "dropdown.background": "#3C3F41",
+    "dropdown.foreground": "#A9B7C6",
+    "editor.findMatchBackground": "#2154A6",
+    "editor.findMatchHighlightBackground": "#32593D",
+    "peekViewEditor.matchHighlightBackground": "#3d5e30",
+    "peekViewTitle.background": "#313335",
+    "peekViewEditor.background": "#1C1B20",
+    "peekViewResult.background": "#313335",
+    "peekView.border": "#4B6EAF",
+    "peekViewResult.matchHighlightBackground": "#3d5e30",
+    "tab.lastPinnedBorder": "#4B6EAF",
+    "statusBar.background": "#3C3F41",
+    "statusBar.foreground": "#A9B7C6",
+    "statusBar.debuggingBackground": "#CC7832",
+    "statusBar.noFolderBackground": "#3C3F41",
+    "statusBarItem.remoteBackground": "#4B6EAF",
+    "ports.iconRunningProcessForeground": "#6A8759",
+    "activityBar.background": "#3C3F41",
+    "activityBar.foreground": "#A9B7C6",
+    "activityBarBadge.background": "#4B6EAF",
+    "titleBar.activeBackground": "#3C3F41",
+    "titleBar.activeForeground": "#A9B7C6",
+    "button.background": "#4B6EAF",
+    "button.foreground": "#A9B7C6",
+    "editorGroup.dropBackground": "#4B6EAF88",
+    "inputValidation.infoBorder": "#4B6EAF",
+    "inputValidation.infoBackground": "#3C3F41",
+    "inputValidation.warningBackground": "#52503A",
+    "inputValidation.warningBorder": "#CC7832",
+    "inputValidation.errorBackground": "#5C3D3D",
+    "inputValidation.errorBorder": "#FF6B68",
+    "errorForeground": "#FF6B68",
+    "badge.background": "#4B6EAF",
+    "progressBar.background": "#4B6EAF",
+    "walkThrough.embeddedEditorBackground": "#1C1B20",
+    "editorIndentGuide.background": "#373737",
+    "editorIndentGuide.activeBackground": "#505050"
+  },
+  "settings": [
+    {
+      "settings": {
+        "background": "#1C1B20",
+        "foreground": "#A9B7C6",
+        "caret": "#BBBBBB",
+        "lineHighlight": "#323232",
+        "selection": "#214283",
+        "invisibles": "#404040"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "foreground": "#808080",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "String",
+      "scope": ["string", "string.quoted"],
+      "settings": {
+        "foreground": "#6A8759"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": ["constant.numeric"],
+      "settings": {
+        "foreground": "#6897BB"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": ["constant.language", "variable.language"],
+      "settings": {
+        "foreground": "#CC7832",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": ["constant.character", "constant.other"],
+      "settings": {
+        "foreground": "#9876AA"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": ["keyword", "storage"],
+      "settings": {
+        "foreground": "#CC7832",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Keyword Operator",
+      "scope": ["keyword.operator"],
+      "settings": {
+        "foreground": "#A9B7C6",
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": ["entity.name.class", "entity.name.type", "entity.name.namespace", "support.class"],
+      "settings": {
+        "foreground": "#A9B7C6",
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": ["entity.name.function", "support.function"],
+      "settings": {
+        "foreground": "#FFC66D"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": ["variable.parameter"],
+      "settings": {
+        "foreground": "#A9B7C6",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": ["entity.name.tag", "punctuation.definition.tag"],
+      "settings": {
+        "foreground": "#CC7832"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": ["entity.other.attribute-name"],
+      "settings": {
+        "foreground": "#A9B7C6"
+      }
+    },
+    {
+      "name": "Lua Keywords (Specific)",
+      "scope": [
+        "source.lua keyword.control.lua",
+        "source.lua storage.type.lua",
+        "source.lua keyword.operator.word.lua"
+      ],
+      "settings": {
+        "foreground": "#CC7832",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Lua Functions (Specific)",
+      "scope": [
+        "source.lua support.function.lua",
+        "source.lua entity.name.function.lua"
+      ],
+      "settings": {
+        "foreground": "#FFC66D"
+      }
+    },
+    {
+      "name": "Lua Libraries/Tables (Specific)",
+      "scope": [
+        "source.lua support.class.lua",
+        "source.lua support.type.lua",
+        "source.lua support.constant.library.lua"
+      ],
+      "settings": {
+        "foreground": "#9876AA",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Lua Constants (nil/true/false)",
+      "scope": ["source.lua constant.language.lua"],
+      "settings": {
+        "foreground": "#CC7832",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Lua Self",
+      "scope": ["source.lua variable.language.self.lua"],
+      "settings": {
+        "foreground": "#CC7832",
+        "fontStyle": "italic"
+      }
+    }
+  ]
+}

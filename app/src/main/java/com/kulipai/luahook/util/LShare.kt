@@ -3,30 +3,34 @@ package com.kulipai.luahook.util
 import android.content.Context
 import android.util.Base64
 import org.json.JSONObject
+import java.io.File
 
+/**
+ * /data/local/tmp/LuaHook/文件管理系统
+ */
 
 object LShare {
 
     const val DIR: String = "/data/local/tmp/LuaHook"
-    const val Project : String = "/Project"
-    const val AppConf : String = "/AppConf"
-    const val AppScript : String = "/AppScript"
-    const val Plugin : String = "/Plugin"
-
+    const val Project: String = "/Project"
+    const val AppConf: String = "/AppConf"
+    const val AppScript: String = "/AppScript"
+    const val Plugin: String = "/Plugin"
 
 
     var isok: Boolean = false
 
-    fun read(file: String): String {
-        var (context, isok) = ShellManager.shell("cat '$DIR$file'")
-        if (isok) {
-            return context
+    fun read(path: String): String {
+        val path = DIR + path
+        if (File(path).exists()) {
+            return File(path).readText()
         }
         return ""
     }
 
+
     fun write(file: String, content: String): Boolean {
-        val path = "$DIR/$file"
+        val path = "$DIR$file"
 
         // 将内容编码为 Base64，然后解码写入文件
         val base64Content = Base64.encodeToString(
@@ -40,10 +44,9 @@ object LShare {
         echo "$base64Content" | base64 -d > "$path"
     """.trimIndent()
 
-        val (output, success) = ShellManager.shell(script)
+        val (_, success) = ShellManager.shell(script)
         return success
     }
-
 
 
     /**
@@ -100,7 +103,7 @@ object LShare {
     }
 
     fun writeTmp(packageName: String, content: String): Boolean {
-        var tmpPath = "/tmp"
+        val tmpPath = "/tmp"
 
         if (isok && ensureDirectoryExists(DIR + tmpPath)) {
             return write("$tmpPath/$packageName.lua", content)
@@ -112,16 +115,16 @@ object LShare {
     fun rm(file: String): Boolean {
         val path = "$DIR/$file"
         val script = "rm -f $path"
-        val (output, success) = ShellManager.shell(script)
+        val (_, success) = ShellManager.shell(script)
         return success
     }
 
     fun init(context: Context) {
         ensureDirectoryExists(DIR)
-        ensureDirectoryExists(DIR+Project)
-        ensureDirectoryExists(DIR+AppConf)
-        ensureDirectoryExists(DIR+AppScript)
-        ensureDirectoryExists(DIR+Plugin)
+        ensureDirectoryExists(DIR + Project)
+        ensureDirectoryExists(DIR + AppConf)
+        ensureDirectoryExists(DIR + AppScript)
+        ensureDirectoryExists(DIR + Plugin)
         isok = true
     }
 
@@ -134,12 +137,9 @@ object LShare {
 
     fun DirectoryExists(path: String): Boolean {
         // 使用 ls 判断目录是否存在
-        val (checkOutput, checkSuccess) = ShellManager.shell("ls \"$path\"")
-        if (checkSuccess) {
-            // 目录存在
-            return true
-        }
-        return false
+        val (_, checkSuccess) = ShellManager.shell("ls \"$path\"")
+        return checkSuccess
+        // 目录存在
     }
 
     /**
@@ -155,7 +155,7 @@ object LShare {
 
 
         // 不存在则尝试创建
-        val (mkdirOutput, mkdirSuccess) = ShellManager.shell("mkdir -p \"$path\"")
+        val (_, mkdirSuccess) = ShellManager.shell("mkdir -p \"$path\"")
         return mkdirSuccess
     }
 

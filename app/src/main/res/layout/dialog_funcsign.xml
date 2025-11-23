@@ -4,48 +4,77 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
-<!--    <TextView-->
-<!--        style="@style/TextAppearance.Material3.TitleLarge"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginStart="16dp"-->
-<!--        android:text="方法签名" />-->
+    <!--    <TextView-->
+    <!--        style="@style/TextAppearance.Material3.TitleLarge"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginStart="16dp"-->
+    <!--        android:text="方法签名" />-->
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/funcSign"
         android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
         android:layout_marginTop="12dp"
-        >
+        android:layout_marginEnd="12dp"
+        android:hint="@string/funcSign">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
+            android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
-<!--    <LinearLayout-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginTop="16dp"-->
-<!--        android:layout_marginEnd="16dp"-->
-<!--        android:gravity="end"-->
-<!--        android:orientation="horizontal">-->
+    <CheckBox
+        android:id="@+id/checkBox_print_all_params"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="@string/print_all_params" />
 
-<!--        <com.google.android.material.button.MaterialButton-->
-<!--            android:id="@+id/cancel"-->
-<!--            style="@style/Widget.Material3.Button.TextButton"-->
-<!--            android:layout_width="wrap_content"-->
+    <CheckBox
+        android:id="@+id/checkBox_print_return"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="@string/print_return" />
 
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="取消" />-->
+    <CheckBox
+        android:id="@+id/checkBox_print_stack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="@string/print_stack" />
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="16dp"-->
+    <!--        android:layout_marginEnd="16dp"-->
+    <!--        android:gravity="end"-->
+    <!--        android:orientation="horizontal">-->
 
-<!--        <com.google.android.material.button.MaterialButton-->
-<!--            android:id="@+id/ok"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="确定" />-->
-<!--    </LinearLayout>-->
+    <!--        <com.google.android.material.button.MaterialButton-->
+    <!--            android:id="@+id/cancel"-->
+    <!--            style="@style/Widget.Material3.Button.TextButton"-->
+    <!--            android:layout_width="wrap_content"-->
+
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:text="取消" />-->
+
+    <!--        <com.google.android.material.button.MaterialButton-->
+    <!--            android:id="@+id/ok"-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:text="确定" />-->
+    <!--    </LinearLayout>-->
 </LinearLayout>

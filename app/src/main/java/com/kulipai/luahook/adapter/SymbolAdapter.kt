@@ -5,11 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.androlua.LuaEditor
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.R
+import io.github.rosemoe.sora.widget.CodeEditor
 
-class SymbolAdapter(private val editor: LuaEditor) :
+class SymbolAdapter(private val editor: CodeEditor) :
     RecyclerView.Adapter<SymbolAdapter.SymbolViewHolder>() {
 
     val symbols =
@@ -55,21 +55,30 @@ class SymbolAdapter(private val editor: LuaEditor) :
         init {
             symbolItem.setOnClickListener {
                 val symbol = symbols[bindingAdapterPosition]
-                var idx = editor.selectionStart
+                var idx = editor.left
+
                 if (editor.isSelected && symbol == "\"") {
-                    editor.insert(editor.selectionStart, symbol)
-                    editor.insert(editor.selectionEnd, symbol)
+                    editor.insertText( symbol,editor.left)
+                    editor.insertText(symbol, editor.right)
                 }
                 when (symbol) {
-                    "log" -> {editor.insert(
-                        idx,
-                        """log()"""
+                    "log" -> {editor.insertText(
+                        """log()""",
+                        idx
+
                     )
-                        editor.setSelection(editor.selectionStart-1)
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+4)
                     }
 
-                    "lp" -> editor.insert(idx, "lpparam")
-                    else -> editor.insert(editor.selectionStart, symbol)
+                    "lp" -> {
+                        editor.insertText("lpparam",idx)
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+"lpparam".length)
+
+                    }
+                    else -> {
+                        editor.insertText(symbol,idx )
+                        editor.setSelection(editor.cursor.rightLine,editor.cursor.rightColumn+symbol.length)
+                    }
                 }
 
 

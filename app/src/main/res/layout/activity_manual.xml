@@ -78,7 +78,7 @@
             app:strokeColor="#000000"
             app:strokeWidth="0dp">
 
-            <com.androlua.LuaEditor
+            <io.github.rosemoe.sora.widget.CodeEditor
                 android:id="@+id/editor"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>

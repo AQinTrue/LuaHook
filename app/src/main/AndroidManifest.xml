@@ -21,7 +21,7 @@
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="35">
         <activity
-            android:name=".ErrorActivity"
+            android:name=".activity.ErrorActivity"
             android:exported="false" />
         <activity
             android:name=".activity.MultiScriptActivity"
@@ -29,9 +29,6 @@
         <activity
             android:name=".activity.ScriptSetActivity"
             android:exported="true" />
-        <activity
-            android:name=".Welcome"
-            android:exported="false" />
         <activity
             android:name=".activity.AboutActivity"
             android:exported="false" />
@@ -43,6 +40,7 @@
             android:exported="false" />
         <activity
             android:name=".activity.AppsEdit"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".activity.Manual"
@@ -52,11 +50,14 @@
             android:exported="false" />
         <activity
             android:name=".activity.EditActivity"
+            android:windowSoftInputMode="adjustResize"
+
             android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustNothing">
+            android:windowSoftInputMode="adjustNothing"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

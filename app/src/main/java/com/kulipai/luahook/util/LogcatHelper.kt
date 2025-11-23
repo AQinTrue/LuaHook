@@ -6,6 +6,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * 读取系统日志的工具类
+ */
+
 object LogcatHelper {
 
     suspend fun getSystemLogsByTagSince(tag: String, since: String? = null): List<String> {

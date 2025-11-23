@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 31
-        versionName = "3.9.5"
+        versionCode = 33
+        versionName = "3.9.6-beta1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -72,8 +72,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-
+//    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(fileTree(mapOf("dir" to "${rootProject.projectDir}/libs", "include" to listOf("*.jar"))))
     implementation(libs.okhttp)
     compileOnly(fileTree("compileOnly"))
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -88,6 +88,11 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.shizuku.api)
     implementation(libs.provider) // 如果你需要使用 ShizukuProvider
+
+    implementation(platform(libs.sora.editor.bom))
+    implementation(libs.sora.editor)
+    implementation(libs.sora.editor.language.textmate)
+    implementation(project(":androlua"))
 
     //Xposed service 100
     compileOnly(project(":libxposed:api"))

@@ -1,7 +1,13 @@
+package com.kulipai.luahook.util
+
 import android.content.Context
 import android.content.res.Configuration
 import java.util.*
 import androidx.core.content.edit
+
+/**
+ * 语言工具类
+ */
 
 object LanguageUtil {
 

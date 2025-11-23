@@ -1,6 +1,7 @@
 package com.kulipai.luahook.library
-import com.kulipai.luahook.util.d
+
 import com.kulipai.luahook.util.e
+
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import org.luaj.Globals
@@ -8,6 +9,11 @@ import org.luaj.LuaError
 import org.luaj.LuaValue
 import org.luaj.lib.OneArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
+
+/**
+ * imports可以导入宿主的类或者模块自己的类
+ * 优先宿主
+ */
 
 class LuaImport(
     private val classLoader: ClassLoader,

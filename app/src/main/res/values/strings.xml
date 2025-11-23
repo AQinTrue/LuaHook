@@ -124,4 +124,10 @@
     <string name="repository">仓库</string>
     <string name="github_repo">Github开源仓库地址</string>
     <string name="show_system_app">显示系统应用</string>
+    <string name="gen_hook_code">生成hook代码</string>
+    <string name="returns">返回值</string>
+    <string name="change_value">修改值</string>
+    <string name="print_all_params">打印所有参数</string>
+    <string name="print_return">打印返回值</string>
+    <string name="print_stack">打印堆栈</string>
 </resources>

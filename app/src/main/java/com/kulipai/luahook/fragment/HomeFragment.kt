@@ -1,6 +1,6 @@
 package com.kulipai.luahook.fragment
 
-import AViewModel
+import com.kulipai.luahook.util.AViewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -71,7 +71,7 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        val view = inflater.inflate(R.layout.home, container, false)
+        val view = inflater.inflate(R.layout.activity_main_home, container, false)
         val card1: MaterialCardView by lazy { view.findViewById(R.id.card1) }
         val howToActivateCard: MaterialCardView by lazy { view.findViewById(R.id.how_to_activate) }
         val card: MaterialCardView by lazy { view.findViewById(R.id.card) }
