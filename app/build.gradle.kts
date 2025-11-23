@@ -39,6 +39,20 @@ android {
         }
     }
 
+    packaging {
+        resources {
+            // 排除 APK 根目录下的这些文件夹及其内容
+            excludes += "tables/**"
+            excludes += "schema/**"
+            excludes += "src/**"
+
+            // （排除许可证文件重复导致的构建错误）
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE*"
+            excludes += "META-INF/NOTICE*"
+        }
+    }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
