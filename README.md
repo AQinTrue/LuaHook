@@ -54,6 +54,10 @@ Alternatively, you can directly submit issues and suggestions on the project's I
 
 [NeLuaJ](https://github.com/znzsofficial/NeLuaJ)
 
+[sora-editor](https://github.com/Rosemoe/sora-editor)
+
+[sora-editor-with-androlua](https://github.com/dingyi222666/sora-editor-with-androlua)
+
 **支持/Support**
 
 微信赞赏方式
