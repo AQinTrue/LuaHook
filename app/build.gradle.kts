@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 34
-        versionName = "3.9.6"
+        versionCode = 35
+        versionName = "3.9.6-fix"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -42,7 +42,7 @@ android {
     packaging {
         resources {
             // 排除 APK 根目录下的这些文件夹及其内容
-            excludes += "tables/**"
+//            excludes += "tables/**"
             excludes += "schema/**"
             excludes += "src/**"
 

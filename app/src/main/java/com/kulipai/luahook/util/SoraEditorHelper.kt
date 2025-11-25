@@ -97,8 +97,6 @@ object SoraEditorHelper {
             e.printStackTrace()
         }
 
-
-
         setupTextmate()
         resetColorScheme()
         ensureTextmateTheme()
