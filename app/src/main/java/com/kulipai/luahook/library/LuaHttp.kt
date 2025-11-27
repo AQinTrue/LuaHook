@@ -82,7 +82,7 @@ object LuaHttp{
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body.string()
+                        val body = response.body.bytes()
                         callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
@@ -158,7 +158,7 @@ object LuaHttp{
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body.string()
+                        val body = response.body.bytes()
                         callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
@@ -340,7 +340,7 @@ object LuaHttp{
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body.string()
+                        val body = response.body.bytes()
                         callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
@@ -558,7 +558,7 @@ object LuaHttp{
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body.string()
+                        val body = response.body.bytes()
                         callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
@@ -606,7 +606,7 @@ object LuaHttp{
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        val body = response.body.string()
+                        val body = response.body.bytes()
                         callback.call(valueOf(response.code), valueOf(body))
                     }
                 })
@@ -679,7 +679,7 @@ object LuaHttp{
                         }
 
                         override fun onResponse(call: Call, response: Response) {
-                            val body = response.body.string()
+                            val body = response.body.bytes()
                             callback.call(valueOf(response.code), valueOf(body))
                         }
                     })
