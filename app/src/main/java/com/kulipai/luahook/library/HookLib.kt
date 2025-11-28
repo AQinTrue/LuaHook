@@ -491,7 +491,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -504,7 +504,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -523,7 +523,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -536,7 +536,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -556,7 +556,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -568,7 +568,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -648,7 +648,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
 
                                 }
@@ -662,7 +662,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
 
                                 }
@@ -688,7 +688,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
 
                                 }
@@ -701,7 +701,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
                                 }
                             }
@@ -773,7 +773,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                         return null
@@ -793,7 +793,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                         return null
@@ -814,7 +814,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                     return null
@@ -891,7 +891,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
                                 }
                                 return null
@@ -915,7 +915,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
                                 }
                                 return null
@@ -965,7 +965,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -978,7 +978,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -996,7 +996,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -1009,7 +1009,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -1042,7 +1042,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
                                 }
                             }
@@ -1054,7 +1054,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                         func.call(luaParam)
                                     } catch (e: Exception) {
                                         val err = simplifyLuaError(e.toString())
-                                        "${lpparam.packageName}:$scriptName:$err".e()
+                                        ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                     }
                                 }
                             }
@@ -1065,7 +1065,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
                 } catch (e: Exception) {
                     val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$scriptName:$err".e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                     return FALSE
                 }
             }
@@ -1126,7 +1126,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -1139,7 +1139,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -1157,7 +1157,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
 
                                         }
@@ -1170,7 +1170,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                                 func.call(luaParam)
                                             } catch (e: Exception) {
                                                 val err = simplifyLuaError(e.toString())
-                                                "${lpparam.packageName}:$scriptName:$err".e()
+                                                ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                             }
                                         }
                                     }
@@ -1240,7 +1240,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -1252,7 +1252,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -1320,7 +1320,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -1332,7 +1332,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
                                             func.call(luaParam)
                                         } catch (e: Exception) {
                                             val err = simplifyLuaError(e.toString())
-                                            "${lpparam.packageName}:$scriptName:$err".e()
+                                            ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                                         }
                                     }
                                 }
@@ -1346,7 +1346,7 @@ class HookLib(private val lpparam: LPParam, private val scriptName: String = "")
 
                 } catch (e: Exception) {
                     val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$scriptName:$err".e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                     return NIL
                 }
             }

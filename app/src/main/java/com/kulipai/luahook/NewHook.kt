@@ -106,7 +106,7 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
                     }
                 } catch (e: Exception) {
                     val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$scriptName:$err".e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                 }
             }
         }
@@ -123,7 +123,7 @@ class NewHook(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(ba
         LuaActivity(null).registerTo(globals)
         HookLib(lpparam, scriptName).registerTo(globals)
         LuaUtil.loadBasicLib(globals)
-        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals)
+        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals,lpparam.packageName)
 
         return globals
     }

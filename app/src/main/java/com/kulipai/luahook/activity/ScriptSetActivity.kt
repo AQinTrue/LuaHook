@@ -22,9 +22,6 @@ class ScriptSetActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-
-
-
         val path = intent.getStringExtra("path").toString()
         val script = read(path)
         val func = extractLuaFunctionByLabel(script, "set")
@@ -34,7 +31,7 @@ class ScriptSetActivity : AppCompatActivity() {
             try {
                 createGlobals().load("${func.functionCode}\n$callfunc()").call()
             } catch (e: Exception) {
-                val err = simplifyLuaError(e.toString(),funcLine)
+                val err = simplifyLuaError(e.toString(), funcLine)
                 val errText = TextView(this)
                 errText.text = err
                 errText.gravity = Gravity.CENTER
@@ -221,8 +218,6 @@ class ScriptSetActivity : AppCompatActivity() {
     }
 
 
-
-
     fun createGlobals(): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
@@ -237,13 +232,16 @@ class ScriptSetActivity : AppCompatActivity() {
         globals["activity"] = CoerceJavaToLua.coerce(this)
         LuaActivity(this).registerTo(globals)
         LuaUtil.loadBasicLib(globals)
-        LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
+        LuaImport(
+            this::class.java.classLoader!!,
+            this::class.java.classLoader!!
+        ).registerTo(globals, packageName)
         LuaUtil.shell(globals)
         return globals
     }
 
 
-    fun simplifyLuaError(raw: String,funcLine: Int): String {
+    fun simplifyLuaError(raw: String, funcLine: Int): String {
         val lines = raw.lines()
 
         // 1. 优先提取第一条真正的错误信息（不是 traceback）
@@ -253,7 +251,7 @@ class ScriptSetActivity : AppCompatActivity() {
             val match = Regex(""".*:(\d+) (.+)""").find(primaryErrorLine)
             if (match != null) {
                 val (lineNum, msg) = match.destructured
-                return "line ${lineNum.toInt()+funcLine-1}: $msg"
+                return "line ${lineNum.toInt() + funcLine - 1}: $msg"
             }
         }
 
@@ -263,7 +261,7 @@ class ScriptSetActivity : AppCompatActivity() {
             val match = Regex(""".*:(\d+): (.+)""").find(fallbackLine)
             if (match != null) {
                 val (lineNum, msg) = match.destructured
-                return "line ${lineNum.toInt()+funcLine-1}: $msg"
+                return "line ${lineNum.toInt() + funcLine - 1}: $msg"
             }
         }
 

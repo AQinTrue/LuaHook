@@ -41,7 +41,7 @@ class EmptyActivity : BaseActivity() {
         globals["activity"] = CoerceJavaToLua.coerce(this)
         LuaActivity(this).registerTo(globals)
 
-        LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals)
+//        LuaImport(this::class.java.classLoader!!, this::class.java.classLoader!!).registerTo(globals,)
         LuaUtil.loadBasicLib(globals)
         return globals
     }
