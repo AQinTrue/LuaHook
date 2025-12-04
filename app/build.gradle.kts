@@ -19,7 +19,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
         versionCode = 37
-        versionName = "3.9.7-zeta"
+        versionName = "3.9.7-zeta1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
