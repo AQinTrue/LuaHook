@@ -15,7 +15,7 @@ appcompat = "1.7.1"
 libsu = "3.1.0"
 lifecycleViewmodelKtx = "2.10.0"
 material = "1.14.0-alpha07"
-activity = "1.12.0"
+activity = "1.12.1"
 constraintlayout = "2.2.1"
 okhttp = "5.3.2"
 preferenceKtx = "1.2.1"
@@ -27,7 +27,8 @@ compileSdk = "36"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
 lint = "31.13.1"
-sora-editor = "0.24.0"
+sora-editor = "0.24.2"
+coil = "3.3.0"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -59,6 +60,10 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 sora-editor-bom = { group = "io.github.rosemoe", name = "editor-bom", version.ref = "sora-editor" }
 sora-editor = { group = "io.github.rosemoe", name = "editor" }
 sora-editor-language-textmate = { group = "io.github.rosemoe", name = "language-textmate" }
+coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 
 [plugins]
 agp-lib = { id = "com.android.library", version.ref = "agp" }

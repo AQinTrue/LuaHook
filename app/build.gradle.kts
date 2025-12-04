@@ -112,5 +112,11 @@ dependencies {
     compileOnly(project(":libxposed:api"))
     implementation(project(":libxposed:service"))
 
+    //coil3 加载图片
+    implementation(libs.coil)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
+    implementation(libs.coil.gif)
+
 
 }
