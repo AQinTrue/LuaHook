@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 36
-        versionName = "3.9.7-beta"
+        versionCode = 37
+        versionName = "3.9.7-zeta"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -117,6 +117,9 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.svg)
     implementation(libs.coil.gif)
+
+    // nanohttpd
+    implementation(libs.nanohttpd)
 
 
 }
