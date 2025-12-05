@@ -41,4 +41,4 @@
 -dontwarn io.kulipai.sora.luaj.**
 -keep class io.dingyi222666.sora.lua.tool.** { *; }
 -dontwarn io.github.rosemoe.oniguruma.OnigNative
--keep class fi.iki.elonen.** { *; }
+-keep class org.nanohttpd.protocols.http.** { *; }
