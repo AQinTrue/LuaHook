@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 34,
-      "versionName": "3.9.6",
+      "versionCode": 37,
+      "versionName": "3.9.7-zeta1",
       "outputFile": "app-release.apk"
     }
   ],

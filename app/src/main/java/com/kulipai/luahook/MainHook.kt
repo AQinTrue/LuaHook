@@ -98,7 +98,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     }
                 } catch (e: Exception) {
                     val err = simplifyLuaError(e.toString())
-                    "${lpparam.packageName}:$scriptName:$err".e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
                 }
             }
         }
@@ -121,7 +121,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaActivity(null).registerTo(globals)
         HookLib(lpparam, scriptName).registerTo(globals)
 
-        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals)
+        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals,lpparam.packageName)
         LuaUtil.loadBasicLib(globals)
 
         return globals

@@ -18,8 +18,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 36
-        versionCode = 35
-        versionName = "3.9.6-fix"
+        versionCode = 38
+        versionName = "3.9.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -31,7 +31,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true // 启用代码压缩
-            isShrinkResources = true // 启用资源压缩
+            isShrinkResources = false // 启用资源压缩
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -111,6 +111,15 @@ dependencies {
     //Xposed service 100
     compileOnly(project(":libxposed:api"))
     implementation(project(":libxposed:service"))
+
+    //coil3 加载图片
+    implementation(libs.coil)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
+    implementation(libs.coil.gif)
+
+    // nanohttpd
+    implementation(libs.nanohttpd)
 
 
 }

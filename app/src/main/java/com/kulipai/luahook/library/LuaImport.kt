@@ -1,7 +1,10 @@
 package com.kulipai.luahook.library
 
+import com.kulipai.luahook.library.LuaUtil.simplifyLuaError
+import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.util.LShare.read
+import com.kulipai.luahook.util.d
 import com.kulipai.luahook.util.e
-
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import org.luaj.Globals
@@ -19,39 +22,48 @@ class LuaImport(
     private val classLoader: ClassLoader,
     private val thisLoader: ClassLoader,
 ) {
-    fun registerTo(env: Globals) {
+    fun registerTo(env: Globals, packageName: String) {
+
+        env["require"] = object : OneArgFunction() {
+            override fun call(scriptName: LuaValue): LuaValue {
+                try {
+                    return env.load(read(LShare.AppScript + "/" + packageName + "/" + scriptName + ".lua"))
+                        .call()
+                } catch (e: Exception) {
+                    ("[Error] | Package: $packageName | Script: $scriptName | Message: "+simplifyLuaError(e.toString())).d()
+                }
+                return NIL
+            }
+        }
 
         env["imports"] = object : OneArgFunction() {
             override fun call(classNameValue: LuaValue): LuaValue {
-            return try
-            {
+                return try {
 
-                val className = classNameValue.checkjstring()
-                var clazz: Class<*>
-                try {
-                    clazz = XposedHelpers.findClass(className, classLoader)
-                } catch (_: ClassNotFoundError) {
+                    val className = classNameValue.checkjstring()
+                    var clazz: Class<*>
                     try {
-                        clazz = XposedHelpers.findClass(className, thisLoader)
+                        clazz = XposedHelpers.findClass(className, classLoader)
                     } catch (_: ClassNotFoundError) {
-                        "Error:import.ClassNotFoundError($className)".e()
-                        clazz = Void::class.java
+                        try {
+                            clazz = XposedHelpers.findClass(className, thisLoader)
+                        } catch (_: ClassNotFoundError) {
+                            "Error:import.ClassNotFoundError($className)".e()
+                            clazz = Void::class.java
+                        }
                     }
-                }
-                val luaClass = CoerceJavaToLua.coerce(clazz)
+                    val luaClass = CoerceJavaToLua.coerce(clazz)
 
-                // 提取简名作为全局变量（例如 java.io.File -> File）
-                val simpleName = className.substringAfterLast('.')
-                env.set(simpleName, luaClass)
-                luaClass
-            } catch (e: Exception)
-            {
-                throw LuaError("import.err: " + e.message)
+                    // 提取简名作为全局变量（例如 java.io.File -> File）
+                    val simpleName = className.substringAfterLast('.')
+                    env.set(simpleName, luaClass)
+                    luaClass
+                } catch (e: Exception) {
+                    throw LuaError("import.err: " + e.message)
+                }
             }
         }
     }
-    }
-
 
 
 }

@@ -3,6 +3,7 @@ package com.kulipai.luahook
 import com.kulipai.luahook.util.DataRepository.shellInit
 import com.kulipai.luahook.util.LanguageUtil
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import com.google.android.material.color.DynamicColors
@@ -27,6 +28,7 @@ class MyApplication : Application() {
     private val waiters = mutableListOf<CompletableDeferred<List<AppInfo>>>()
 
     companion object {
+        @JvmStatic
         lateinit var instance: MyApplication
             private set
     }

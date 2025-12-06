@@ -251,11 +251,41 @@ class EditActivity : AppCompatActivity() {
                 // 格式化
 //                editor.format()
                 try {
-                    val startLine = editor.cursor.leftLine
-                    val luaCode = editor.text
+                    // 1. 保存当前状态
+                    val cursorLine = editor.cursor.leftLine
+                    val cursorColumn = editor.cursor.leftColumn
+                    val currentScrollY = editor.offsetY // 获取当前滚动纵坐标
+
+                    val luaCode = editor.text.toString()
                     LuaParser.lexer(luaCode, Globals(), Flag())
-                    editor.setText(AutoIndent.format(luaCode, 2))
-                    editor.setSelection(startLine, 0)
+                    val formattedCode = AutoIndent.format(luaCode, 2)
+
+                    // 获取 Content 对象
+                    val content = editor.text
+
+                    // 2. 使用 batchEdit 进行原子操作（关键步骤）
+                    // 这告诉编辑器这一系列操作是一个整体，Undo 时会一步撤销回格式化前
+                    content.beginBatchEdit()
+
+                    // 删除全部内容 (从 0,0 到 最后一行,最后一列)
+                    content.delete(0, 0, content.lineCount - 1, content.getColumnCount(content.lineCount - 1))
+
+                    // 插入格式化后的代码
+                    content.insert(0, 0, formattedCode)
+
+                    // 结束编辑
+                    content.endBatchEdit()
+
+                    // 3. 恢复光标位置
+                    val targetLine = cursorLine.coerceAtMost(content.lineCount - 1)
+                    val targetCol = if (targetLine == cursorLine) cursorColumn else 0
+                    editor.setSelection(targetLine, targetCol)
+
+                    // 4. 强制恢复视角（解决概率性跳回第一行的问题）
+                    if (!editor.scroller.isFinished) {
+                        editor.scroller.forceFinished(true)
+                    }
+                    editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
                 } catch (e: Exception) {
                     Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
