@@ -1,5 +1,6 @@
 package com.kulipai.luahook.library
 
+import com.kulipai.luahook.util.e
 import org.luaj.LuaTable
 import org.luaj.LuaValue
 import org.luaj.Varargs
@@ -14,6 +15,12 @@ class NativeLib {
     init {
         System.loadLibrary("luahook")
     }
+
+
+    external fun getModuleBase(module_name: String, module_field: String): Long
+    external fun writeDword(ptr: Long, value: Int): Boolean
+    external fun readDword(ptr: Long): Int
+    external fun readPoint(ptr: Long,  offsets: LongArray): Long
 
 
     external fun read(ptr: Long, size: Int): ByteArray?
@@ -55,6 +62,50 @@ class NativeLib {
                 return CoerceJavaToLua.coerce(base)
             }
         }
+
+        table["getModuleBase"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): Varargs? {
+                val name = args.arg(1).tojstring()
+                val fieldName = args.arg(2).tojstring()
+                val base = getModuleBase(name, fieldName)
+                return CoerceJavaToLua.coerce(base)
+            }
+        }
+
+        table["writeDword"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                val value = args.arg(2).toint()
+                return CoerceJavaToLua.coerce(writeDword(ptr, value))
+            }
+        }
+
+
+        table["readDword"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                return CoerceJavaToLua.coerce(readDword(ptr))
+            }
+        }
+
+
+        table["readPoint"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                val offsetsTable = args.arg(2).checktable()
+
+                val offsetCount = offsetsTable.length()
+                val offsets = LongArray(offsetCount)
+
+                for (i in 0 until offsetCount) {
+                    offsets[i] = offsetsTable.get(i + 1).tolong()
+                }
+
+                val result = readPoint(ptr, offsets)
+                return CoerceJavaToLua.coerce(result)
+            }
+        }
+
 
         table["resolve_symbol"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
