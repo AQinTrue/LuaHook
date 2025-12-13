@@ -2,8 +2,11 @@
 #include <jni.h>
 #include <sys/mman.h>
 #include "xdl.h"
+#include "SysRead.h"
 
-extern "C" JNIEXPORT jbyteArray JNICALL
+extern "C" JNIEXPORT jbyteArray
+
+JNICALL
 Java_com_kulipai_luahook_library_NativeLib_read(JNIEnv *env, jobject thiz, jlong ptr, jint size) {
     if (ptr == 0 || size <= 0) return nullptr;
 
@@ -14,8 +17,11 @@ Java_com_kulipai_luahook_library_NativeLib_read(JNIEnv *env, jobject thiz, jlong
     return byteArray;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlong ptr, jbyteArray data) {
+extern "C" JNIEXPORT jboolean
+
+JNICALL
+Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlong ptr,
+                                                 jbyteArray data) {
     if (ptr == 0 || data == nullptr) return JNI_FALSE;
 
     jsize size = env->GetArrayLength(data);
@@ -32,7 +38,9 @@ Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlon
     return JNI_TRUE;
 }
 
-extern "C" JNIEXPORT jlong JNICALL
+extern "C" JNIEXPORT jlong
+
+JNICALL
 Java_com_kulipai_luahook_library_NativeLib_moduleBase(JNIEnv *env, jobject thiz, jstring name) {
     const char *chars = env->GetStringUTFChars(name, nullptr);
     int64_t result = 0;
@@ -46,8 +54,11 @@ Java_com_kulipai_luahook_library_NativeLib_moduleBase(JNIEnv *env, jobject thiz,
     return result;
 }
 
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_kulipai_luahook_library_NativeLib_resolveSymbol(JNIEnv *env, jobject thiz, jstring module, jstring name) {
+extern "C" JNIEXPORT jlong
+
+JNICALL
+Java_com_kulipai_luahook_library_NativeLib_resolveSymbol(JNIEnv *env, jobject thiz, jstring module,
+                                                         jstring name) {
     const char *module_chars = env->GetStringUTFChars(module, nullptr);
     const char *name_chars = env->GetStringUTFChars(name, nullptr);
     void *handle = xdl_open(module_chars, XDL_DEFAULT);
@@ -64,4 +75,111 @@ Java_com_kulipai_luahook_library_NativeLib_resolveSymbol(JNIEnv *env, jobject th
     env->ReleaseStringUTFChars(name, module_chars);
     env->ReleaseStringUTFChars(name, name_chars);
     return result;
+}
+
+extern "C"
+JNIEXPORT jlong
+
+JNICALL
+Java_com_kulipai_luahook_library_NativeLib_getModuleBase(JNIEnv *env, jobject thiz,
+                                                         jstring module_name,
+                                                         jstring module_field) {
+    const char *native_module_name = env->GetStringUTFChars(module_name, nullptr);
+    const char *native_module_field = env->GetStringUTFChars(module_field, nullptr);
+    if (native_module_name == nullptr || native_module_field == nullptr) {
+        return 0;
+    }
+
+    uintptr_t base_address = GetModuleBase(native_module_name, native_module_field);
+    env->ReleaseStringUTFChars(module_name, native_module_name);
+    env->ReleaseStringUTFChars(module_field, native_module_field);
+    return static_cast<jlong>(base_address);;
+
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_kulipai_luahook_library_NativeLib_writeDword(JNIEnv *env, jobject thiz, jlong ptr,
+                                                      jint value) {
+    if (ptr == 0) return JNI_FALSE;
+    try {
+        WriteDword(static_cast<long>(ptr), static_cast<int>(value));
+        return JNI_TRUE;
+    } catch (...) {
+        return JNI_FALSE;
+    }
+
+
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_kulipai_luahook_library_NativeLib_readDword(JNIEnv *env, jobject thiz, jlong ptr) {
+    if (ptr == 0) return JNI_FALSE;
+    try {
+        return (jint) ReadDword((long) ptr);
+    } catch (...) {
+        return JNI_FALSE;
+    }
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_kulipai_luahook_library_NativeLib_readPoint(JNIEnv *env, jobject thiz,
+                                                     jlong ptr, jlongArray offsetsArray) {
+    if (ptr == 0) {
+        return 0;
+    }
+
+    try {
+        // 如果没有偏移数组，只读取一级指针
+        if (!offsetsArray) {
+            return (jlong)ReadZZ((long)ptr);
+        }
+
+        jsize length = env->GetArrayLength(offsetsArray);
+        if (length == 0) {
+            return (jlong)ReadZZ((long)ptr);
+        }
+
+        // 获取偏移数组
+        jlong* offsetsPtr = env->GetLongArrayElements(offsetsArray, nullptr);
+        if (!offsetsPtr) {
+            return (jlong)ReadZZ((long)ptr);
+        }
+
+        // 将 jlong 转换为 int（因为您的 ReadPoint 使用 int 参数）
+        std::vector<int> offsets;
+        offsets.reserve(length);
+        for (jsize i = 0; i < length; i++) {
+            offsets.push_back((int)offsetsPtr[i]);
+        }
+
+        // 直接实现 ReadPoint 的逻辑
+        long addr = (long)ptr;
+
+        // 第一步：读取第一级指针
+        addr = ReadZZ(addr);
+
+        // 处理所有偏移
+        for (jsize i = 0; i < length; i++) {
+            if (i == length - 1) {
+                // 最后一个偏移，直接加上
+                addr += offsets[i];
+                break;
+            }
+            // 读取下一级指针并加上偏移
+            addr = ReadZZ(addr + offsets[i]);
+            if (addr == 0) {
+                // 读取失败
+                break;
+            }
+        }
+
+        env->ReleaseLongArrayElements(offsetsArray, offsetsPtr, JNI_ABORT);
+        return (jlong)addr;
+    }
+    catch (...) {
+        return 0;
+    }
 }
