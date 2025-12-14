@@ -121,6 +121,13 @@ void WriteByte(long addr, uint8_t value) {
     WriteBuffer(addr, &value, 1);
 }
 
+uint8_t ReadByte(long addr) {
+    uint8_t var = 0;
+    ReadBuffer(addr, &var, 1);
+    return var;
+}
+
+
 uintptr_t GetModuleBase(const char *module_name, const char *module_field) {
     long addr = 0;
     char path[64];

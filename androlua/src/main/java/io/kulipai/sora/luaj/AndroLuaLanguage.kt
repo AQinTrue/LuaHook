@@ -224,7 +224,7 @@ class AndroLuaLanguage(
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
 
         private const val package_native =
-            "write|read|get_module_base|module_base|sleep|resolve_symbol"
+            "write|read|get_module_base|getModuleBase|module_base|sleep|resolve_symbol|readDword|writeDword|readFloat|writeFloat|readByte|writeByte|readPoint"
 
 
 
