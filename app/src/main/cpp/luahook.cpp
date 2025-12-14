@@ -134,29 +134,29 @@ Java_com_kulipai_luahook_library_NativeLib_readPoint(JNIEnv *env, jobject thiz,
     try {
         // 如果没有偏移数组，只读取一级指针
         if (!offsetsArray) {
-            return (jlong)ReadZZ((long)ptr);
+            return (jlong) ReadZZ((long) ptr);
         }
 
         jsize length = env->GetArrayLength(offsetsArray);
         if (length == 0) {
-            return (jlong)ReadZZ((long)ptr);
+            return (jlong) ReadZZ((long) ptr);
         }
 
         // 获取偏移数组
-        jlong* offsetsPtr = env->GetLongArrayElements(offsetsArray, nullptr);
+        jlong *offsetsPtr = env->GetLongArrayElements(offsetsArray, nullptr);
         if (!offsetsPtr) {
-            return (jlong)ReadZZ((long)ptr);
+            return (jlong) ReadZZ((long) ptr);
         }
 
         // 将 jlong 转换为 int（因为您的 ReadPoint 使用 int 参数）
         std::vector<int> offsets;
         offsets.reserve(length);
         for (jsize i = 0; i < length; i++) {
-            offsets.push_back((int)offsetsPtr[i]);
+            offsets.push_back((int) offsetsPtr[i]);
         }
 
         // 直接实现 ReadPoint 的逻辑
-        long addr = (long)ptr;
+        long addr = (long) ptr;
 
         // 第一步：读取第一级指针
         addr = ReadZZ(addr);
@@ -177,9 +177,53 @@ Java_com_kulipai_luahook_library_NativeLib_readPoint(JNIEnv *env, jobject thiz,
         }
 
         env->ReleaseLongArrayElements(offsetsArray, offsetsPtr, JNI_ABORT);
-        return (jlong)addr;
+        return (jlong) addr;
     }
     catch (...) {
         return 0;
+    }
+}
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_kulipai_luahook_library_NativeLib_readFloat(JNIEnv *env, jobject thiz, jlong ptr) {
+    if (ptr == 0) return JNI_FALSE;
+    try {
+        return (jfloat) ReadFloat((long) ptr);
+    } catch (...) {
+        return JNI_FALSE;
+    }
+}
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_kulipai_luahook_library_NativeLib_writeFloat(JNIEnv *env, jobject thiz, jlong ptr,
+                                                      jfloat value) {
+    if (ptr == 0) return JNI_FALSE;
+    try {
+        WriteFloat(static_cast<long>(ptr), static_cast<float>(value));
+        return JNI_TRUE;
+    } catch (...) {
+        return JNI_FALSE;
+    }
+}
+extern "C"
+JNIEXPORT jbyte JNICALL
+Java_com_kulipai_luahook_library_NativeLib_readByte(JNIEnv *env, jobject thiz, jlong ptr) {
+    if (ptr == 0) return 0;
+    try {
+        return static_cast<jbyte>(ReadByte(static_cast<long>(ptr)));
+    } catch (...) {
+        return 0;
+    }
+}
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_kulipai_luahook_library_NativeLib_writeByte(JNIEnv *env, jobject thiz, jlong ptr,
+                                                     jbyte value) {
+    if (ptr == 0) return JNI_FALSE;
+    try {
+        WriteByte(static_cast<long>(ptr), static_cast<uint8_t>(value));
+        return JNI_TRUE;
+    } catch (...) {
+        return JNI_FALSE;
     }
 }

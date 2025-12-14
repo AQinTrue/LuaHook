@@ -18,9 +18,14 @@ class NativeLib {
 
 
     external fun getModuleBase(module_name: String, module_field: String): Long
-    external fun writeDword(ptr: Long, value: Int): Boolean
     external fun readDword(ptr: Long): Int
+    external fun writeDword(ptr: Long, value: Int): Boolean
+    external fun readFloat(ptr: Long): Float
+    external fun writeFloat(ptr: Long, value: Float): Boolean
+    external fun readByte(ptr: Long): Byte
+    external fun writeByte(ptr: Long, value: Byte): Boolean
     external fun readPoint(ptr: Long,  offsets: LongArray): Long
+
 
 
     external fun read(ptr: Long, size: Int): ByteArray?
@@ -72,6 +77,13 @@ class NativeLib {
             }
         }
 
+        table["readDword"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                return CoerceJavaToLua.coerce(readDword(ptr))
+            }
+        }
+
         table["writeDword"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val ptr = args.arg(1).tolong()
@@ -81,10 +93,32 @@ class NativeLib {
         }
 
 
-        table["readDword"] = object : VarArgFunction() {
+        table["readFloat"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val ptr = args.arg(1).tolong()
-                return CoerceJavaToLua.coerce(readDword(ptr))
+                return CoerceJavaToLua.coerce(readFloat(ptr))
+            }
+        }
+
+        table["writeFloat"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                val value = args.arg(2).tofloat()
+                return CoerceJavaToLua.coerce(writeFloat(ptr, value))
+            }
+        }
+
+        table["readByte"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                return CoerceJavaToLua.coerce(readByte(ptr))
+            }
+        }
+        table["writeByte"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val ptr = args.arg(1).tolong()
+                val value = args.arg(2).checkint().toByte()
+                return CoerceJavaToLua.coerce(writeByte(ptr, value))
             }
         }
 
