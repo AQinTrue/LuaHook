@@ -18,12 +18,10 @@ object LShare {
     const val Plugin: String = "/Plugin"
 
 
-    var isok: Boolean = false
-
-    fun read(path: String): String {
-        val path = DIR + path
-        if (File(path).exists()) {
-            return File(path).readText()
+    fun read(relativePath: String): String {
+        val fullPath = DIR + relativePath
+        if (File(fullPath).exists()) {
+            return File(fullPath).readText()
         }
         return ""
     }
@@ -66,7 +64,7 @@ object LShare {
      * 从文件读取 JSON 字符串并解析为 Map<String, Any?>。
      *
      * @param file 文件名
-     * @return 读取到的 Map，如果失败则返回 null
+     * @return 读取到的 Map，如果失败则返回空 Map
      */
     fun readMap(file: String): MutableMap<String, Any?> {
         val jsonString = read(file)
@@ -95,26 +93,17 @@ object LShare {
 
     fun readStringList(path: String): MutableList<String> {
         val serialized = read(path)
-        return if (serialized != "") {
+        return if (serialized.isNotEmpty()) {
             serialized.split(",").toMutableList()
         } else {
             mutableListOf()
         }
     }
 
-    fun writeTmp(packageName: String, content: String): Boolean {
-        val tmpPath = "/tmp"
-
-        if (isok && ensureDirectoryExists(DIR + tmpPath)) {
-            return write("$tmpPath/$packageName.lua", content)
-        }
-        return false
-    }
-
 
     fun rm(file: String): Boolean {
         val path = "$DIR/$file"
-        val script = "rm -f $path"
+        val script = "rm -f \"$path\""
         val (_, success) = ShellManager.shell(script)
         return success
     }
@@ -125,7 +114,6 @@ object LShare {
         ensureDirectoryExists(DIR + AppConf)
         ensureDirectoryExists(DIR + AppScript)
         ensureDirectoryExists(DIR + Plugin)
-        isok = true
     }
 
 
@@ -135,7 +123,7 @@ object LShare {
 //        return bytes.joinToString("") { "%02x".format(it) }
 //    }
 
-    fun DirectoryExists(path: String): Boolean {
+    fun directoryExists(path: String): Boolean {
         // 使用 ls 判断目录是否存在
         val (_, checkSuccess) = ShellManager.shell("ls \"$path\"")
         return checkSuccess
@@ -149,7 +137,7 @@ object LShare {
      */
     fun ensureDirectoryExists(path: String): Boolean {
 
-        if (DirectoryExists(path)) {
+        if (directoryExists(path)) {
             return true
         }
 
