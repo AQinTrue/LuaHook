@@ -10,7 +10,7 @@
 
     <application
         android:description="@string/xposeddescription"
-        android:name=".MyApplication"
+        android:name=".app.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -21,40 +21,40 @@
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="35">
         <activity
-            android:name=".activity.ErrorActivity"
+            android:name=".ui.error.ErrorActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.MultiScriptActivity"
+            android:name=".ui.script.manager.MultiScriptActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.ScriptSetActivity"
+            android:name=".ui.script.setting.ScriptSetActivity"
             android:exported="true" />
         <activity
-            android:name=".activity.AboutActivity"
+            android:name=".ui.about.AboutActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.SettingsActivity"
+            android:name=".ui.setting.SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.SelectApps"
+            android:name=".ui.script.selector.SelectApps"
             android:exported="false" />
         <activity
-            android:name=".activity.AppsEdit"
+            android:name=".ui.script.editor.app.AppsEdit"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".activity.Manual"
+            android:name=".ui.manual.Manual"
             android:exported="false" />
         <activity
-            android:name=".activity.LogCatActivity"
+            android:name=".ui.logcat.LogCatActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.EditActivity"
+            android:name=".ui.script.editor.global.EditActivity"
             android:windowSoftInputMode="adjustResize"
 
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.home.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustNothing"
             >

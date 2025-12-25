@@ -12,6 +12,7 @@ android {
     buildFeatures {
         buildConfig = true    // 开启BuildConfig类的生成
         aidl = true           // 启用aidl
+        viewBinding = true
     }
 
     defaultConfig {

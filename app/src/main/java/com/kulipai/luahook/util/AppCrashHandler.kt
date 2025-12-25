@@ -3,7 +3,7 @@ package com.kulipai.luahook.util
 import android.content.Context
 import android.content.Intent
 import android.os.Process
-import com.kulipai.luahook.activity.ErrorActivity
+import com.kulipai.luahook.ui.error.ErrorActivity
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess
