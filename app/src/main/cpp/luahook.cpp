@@ -7,7 +7,7 @@
 extern "C" JNIEXPORT jbyteArray
 
 JNICALL
-Java_com_kulipai_luahook_library_NativeLib_read(JNIEnv *env, jobject thiz, jlong ptr, jint size) {
+Java_com_kulipai_luahook_hook_api_NativeLib_read(JNIEnv *env, jobject thiz, jlong ptr, jint size) {
     if (ptr == 0 || size <= 0) return nullptr;
 
     jbyteArray byteArray = env->NewByteArray(size);
@@ -20,7 +20,7 @@ Java_com_kulipai_luahook_library_NativeLib_read(JNIEnv *env, jobject thiz, jlong
 extern "C" JNIEXPORT jboolean
 
 JNICALL
-Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlong ptr,
+Java_com_kulipai_luahook_hook_api_NativeLib_write(JNIEnv *env, jobject thiz, jlong ptr,
                                                  jbyteArray data) {
     if (ptr == 0 || data == nullptr) return JNI_FALSE;
 
@@ -41,7 +41,7 @@ Java_com_kulipai_luahook_library_NativeLib_write(JNIEnv *env, jobject thiz, jlon
 extern "C" JNIEXPORT jlong
 
 JNICALL
-Java_com_kulipai_luahook_library_NativeLib_moduleBase(JNIEnv *env, jobject thiz, jstring name) {
+Java_com_kulipai_luahook_hook_api_NativeLib_moduleBase(JNIEnv *env, jobject thiz, jstring name) {
     const char *chars = env->GetStringUTFChars(name, nullptr);
     int64_t result = 0;
     void *handle = xdl_open(chars, XDL_DEFAULT);
@@ -57,7 +57,7 @@ Java_com_kulipai_luahook_library_NativeLib_moduleBase(JNIEnv *env, jobject thiz,
 extern "C" JNIEXPORT jlong
 
 JNICALL
-Java_com_kulipai_luahook_library_NativeLib_resolveSymbol(JNIEnv *env, jobject thiz, jstring module,
+Java_com_kulipai_luahook_hook_api_NativeLib_resolveSymbol(JNIEnv *env, jobject thiz, jstring module,
                                                          jstring name) {
     const char *module_chars = env->GetStringUTFChars(module, nullptr);
     const char *name_chars = env->GetStringUTFChars(name, nullptr);
@@ -81,7 +81,7 @@ extern "C"
 JNIEXPORT jlong
 
 JNICALL
-Java_com_kulipai_luahook_library_NativeLib_getModuleBase(JNIEnv *env, jobject thiz,
+Java_com_kulipai_luahook_hook_api_NativeLib_getModuleBase(JNIEnv *env, jobject thiz,
                                                          jstring module_name,
                                                          jstring module_field) {
     const char *native_module_name = env->GetStringUTFChars(module_name, nullptr);
@@ -99,7 +99,7 @@ Java_com_kulipai_luahook_library_NativeLib_getModuleBase(JNIEnv *env, jobject th
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_kulipai_luahook_library_NativeLib_writeDword(JNIEnv *env, jobject thiz, jlong ptr,
+Java_com_kulipai_luahook_hook_api_NativeLib_writeDword(JNIEnv *env, jobject thiz, jlong ptr,
                                                       jint value) {
     if (ptr == 0) return JNI_FALSE;
     try {
@@ -114,7 +114,7 @@ Java_com_kulipai_luahook_library_NativeLib_writeDword(JNIEnv *env, jobject thiz,
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_kulipai_luahook_library_NativeLib_readDword(JNIEnv *env, jobject thiz, jlong ptr) {
+Java_com_kulipai_luahook_hook_api_NativeLib_readDword(JNIEnv *env, jobject thiz, jlong ptr) {
     if (ptr == 0) return JNI_FALSE;
     try {
         return (jint) ReadDword((long) ptr);
@@ -125,7 +125,7 @@ Java_com_kulipai_luahook_library_NativeLib_readDword(JNIEnv *env, jobject thiz, 
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_kulipai_luahook_library_NativeLib_readPoint(JNIEnv *env, jobject thiz,
+Java_com_kulipai_luahook_hook_api_NativeLib_readPoint(JNIEnv *env, jobject thiz,
                                                      jlong ptr, jlongArray offsetsArray) {
     if (ptr == 0) {
         return 0;
@@ -185,7 +185,7 @@ Java_com_kulipai_luahook_library_NativeLib_readPoint(JNIEnv *env, jobject thiz,
 }
 extern "C"
 JNIEXPORT jfloat JNICALL
-Java_com_kulipai_luahook_library_NativeLib_readFloat(JNIEnv *env, jobject thiz, jlong ptr) {
+Java_com_kulipai_luahook_hook_api_NativeLib_readFloat(JNIEnv *env, jobject thiz, jlong ptr) {
     if (ptr == 0) return JNI_FALSE;
     try {
         return (jfloat) ReadFloat((long) ptr);
@@ -195,7 +195,7 @@ Java_com_kulipai_luahook_library_NativeLib_readFloat(JNIEnv *env, jobject thiz, 
 }
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_kulipai_luahook_library_NativeLib_writeFloat(JNIEnv *env, jobject thiz, jlong ptr,
+Java_com_kulipai_luahook_hook_api_NativeLib_writeFloat(JNIEnv *env, jobject thiz, jlong ptr,
                                                       jfloat value) {
     if (ptr == 0) return JNI_FALSE;
     try {
@@ -207,7 +207,7 @@ Java_com_kulipai_luahook_library_NativeLib_writeFloat(JNIEnv *env, jobject thiz,
 }
 extern "C"
 JNIEXPORT jbyte JNICALL
-Java_com_kulipai_luahook_library_NativeLib_readByte(JNIEnv *env, jobject thiz, jlong ptr) {
+Java_com_kulipai_luahook_hook_api_NativeLib_readByte(JNIEnv *env, jobject thiz, jlong ptr) {
     if (ptr == 0) return 0;
     try {
         return static_cast<jbyte>(ReadByte(static_cast<long>(ptr)));
@@ -217,7 +217,7 @@ Java_com_kulipai_luahook_library_NativeLib_readByte(JNIEnv *env, jobject thiz, j
 }
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_kulipai_luahook_library_NativeLib_writeByte(JNIEnv *env, jobject thiz, jlong ptr,
+Java_com_kulipai_luahook_hook_api_NativeLib_writeByte(JNIEnv *env, jobject thiz, jlong ptr,
                                                      jbyte value) {
     if (ptr == 0) return JNI_FALSE;
     try {

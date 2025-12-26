@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.kulipai.luahook.databinding.ActivityMainHomeBinding
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.util.XposedScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay

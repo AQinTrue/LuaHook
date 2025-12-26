@@ -15,7 +15,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.about.AboutActivity
-import com.kulipai.luahook.util.LanguageUtil
+import com.kulipai.luahook.core.language.LanguageUtils
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -65,16 +65,16 @@ class SettingsActivity : AppCompatActivity() {
     fun showLanguagePickerDialog(context: Context) {
         val languages = arrayOf("English", "简体中文","繁體中文")
         val languageCodes = arrayOf(
-            LanguageUtil.LANGUAGE_ENGLISH, LanguageUtil.LANGUAGE_CHINESE,
-            LanguageUtil.LANGUAGE_CHINESE_TRADITIONAL)
-        val currentLanguage = LanguageUtil.getCurrentLanguage(context)
+            LanguageUtils.LANGUAGE_ENGLISH, LanguageUtils.LANGUAGE_CHINESE,
+            LanguageUtils.LANGUAGE_CHINESE_TRADITIONAL)
+        val currentLanguage = LanguageUtils.getCurrentLanguage(context)
         val checkedItem = languageCodes.indexOf(currentLanguage)
 
         MaterialAlertDialogBuilder(context)
             .setTitle(resources.getString(R.string.Select_language))
             .setSingleChoiceItems(languages, checkedItem) { dialog, which ->
                 val selectedLanguageCode = languageCodes[which]
-                LanguageUtil.changeLanguage(context, selectedLanguageCode)
+                LanguageUtils.changeLanguage(context, selectedLanguageCode)
                 (context as Activity).recreate()
                 dialog.dismiss()
             }

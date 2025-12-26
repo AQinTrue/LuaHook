@@ -8,7 +8,7 @@ import android.os.Parcelable
  */
 
 
-data class ShellResult(val output: String, val success: Boolean) : Parcelable {
+data class ShizukuShellResult(val output: String, val success: Boolean) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
         parcel.readByte() != 0.toByte()
@@ -21,8 +21,8 @@ data class ShellResult(val output: String, val success: Boolean) : Parcelable {
 
     override fun describeContents(): Int = 0
 
-    companion object CREATOR : Parcelable.Creator<ShellResult> {
-        override fun createFromParcel(parcel: Parcel): ShellResult = ShellResult(parcel)
-        override fun newArray(size: Int): Array<ShellResult?> = arrayOfNulls(size)
+    companion object CREATOR : Parcelable.Creator<ShizukuShellResult> {
+        override fun createFromParcel(parcel: Parcel): ShizukuShellResult = ShizukuShellResult(parcel)
+        override fun newArray(size: Int): Array<ShizukuShellResult?> = arrayOfNulls(size)
     }
 }

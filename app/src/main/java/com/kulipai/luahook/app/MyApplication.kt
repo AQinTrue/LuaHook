@@ -7,9 +7,9 @@ import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.ui.home.AppInfo
 import com.kulipai.luahook.ui.home.getInstalledApps
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.util.AppCrashHandler
-import com.kulipai.luahook.util.LanguageUtil
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.crash.AppCrashHandler
+import com.kulipai.luahook.core.language.LanguageUtils
+import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.util.XposedScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,7 @@ class MyApplication : Application() {
         AppCrashHandler.Companion.init(this)
         DynamicColors.applyToActivitiesIfAvailable(this)
         instance = this
-        LanguageUtil.applyLanguage(this)
+        LanguageUtils.applyLanguage(this)
         ShizukuApi.init()//在shell里init？
         // 预加载 shell，确保 MainActivity 能及时拿到状态
         ShellManager.init(applicationContext)
@@ -109,7 +109,7 @@ class MyApplication : Application() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        LanguageUtil.applyLanguage(this)
+        LanguageUtils.applyLanguage(this)
     }
 
 }

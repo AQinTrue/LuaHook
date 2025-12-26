@@ -1,4 +1,4 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.crash
 
 import android.content.Context
 import android.content.Intent

@@ -36,7 +36,7 @@ import com.kulipai.luahook.ui.script.editor.ToolAdapter
 import com.kulipai.luahook.databinding.ActivityAppsEditBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.util.SoraEditorHelper.initLuaEditor
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag

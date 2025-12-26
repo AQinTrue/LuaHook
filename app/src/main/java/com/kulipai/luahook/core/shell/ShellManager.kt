@@ -1,8 +1,8 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.shell
 
 import android.content.Context
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.core.shizuku.ShizukuApi.bindShizuku
+import com.kulipai.luahook.util.LShare
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +17,7 @@ object ShellManager {
     enum class Mode {
         ROOT, SHIZUKU, NONE
     }
+
 
     private var _mode = MutableStateFlow(Mode.NONE)
     var mode = _mode.asStateFlow()
@@ -37,7 +38,7 @@ object ShellManager {
                     .setFlags(Shell.FLAG_MOUNT_MASTER)
             )
         }catch (_: Exception) {
-            
+
         }
 
 
@@ -52,7 +53,7 @@ object ShellManager {
             else if (Shizuku.getBinder() != null && Shizuku.pingBinder()) {
                 //shizuku
 
-                bindShizuku(context)
+                ShizukuApi.bindShizuku(context)
 //                {
 //                    mode = if (userService != null) Mode.SHIZUKU else Mode.NONE
 //                    LShare.init(context)
@@ -67,21 +68,23 @@ object ShellManager {
     }
 
 
+
+
     /**
      * 执行命令，返回 (输出, 是否成功)
      */
-    fun shell(cmd: String): Pair<String, Boolean> {
+    fun shell(cmd: String): ShellResult {
         return when (mode.value) {
             Mode.ROOT -> {
                 try {
                     val result = Shell.cmd(cmd).exec()
                     if (result.isSuccess) {
-                        Pair(result.out.joinToString("\n"), true)
+                        ShellResult.Success(result.out.joinToString("\n"))
                     } else {
-                        Pair(result.err.joinToString("\n"), false)
+                        ShellResult.Error(result.err.joinToString("\n"))
                     }
                 } catch (e: Exception) {
-                    Pair("Exception: ${e.message}", false)
+                    ShellResult.Error("Exception occurred", e)
                 }
             }
 
@@ -89,10 +92,10 @@ object ShellManager {
                 ShizukuApi.execShell(cmd)
             }
 
-
             else -> {
-                Pair("No shell method available", false)
+                ShellResult.Error("No shell method available")
             }
         }
     }
+
 }

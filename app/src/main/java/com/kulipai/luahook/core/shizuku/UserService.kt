@@ -24,7 +24,7 @@ class UserService : IUserService.Stub() {
     }
 
     @Throws(RemoteException::class)
-    override fun exec(command: String): ShellResult {
+    override fun exec(command: String): ShizukuShellResult {
         val output = StringBuilder()
         var success = false
         try {
@@ -52,7 +52,7 @@ class UserService : IUserService.Stub() {
             output.append("InterruptedException: ${e.message}")
         }
 
-        return ShellResult(output.toString().trim(), success)
+        return ShizukuShellResult(output.toString().trim(), success)
     }
 
 }

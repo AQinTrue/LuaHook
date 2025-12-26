@@ -9,6 +9,7 @@ import android.os.IInterface
 import android.os.RemoteException
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.BuildConfig
+import com.kulipai.luahook.core.shell.ShellResult
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 
@@ -85,17 +86,25 @@ object ShizukuApi {
 
 
     // TODO)) userService拿不到用私有接口shell
-    fun execShell(cmd: String):Pair<String, Boolean> {
-        if (userService == null) return Pair("Service not bound", false)
-        return try {
-            val result = userService!!.exec(cmd)
-            Pair(result.output, result.success)
-        } catch (e: RemoteException) {
-            e.printStackTrace()
-            Pair("RemoteException: ${e.message}", false)
-        }
+    fun execShell(cmd: String): ShellResult {
+        val service = userService
+            ?: return ShellResult.Error("Service not bound")
 
+        return try {
+            val result = service.exec(cmd)
+            if (result.success) {
+                ShellResult.Success(result.output)
+            } else {
+                ShellResult.Error(result.output)
+            }
+        } catch (e: RemoteException) {
+            ShellResult.Error(
+                stderr = "RemoteException",
+                throwable = e
+            )
+        }
     }
+
 
 
 }

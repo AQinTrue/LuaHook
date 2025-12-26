@@ -26,8 +26,8 @@ import com.kulipai.luahook.ui.setting.SettingsActivity
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.LanguageUtil
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.language.LanguageUtils
+import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        LanguageUtil.applyLanguage(this)
+        LanguageUtils.applyLanguage(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.toolbar.setOnMenuItemClickListener {
             if (it.itemId == 1) {
-                lastLanguage = LanguageUtil.getCurrentLanguage(this)
+                lastLanguage = LanguageUtils.getCurrentLanguage(this)
                 settingsLauncher.launch(Intent(this, SettingsActivity::class.java))
             }
             true
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         settingsLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            if (LanguageUtil.getCurrentLanguage(this) != lastLanguage) recreate()
+            if (LanguageUtils.getCurrentLanguage(this) != lastLanguage) recreate()
         }
     }
 

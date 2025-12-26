@@ -16,9 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.logcat.LogAdapter
-import com.kulipai.luahook.util.LogcatHelper
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.launch
 
 class LogCatActivity : AppCompatActivity() {
@@ -66,7 +64,7 @@ class LogCatActivity : AppCompatActivity() {
 
         if (ShellManager.mode.value != ShellManager.Mode.NONE) {
             lifecycleScope.launch {
-                val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
+                val logs = LogcatDelegate.getSystemLogsByTagSince("LuaXposed",getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null))
                 logRecyclerView.layoutManager =
                     LinearLayoutManager(this@LogCatActivity, LinearLayoutManager.VERTICAL, false)
                 adapter = LogAdapter(logs as MutableList<String>)
@@ -79,7 +77,7 @@ class LogCatActivity : AppCompatActivity() {
 
         refresh.setOnClickListener {
             lifecycleScope.launch {
-                val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                val logs = LogcatDelegate.getSystemLogsByTagSince("LuaXposed",
                     getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                 )
                 adapter.updateLogs(logs as MutableList<String>)
@@ -119,11 +117,11 @@ class LogCatActivity : AppCompatActivity() {
         return when (item.itemId) {
             0 -> {
                 getSharedPreferences("cache",MODE_PRIVATE).edit().apply{
-                    putString("logClearTime", LogcatHelper.getCurrentLogcatTimeFormat())
+                    putString("logClearTime", LogcatDelegate.getCurrentLogcatTimeFormat())
                     apply()
                 }
                 lifecycleScope.launch {
-                    val logs = LogcatHelper.getSystemLogsByTagSince("LuaXposed",
+                    val logs = LogcatDelegate.getSystemLogsByTagSince("LuaXposed",
                         getSharedPreferences("cache",MODE_PRIVATE).getString("logClearTime",null)
                     )
                     adapter.updateLogs(logs as MutableList<String>)
