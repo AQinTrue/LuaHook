@@ -1,15 +1,15 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.language
 
 import android.content.Context
 import android.content.res.Configuration
-import java.util.*
 import androidx.core.content.edit
+import java.util.Locale
 
 /**
  * 语言工具类
  */
 
-object LanguageUtil {
+object LanguageUtils {
 
     private const val KEY_LANGUAGE = "key_language"
     const val LANGUAGE_CHINESE = "zh"

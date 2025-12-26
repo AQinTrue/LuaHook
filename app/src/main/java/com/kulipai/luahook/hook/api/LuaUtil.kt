@@ -1,6 +1,7 @@
 package com.kulipai.luahook.hook.api
 
-import com.kulipai.luahook.util.ShellManager
+import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.util.d
 import org.luaj.Globals
 import org.luaj.LuaTable
@@ -21,10 +22,17 @@ object LuaUtil {
         _G["shell"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): Varargs {
                 val cmd = args.checkjstring(1)
-                val resultPair: Pair<String, Boolean> = ShellManager.shell(cmd)
-                val luaResultString = CoerceJavaToLua.coerce(resultPair.first)
-                val luaSuccessBoolean = CoerceJavaToLua.coerce(resultPair.second)
-                return varargsOf(luaResultString, luaSuccessBoolean)
+                return when (val result = ShellManager.shell(cmd)) {
+                    is ShellResult.Error -> varargsOf(
+                        CoerceJavaToLua.coerce(""),
+                        CoerceJavaToLua.coerce(false)
+                    )
+
+                    is ShellResult.Success -> varargsOf(
+                        CoerceJavaToLua.coerce(result.stdout),
+                        CoerceJavaToLua.coerce(true)
+                    )
+                }
             }
         }
     }
@@ -40,7 +48,8 @@ object LuaUtil {
 
         // 打印堆栈
         // 这个不能写在java层会栈溢出
-        _G.load("""
+        _G.load(
+            """
             function printStackTrace()
                import "java.lang.Throwable"
                stackTrace = Throwable().stackTrace
@@ -48,7 +57,8 @@ object LuaUtil {
                   print("at "..tostring(v))
                end
             end
-        """.trimIndent()).call()
+        """.trimIndent()
+        ).call()
 
 
         _G["pcall"] = object : VarArgFunction() {
@@ -164,7 +174,6 @@ object LuaUtil {
         }
 
     }
-
 
 
     fun simplifyLuaError(raw: String): String {

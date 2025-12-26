@@ -55,10 +55,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         selectAppsString = LShare.read("/apps.txt").replace("\n", "")
         // 读取全局脚本
         luaScript = LShare.read("/global.lua")
-        if (selectAppsString.isNotEmpty() && selectAppsString != "") {
-            selectAppsList = selectAppsString.split(",").toMutableList()
+        selectAppsList = if (selectAppsString.isNotEmpty() && selectAppsString != "") {
+            selectAppsString.split(",").toMutableList()
         } else {
-            selectAppsList = mutableListOf()
+            mutableListOf()
         }
 
         // 全局脚本
