@@ -92,7 +92,7 @@ fun getInstalledApps(context: Context): List<AppInfo> {
 class AppsFragment : Fragment() {
     private lateinit var adapter: AppsAdapter
     private var appInfoList: List<AppInfo> = emptyList()
-    private val viewModel by viewModels<AViewModel>()
+
 
 
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
@@ -102,7 +102,7 @@ class AppsFragment : Fragment() {
 
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
-                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
+                if (ShellManager.mode.value != ShellManager.Mode.NONE) {
                     val savedList = LShare.readStringList("/apps.txt")
                     if (savedList.isEmpty()) {
                         // 列表为空的逻辑
@@ -149,19 +149,20 @@ class AppsFragment : Fragment() {
         rec.layoutManager = LinearLayoutManager(requireContext())
         rec.adapter = adapter
 
-        viewModel.data.observe(requireActivity()) {
-            lifecycleScope.launch {
-                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-                    val savedList = LShare.readStringList("/apps.txt")
-                    if (savedList.isEmpty()) {
-                        // 列表为空的逻辑
-                    } else {
-                        appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                        adapter.updateData(appInfoList)
-                    }
-                }
-            }
-        }
+        // TODO)) 获取到shell后加载数据
+//        viewModel.data.observe(requireActivity()) {
+//            lifecycleScope.launch {
+//                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
+//                    val savedList = LShare.readStringList("/apps.txt")
+//                    if (savedList.isEmpty()) {
+//                        // 列表为空的逻辑
+//                    } else {
+//                        appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
+//                        adapter.updateData(appInfoList)
+//                    }
+//                }
+//            }
+//        }
 
         searchbar.setOnClickListener {
             searchEdit.requestFocus()
@@ -205,7 +206,7 @@ class AppsFragment : Fragment() {
 
 
         fab1.setOnClickListener {
-            if (ShellManager.getMode() != ShellManager.Mode.NONE) {
+            if (ShellManager.mode.value != ShellManager.Mode.NONE) {
                 val intent = Intent(requireContext(), SelectApps::class.java)
                 launcher.launch(intent)
             } else {

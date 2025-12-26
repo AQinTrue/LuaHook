@@ -7,9 +7,8 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.IInterface
 import android.os.RemoteException
+import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.BuildConfig
-import com.kulipai.luahook.shizuku.IUserService
-import kotlinx.coroutines.flow.MutableStateFlow
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 
@@ -21,9 +20,9 @@ object ShizukuApi {
 
     private var userService: IUserService? = null
 
-    val isBinderAvailable = MutableStateFlow(false)
-    val isPermissionGranted = MutableStateFlow(false)
-    val isServiceConnected = MutableStateFlow(false)
+    val isBinderAvailable = MutableLiveData(false)
+    val isPermissionGranted = MutableLiveData(false)
+    val isServiceConnected = MutableLiveData(false)
 
     fun init() {
         // 使用 Sticky 确保能获取到初始状态
@@ -49,7 +48,7 @@ object ShizukuApi {
 
 
     fun bindShizuku(context: Context) {
-        if (!isBinderAvailable.value || !isPermissionGranted.value) {
+        if (!isBinderAvailable.value!! || !isPermissionGranted.value!!) {
             // Err
             return
         }

@@ -33,7 +33,7 @@ import rikka.shizuku.Shizuku
 
 class MainActivity : AppCompatActivity() {
 
-    val binding = ActivityMainBinding.inflate(layoutInflater)
+    lateinit var binding: ActivityMainBinding
 
     // TODO)) 用一个object或者viewModel封装一下，在变化的时候响应式变化
     private lateinit var lastLanguage: String
@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         LanguageUtil.applyLanguage(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
@@ -84,7 +85,7 @@ class MainActivity : AppCompatActivity() {
     // --------------------- ViewModel ---------------------
 
     fun requestShizuku() {
-        if (ShizukuApi.isBinderAvailable.value && !ShizukuApi.isPermissionGranted.value) {
+        if (ShizukuApi.isBinderAvailable.value == true && ShizukuApi.isPermissionGranted.value == false) {
             Shizuku.requestPermission(114514)
         }
     }
