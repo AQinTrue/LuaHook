@@ -5,7 +5,6 @@ import android.content.Intent
 import com.kulipai.luahook.hook.activity.EmptyActivity
 import org.luaj.Globals
 import org.luaj.LuaValue
-import org.luaj.android.loadlayout
 import org.luaj.lib.TwoArgFunction
 import org.luaj.lib.jse.CoerceJavaToLua
 import top.sacz.xphelper.XpHelper

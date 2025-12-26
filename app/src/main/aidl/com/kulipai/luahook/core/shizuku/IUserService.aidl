@@ -1,6 +1,6 @@
 package com.kulipai.luahook.core.shizuku;
 
-import com.kulipai.luahook.shizuku.ShellResult;
+import com.kulipai.luahook.core.shizuku.ShellResult;
 
 interface IUserService {
     ShellResult exec(String cmd);

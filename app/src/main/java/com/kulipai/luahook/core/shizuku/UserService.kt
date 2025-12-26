@@ -1,7 +1,6 @@
 package com.kulipai.luahook.core.shizuku
 
 import android.os.RemoteException
-import com.kulipai.luahook.shizuku.IUserService
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
