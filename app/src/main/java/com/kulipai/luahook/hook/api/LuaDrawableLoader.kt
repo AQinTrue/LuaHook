@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import androidx.core.graphics.drawable.toDrawable
-import com.kulipai.luahook.util.d
+import com.kulipai.luahook.core.log.d
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.ConnectionPool

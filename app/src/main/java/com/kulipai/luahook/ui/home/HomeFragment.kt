@@ -18,7 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.kulipai.luahook.databinding.ActivityMainHomeBinding
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.core.shell.ShellManager
-import com.kulipai.luahook.util.XposedScope
+import com.kulipai.luahook.core.xposed.XposedScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

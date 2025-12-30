@@ -18,7 +18,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.setting.ScriptSetActivity
-import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.core.file.LShare
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope

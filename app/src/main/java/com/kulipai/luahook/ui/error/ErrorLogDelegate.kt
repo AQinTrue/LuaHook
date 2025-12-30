@@ -1,4 +1,4 @@
-package com.kulipai.luahook.core.log
+package com.kulipai.luahook.ui.error
 
 import android.content.Context
 import android.content.Intent
@@ -8,8 +8,7 @@ import androidx.core.content.FileProvider
 import java.io.File
 import java.util.Date
 
-
-object ErrorLogManager {
+object ErrorLogDelegate {
 
     private const val LOG_DIR = "logs"
     private const val LOG_PREFIX = "error_"

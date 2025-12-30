@@ -24,8 +24,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.ui.home.AppInfo
-import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.XposedScope
+import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.xposed.XposedScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

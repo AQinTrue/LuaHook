@@ -2,7 +2,7 @@ package com.kulipai.luahook.hook.api
 
 import android.content.Context
 import com.kulipai.luahook.core.androlua.LuaLayout
-import com.kulipai.luahook.util.e
+import com.kulipai.luahook.core.log.e
 import com.nekolaska.ktx.argAt
 import com.nekolaska.ktx.firstArg
 import com.nekolaska.ktx.secondArg

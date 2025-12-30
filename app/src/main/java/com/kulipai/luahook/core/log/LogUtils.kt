@@ -1,4 +1,4 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.log
 
 import android.util.Log
 
