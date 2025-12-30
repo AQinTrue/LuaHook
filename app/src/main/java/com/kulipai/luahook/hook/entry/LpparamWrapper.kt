@@ -1,4 +1,4 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.hook.entry
 
 import android.content.pm.ApplicationInfo
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam

@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
-import com.kulipai.luahook.util.d
+import com.kulipai.luahook.core.log.d
 import org.luaj.Globals
 import org.luaj.LuaError
 import org.luaj.LuaTable

@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.kulipai.luahook.hook.api.LuaActivity
 import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
-import com.kulipai.luahook.util.e
+import com.kulipai.luahook.core.log.e
 import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.ZeroArgFunction

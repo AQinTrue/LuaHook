@@ -10,7 +10,7 @@ import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.crash.AppCrashHandler
 import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
-import com.kulipai.luahook.util.XposedScope
+import com.kulipai.luahook.core.xposed.XposedScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

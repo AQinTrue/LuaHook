@@ -1,6 +1,7 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.ui.script.editor
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Typeface
 import android.view.View
 import android.widget.TextView
@@ -25,7 +26,13 @@ import io.kulipai.sora.luaj.WrapperLanguage
 import org.eclipse.tm4e.core.registry.IThemeSource
 import org.luaj.lib.jse.JsePlatform
 
-object SoraEditorHelper {
+// TODO)) 封装
+fun isNightMode(context: Context): Boolean {
+    return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+}
+
+
+object SoraEditorDelegate {
     fun Context.initLuaEditor(editor: CodeEditor, errMessage: TextView) {
 
         fun loadDefaultThemes() {

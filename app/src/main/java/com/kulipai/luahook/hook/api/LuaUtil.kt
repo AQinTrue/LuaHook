@@ -2,7 +2,7 @@ package com.kulipai.luahook.hook.api
 
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
-import com.kulipai.luahook.util.d
+import com.kulipai.luahook.core.log.d
 import org.luaj.Globals
 import org.luaj.LuaTable
 import org.luaj.LuaValue

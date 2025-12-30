@@ -30,7 +30,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.script.manager.MultScriptAdapter
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
-import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.core.file.LShare
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONException

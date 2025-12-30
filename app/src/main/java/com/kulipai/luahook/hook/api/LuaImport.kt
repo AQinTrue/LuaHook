@@ -1,9 +1,9 @@
 package com.kulipai.luahook.hook.api
 
-import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.LShare.read
-import com.kulipai.luahook.util.d
-import com.kulipai.luahook.util.e
+import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.LShare.read
+import com.kulipai.luahook.core.log.d
+import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError
 import org.luaj.Globals

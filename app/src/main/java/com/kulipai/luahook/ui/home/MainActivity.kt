@@ -25,7 +25,7 @@ import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.ui.setting.SettingsActivity
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.core.file.LShare
 import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.launch

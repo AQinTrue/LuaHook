@@ -1,8 +1,8 @@
 package com.kulipai.luahook.hook.api
 
-import com.kulipai.luahook.util.LPParam
-import com.kulipai.luahook.util.d
-import com.kulipai.luahook.util.e
+import com.kulipai.luahook.hook.entry.LPParam
+import com.kulipai.luahook.core.log.d
+import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedBridge

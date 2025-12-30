@@ -1,4 +1,4 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.xposed
 
 import android.content.Context
 import io.github.libxposed.service.XposedService
@@ -7,7 +7,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import top.sacz.xphelper.util.ActivityTools.runOnUiThread
+import top.sacz.xphelper.util.ActivityTools
 
 /**
  * api100有的模块作用域管理
@@ -47,10 +47,10 @@ object XposedScope {
 //                        }
 
                         override fun onScopeRequestApproved(packageName: String) {
-                            runOnUiThread {
+                            ActivityTools.runOnUiThread {
                                 GlobalScope.launch {
                                     delay(200)
-                                    requestManyScope(context,pkgList,index+1)
+                                    requestManyScope(context, pkgList, index + 1)
                                 }
                             }
                         }

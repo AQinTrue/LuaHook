@@ -16,7 +16,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.kulipai.luahook.R
-import com.kulipai.luahook.util.d
+import com.kulipai.luahook.core.log.d
 import io.github.rosemoe.sora.widget.CodeEditor
 import java.util.regex.Pattern
 import kotlin.text.get

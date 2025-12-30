@@ -39,7 +39,7 @@ import com.kulipai.luahook.ui.script.selector.SelectApps
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.home.AppsAdapter
-import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.core.file.LShare
 import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi

@@ -4,10 +4,8 @@ import com.kulipai.luahook.hook.api.HookLib
 import com.kulipai.luahook.hook.api.LuaActivity
 import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
-import com.kulipai.luahook.util.LPParam
-import com.kulipai.luahook.util.LShare
-import com.kulipai.luahook.util.LoadPackageParamWrapper
-import com.kulipai.luahook.util.e
+import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XposedBridge

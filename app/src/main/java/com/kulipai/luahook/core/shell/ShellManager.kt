@@ -2,7 +2,7 @@ package com.kulipai.luahook.core.shell
 
 import android.content.Context
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.util.LShare
+import com.kulipai.luahook.core.file.LShare
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

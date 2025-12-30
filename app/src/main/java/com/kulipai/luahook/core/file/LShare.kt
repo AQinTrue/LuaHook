@@ -1,7 +1,8 @@
-package com.kulipai.luahook.util
+package com.kulipai.luahook.core.file
 
 import android.content.Context
 import android.util.Base64
+import com.kulipai.luahook.core.log.d
 import com.kulipai.luahook.core.shell.ShellManager
 import org.json.JSONObject
 import java.io.File

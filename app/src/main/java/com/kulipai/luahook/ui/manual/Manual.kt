@@ -20,8 +20,7 @@ import androidx.transition.TransitionManager
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.transition.MaterialContainerTransform
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.manual.ManAdapter
-import com.kulipai.luahook.util.SoraEditorHelper.initEditor
+import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initEditor
 import io.github.rosemoe.sora.widget.CodeEditor
 
 
