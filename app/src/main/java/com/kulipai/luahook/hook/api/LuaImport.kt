@@ -1,7 +1,7 @@
 package com.kulipai.luahook.hook.api
 
-import com.kulipai.luahook.core.file.LShare
-import com.kulipai.luahook.core.file.LShare.read
+import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.file.WorkspaceFileManager.read
 import com.kulipai.luahook.core.log.d
 import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.XposedHelpers
@@ -26,7 +26,7 @@ class LuaImport(
         env["require"] = object : OneArgFunction() {
             override fun call(scriptName: LuaValue): LuaValue {
                 try {
-                    return env.load(read(LShare.AppScript + "/" + packageName + "/" + scriptName + ".lua"))
+                    return env.load(read(WorkspaceFileManager.AppScript + "/" + packageName + "/" + scriptName + ".lua"))
                         .call()
                 } catch (e: Exception) {
                     ("[Error] | Package: $packageName | Script: $scriptName | Message: "+ LuaUtil.simplifyLuaError(

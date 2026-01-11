@@ -14,7 +14,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.script.manager.MultiScriptActivity
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 
 class AppsAdapter(private var apps: List<AppInfo>, private val context: Context) :
     RecyclerView.Adapter<AppsAdapter.AppsViewHolder>() {
@@ -46,9 +46,9 @@ class AppsAdapter(private var apps: List<AppInfo>, private val context: Context)
                     .setTitle(context.resources.getString(R.string.tips))
                     .setMessage(context.resources.getString(R.string.confirm_deletion))
                     .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, _ ->
-                        val savedList = LShare.readStringList("/apps.txt")
+                        val savedList = WorkspaceFileManager.readStringList("/apps.txt")
                         savedList.remove(apps[bindingAdapterPosition].packageName)
-                        LShare.writeStringList("/apps.txt",savedList)
+                        WorkspaceFileManager.writeStringList("/apps.txt",savedList)
                         val availableAppsToShow: List<AppInfo> = apps.filter { appInfo ->
                             savedList.contains(appInfo.packageName)
                             // 或者写成: appInfo.packageName !in selectedPackagesSet

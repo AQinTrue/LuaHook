@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import com.kulipai.luahook.core.log.d
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.shell.ShellResult
 import org.json.JSONObject
 import java.io.File
 
@@ -11,7 +12,7 @@ import java.io.File
  * /data/local/tmp/LuaHook/文件管理系统
  */
 
-object LShare {
+object WorkspaceFileManager {
 
     const val DIR: String = "/data/local/tmp/LuaHook"
     const val Project: String = "/Project"
@@ -44,8 +45,16 @@ object LShare {
         echo "$base64Content" | base64 -d > "$path"
     """.trimIndent()
 
-        val (_, success) = ShellManager.shell(script)
-        return success
+        val result = ShellManager.shell(script)
+        return when(result) {
+            is ShellResult.Error -> {
+                false
+            }
+            is ShellResult.Success -> {
+                true
+            }
+        }
+
     }
 
 
@@ -106,8 +115,15 @@ object LShare {
     fun rm(file: String): Boolean {
         val path = "$DIR/$file"
         val script = "rm -f \"$path\""
-        val (_, success) = ShellManager.shell(script)
-        return success
+        val result = ShellManager.shell(script)
+        return when(result) {
+            is ShellResult.Error -> {
+                false
+            }
+            is ShellResult.Success -> {
+                true
+            }
+        }
     }
 
     fun init(context: Context) {
@@ -127,9 +143,15 @@ object LShare {
 
     fun directoryExists(path: String): Boolean {
         // 使用 ls 判断目录是否存在
-        val (_, checkSuccess) = ShellManager.shell("ls \"$path\"")
-        return checkSuccess
-        // 目录存在
+        val result = ShellManager.shell("ls \"$path\"")
+        return when(result) {
+            is ShellResult.Error -> {
+                false
+            }
+            is ShellResult.Success -> {
+                true
+            }
+        }
     }
 
     /**
@@ -145,8 +167,15 @@ object LShare {
 
 
         // 不存在则尝试创建
-        val (_, mkdirSuccess) = ShellManager.shell("mkdir -p \"$path\"")
-        return mkdirSuccess
+        val result = ShellManager.shell("mkdir -p \"$path\"")
+        return when(result) {
+            is ShellResult.Error -> {
+                false
+            }
+            is ShellResult.Success -> {
+                true
+            }
+        }
     }
 
 

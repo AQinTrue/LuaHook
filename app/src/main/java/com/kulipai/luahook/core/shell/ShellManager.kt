@@ -2,7 +2,7 @@ package com.kulipai.luahook.core.shell
 
 import android.content.Context
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +46,7 @@ object ShellManager {
             if (it.isRoot) {
                 rootShell = it
                 setMode(Mode.ROOT)
-                LShare.init(context)
+                WorkspaceFileManager.init(context)
 
             }
             // 显式尝试获取一次 Shell，会触发 root 权限申请（如必要）

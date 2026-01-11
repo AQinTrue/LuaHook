@@ -18,7 +18,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.setting.ScriptSetActivity
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -37,7 +37,7 @@ class MultScriptAdapter(
 
     RecyclerView.Adapter<MultScriptAdapter.MultScriptViewHolder>() {
 
-    val path = LShare.AppConf + "/" + currentPackageName + ".txt"
+    val path = WorkspaceFileManager.AppConf + "/" + currentPackageName + ".txt"
 
 
     @SuppressLint("NotifyDataSetChanged", "MissingInflatedId", "InflateParams")
@@ -83,7 +83,7 @@ class MultScriptAdapter(
                 bsdDescription.text = (innerList[1] as String).takeUnless { it.isEmpty() } ?: "无"
 
                 val param =
-                    LShare.parseParameters(read(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua"))
+                    WorkspaceFileManager.parseParameters(read(WorkspaceFileManager.DIR + "/" + WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua"))
 
                 bsdAuthor.text = param?.author ?: "无"
 
@@ -103,7 +103,7 @@ class MultScriptAdapter(
 
             setButton.setOnClickListener {
                 val intent = Intent(context, ScriptSetActivity::class.java)
-                intent.putExtra("path", LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua")
+                intent.putExtra("path", WorkspaceFileManager.DIR + WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + conf[bindingAdapterPosition].key + ".lua")
                 context.startActivity(intent)
             }
 
@@ -122,7 +122,7 @@ class MultScriptAdapter(
                 )
 
                 GlobalScope.launch(Dispatchers.IO) {
-                    LShare.writeMap(path, conf.associate { it.key to it.value }.toMutableMap())
+                    WorkspaceFileManager.writeMap(path, conf.associate { it.key to it.value }.toMutableMap())
                 }
             }
 
@@ -169,10 +169,10 @@ class MultScriptAdapter(
             .setTitle(context.resources.getString(R.string.tips))
             .setMessage(context.resources.getString(R.string.confirm_deletion))
             .setPositiveButton(context.resources.getString(R.string.sure)) { dialog, _ ->
-                LShare.rm(LShare.AppScript + "/" + currentPackageName + "/" + conf[position].key + ".lua")
+                WorkspaceFileManager.rm(WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + conf[position].key + ".lua")
                 conf.removeAt(position)
                 GlobalScope.launch(Dispatchers.IO) {
-                    LShare.writeMap(
+                    WorkspaceFileManager.writeMap(
                         path,
                         conf.associate { it.key to it.value }.toMutableMap()
                     )

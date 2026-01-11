@@ -41,7 +41,7 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.manual.Manual
 import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.kulipai.luahook.ui.logcat.LogCatActivity
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
@@ -331,7 +331,7 @@ class EditActivity : AppCompatActivity() {
 
 
     fun saveScript(text: String) {
-        LShare.write("/global.lua", text)
+        WorkspaceFileManager.write("/global.lua", text)
     }
 
 
@@ -400,7 +400,7 @@ class EditActivity : AppCompatActivity() {
         ViewCompat.requestApplyInsets(rootLayout)
 
 
-        val luaScript = LShare.read("/global.lua")
+        val luaScript = WorkspaceFileManager.read("/global.lua")
         if (luaScript == "") {
             val lua = """
         """.trimIndent()
