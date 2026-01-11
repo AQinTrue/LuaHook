@@ -24,7 +24,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.ui.home.AppInfo
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.xposed.XposedScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +65,7 @@ class SelectApps : AppCompatActivity() {
             insets
         }
 
-        val selectedPackageNames = LShare.readStringList("/apps.txt")
+        val selectedPackageNames = WorkspaceFileManager.readStringList("/apps.txt")
         selectApps = selectedPackageNames.toMutableList()
 
         adapter = SelectAppsAdapter(emptyList(), this, selectApps)
@@ -114,7 +114,7 @@ class SelectApps : AppCompatActivity() {
         }
 
         fab.setOnClickListener {
-            LShare.writeStringList("/apps.txt", selectApps)
+            WorkspaceFileManager.writeStringList("/apps.txt", selectApps)
             XposedScope.requestManyScope(
                 this,
                 (selectApps - selectedPackageNames).toMutableList(),

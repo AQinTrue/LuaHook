@@ -26,7 +26,6 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -38,8 +37,7 @@ import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.selector.SelectApps
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.home.AppsAdapter
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -103,7 +101,7 @@ class AppsFragment : Fragment() {
             // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
             lifecycleScope.launch {
                 if (ShellManager.mode.value != ShellManager.Mode.NONE) {
-                    val savedList = LShare.readStringList("/apps.txt")
+                    val savedList = WorkspaceFileManager.readStringList("/apps.txt")
                     if (savedList.isEmpty()) {
                         // 列表为空的逻辑
                     } else {
@@ -389,30 +387,30 @@ class AppsFragment : Fragment() {
     @OptIn(DelicateCoroutinesApi::class)
     fun loadScript(script: String) {
         // 解析参数
-        val param = LShare.parseParameters(script)
+        val param = WorkspaceFileManager.parseParameters(script)
         if (param?.name.isNullOrEmpty() || param.packageName.isNullOrEmpty()) {
             Toast.makeText(requireActivity(), resources.getString(R.string.read_file_failed), Toast.LENGTH_SHORT).show()
         } else {
             // apps列表
-            val appList = LShare.readStringList("/apps.txt")
+            val appList = WorkspaceFileManager.readStringList("/apps.txt")
             if (appList.isEmpty() || !appList.contains(param.packageName)) {
                 appList.add(param.packageName)
-                LShare.writeStringList("/apps.txt", appList)
+                WorkspaceFileManager.writeStringList("/apps.txt", appList)
             }
 
 
             // appconf
             // 写配置
-            val path = LShare.AppConf + "/" + param.packageName + ".txt"
-            val map = LShare.readMap(path)
+            val path = WorkspaceFileManager.AppConf + "/" + param.packageName + ".txt"
+            val map = WorkspaceFileManager.readMap(path)
             map[param.name] = arrayOf<Any?>(true, param.descript, "v1.0")
-            LShare.writeMap(path, map)
-            LShare.ensureDirectoryExists(LShare.DIR + "/" + LShare.AppScript + "/" + param.packageName)
+            WorkspaceFileManager.writeMap(path, map)
+            WorkspaceFileManager.ensureDirectoryExists(WorkspaceFileManager.DIR + "/" + WorkspaceFileManager.AppScript + "/" + param.packageName)
 
 
             // appscript
-            val path2 = LShare.AppScript + "/" + param.packageName + "/" + param.name + ".lua"
-            LShare.write(path2, script)
+            val path2 = WorkspaceFileManager.AppScript + "/" + param.packageName + "/" + param.name + ".lua"
+            WorkspaceFileManager.write(path2, script)
 
             lifecycleScope.launch {
                 // 更新页面

@@ -35,7 +35,7 @@ import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.kulipai.luahook.ui.script.editor.ToolAdapter
 import com.kulipai.luahook.databinding.ActivityAppsEditBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.myopicmobile.textwarrior.common.AutoIndent
@@ -135,7 +135,7 @@ class AppsEdit : AppCompatActivity() {
         }
 
         // TODO)) 弄个统一获取路径或者读取的函数
-        val scriptPath = "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+        val scriptPath = "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
         val script = read(scriptPath)
 
         binding.editor.setText(script, null)
@@ -248,7 +248,7 @@ class AppsEdit : AppCompatActivity() {
                 val intent = Intent(this, ScriptSetActivity::class.java)
                 intent.putExtra(
                     "path",
-                    LShare.DIR + LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
+                    WorkspaceFileManager.DIR + WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
                 )
                 startActivity(intent)
                 true
@@ -280,7 +280,7 @@ class AppsEdit : AppCompatActivity() {
                         }
                         shareFileFromTmp(
                             this,
-                            "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+                            "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
                         )
                     }
                 }
@@ -291,7 +291,7 @@ class AppsEdit : AppCompatActivity() {
         } else {
             shareFileFromTmp(
                 this,
-                "/data/local/tmp/LuaHook/${LShare.AppScript}/$currentPackageName/$scripName.lua"
+                "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
             )
         }
     }
@@ -317,8 +317,8 @@ class AppsEdit : AppCompatActivity() {
 
     // TODO)) 封装
     fun saveScript(script: String) {
-        val path = LShare.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
-        LShare.write(path, script)
+        val path = WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
+        WorkspaceFileManager.write(path, script)
     }
 
     // TODO)) 封装

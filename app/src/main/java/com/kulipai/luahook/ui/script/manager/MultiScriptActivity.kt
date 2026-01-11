@@ -28,9 +28,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.script.manager.MultScriptAdapter
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONException
@@ -199,8 +198,8 @@ class MultiScriptActivity : AppCompatActivity() {
 
     // TODO)) 封装
     fun readConf(): MutableList<MutableMap.MutableEntry<String, Any?>> {
-        val path = LShare.AppConf + "/" + currentPackageName + ".txt"
-        val list = LShare.readMap(path).entries.toMutableList()
+        val path = WorkspaceFileManager.AppConf + "/" + currentPackageName + ".txt"
+        val list = WorkspaceFileManager.readMap(path).entries.toMutableList()
         transformBooleanValuesToJsonArrayInMaps(list)
         return list
 
@@ -209,11 +208,11 @@ class MultiScriptActivity : AppCompatActivity() {
     // TODO)) 封装
     fun createScript(name: String, description: String) {
         // 写配置
-        val path = LShare.AppConf + "/" + currentPackageName + ".txt"
-        val map = LShare.readMap(path)
+        val path = WorkspaceFileManager.AppConf + "/" + currentPackageName + ".txt"
+        val map = WorkspaceFileManager.readMap(path)
         map[name] = arrayOf<Any?>(true, description, "v1.0")
-        LShare.writeMap(path, map)
-        LShare.ensureDirectoryExists(LShare.DIR + "/" + LShare.AppScript + "/" + currentPackageName)
+        WorkspaceFileManager.writeMap(path, map)
+        WorkspaceFileManager.ensureDirectoryExists(WorkspaceFileManager.DIR + "/" + WorkspaceFileManager.AppScript + "/" + currentPackageName)
 
         // 进入编辑界面
         val intent = Intent(this, AppsEdit::class.java)

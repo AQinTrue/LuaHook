@@ -5,7 +5,7 @@ import com.kulipai.luahook.hook.api.HookLib
 import com.kulipai.luahook.hook.api.LuaActivity
 import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.IXposedHookZygoteInit
 import io.github.libxposed.api.XposedInterface
@@ -57,9 +57,9 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
 
     fun luaHookInit(lpparam: LPParam) {
 
-        selectAppsString = LShare.read("/apps.txt").replace("\n", "")
+        selectAppsString = WorkspaceFileManager.read("/apps.txt").replace("\n", "")
 
-        luaScript = LShare.read("/global.lua")
+        luaScript = WorkspaceFileManager.read("/global.lua")
 
         selectAppsList = if (selectAppsString.isNotEmpty() && selectAppsString != "") {
             selectAppsString.split(",").toMutableList()
@@ -85,16 +85,16 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
 
         if (lpparam.packageName in selectAppsList) {
 
-            for ((scriptName, v) in LShare.readMap("/${LShare.AppConf}/${lpparam.packageName}.txt")) {
+            for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
                 try {
                     if (v is Boolean) {  // 兼容旧版luahook的存储格式
                         createGlobals(lpparam, scriptName)
-                            .load(LShare.read("/${LShare.AppScript}/${lpparam.packageName}/$scriptName.lua"))
+                            .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                             .call()
                     } else if ((v is JSONArray)) {
                         if (v[0] as Boolean) {
                             createGlobals(lpparam, scriptName)
-                                .load(LShare.read("/${LShare.AppScript}/${lpparam.packageName}/$scriptName.lua"))
+                                .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                                 .call()
                         }
                     }

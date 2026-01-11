@@ -25,7 +25,7 @@ import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.ui.setting.SettingsActivity
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.core.file.LShare
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
 import kotlinx.coroutines.launch
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
 
     // TODO)) 封装
     private fun getSavedAppList(): MutableList<String> {
-        val serialized = LShare.read("/apps.txt")
+        val serialized = WorkspaceFileManager.read("/apps.txt")
         return if (serialized.isNotBlank()) serialized.split(",").toMutableList()
         else mutableListOf()
     }

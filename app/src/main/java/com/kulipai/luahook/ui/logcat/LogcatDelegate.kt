@@ -22,10 +22,13 @@ object LogcatDelegate {
         }
 
         return withContext(Dispatchers.IO) {
-            val result = ShellManager.shell(command)
-            when(result) {
-                is ShellResult.Error -> {}
-                is ShellResult.Success -> {}
+            when(val result = ShellManager.shell(command)) {
+                is ShellResult.Error -> {
+                    mutableListOf()
+                }
+                is ShellResult.Success -> {
+                    result.stdout.split("\n")
+                }
             }
 //            try {
 //                val (result, err) =
