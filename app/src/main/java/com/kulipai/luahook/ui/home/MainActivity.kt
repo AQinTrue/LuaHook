@@ -84,11 +84,6 @@ class MainActivity : AppCompatActivity() {
 
     // --------------------- ViewModel ---------------------
 
-    fun requestShizuku() {
-        if (ShizukuApi.isBinderAvailable.value == true && ShizukuApi.isPermissionGranted.value == false) {
-            Shizuku.requestPermission(114514)
-        }
-    }
 
 
 
@@ -191,19 +186,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     // --------------------- Shizuku 权限逻辑 ---------------------
-    private val permissionListener =
-        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-            ShizukuApi.isPermissionGranted.value = grantResult == PackageManager.PERMISSION_GRANTED
-        }
+
 
     override fun onStart() {
         super.onStart()
-        Shizuku.addRequestPermissionResultListener(permissionListener)
+        Shizuku.addRequestPermissionResultListener(ShizukuApi.permissionListener)
     }
 
     override fun onStop() {
         super.onStop()
-        Shizuku.removeRequestPermissionResultListener(permissionListener)
+        Shizuku.removeRequestPermissionResultListener(ShizukuApi.permissionListener)
     }
 
 

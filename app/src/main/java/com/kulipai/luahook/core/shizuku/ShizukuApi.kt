@@ -9,6 +9,8 @@ import android.os.IInterface
 import android.os.RemoteException
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.BuildConfig
+import com.kulipai.luahook.core.shell.ShellManager.Mode
+import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
@@ -45,7 +47,19 @@ object ShizukuApi {
     }
 
 
+    val permissionListener =
+        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+            isPermissionGranted.value = grantResult == PackageManager.PERMISSION_GRANTED
+        }
+
     fun checkShizukuPermission(): Boolean = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+
+
+    fun requestShizuku() {
+        if (isBinderAvailable.value == true && isPermissionGranted.value == false) {
+            Shizuku.requestPermission(114514)
+        }
+    }
 
 
     fun bindShizuku(context: Context) {
@@ -70,6 +84,7 @@ object ShizukuApi {
                 if (binder != null && binder.pingBinder()) {
                     userService = IUserService.Stub.asInterface(binder)
                     isServiceConnected.value = true
+                    setMode(Mode.SHIZUKU)
                     // Successful
                 }
             }
