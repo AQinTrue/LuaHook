@@ -26,7 +26,9 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -96,20 +98,7 @@ class AppsFragment : Fragment() {
     // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
     private val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // 使用 activity.RESULT_OK 进行比较
 
-            // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
-            lifecycleScope.launch {
-                if (ShellManager.mode.value != ShellManager.Mode.NONE) {
-                    val savedList = WorkspaceFileManager.readStringList("/apps.txt")
-                    if (savedList.isEmpty()) {
-                        // 列表为空的逻辑
-                    } else {
-                        val appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-                        adapter.updateData(appInfoList)
-                    }
-                }
-            }
         }
 
 
@@ -147,20 +136,24 @@ class AppsFragment : Fragment() {
         rec.layoutManager = LinearLayoutManager(requireContext())
         rec.adapter = adapter
 
-        // TODO)) 获取到shell后加载数据
-//        viewModel.data.observe(requireActivity()) {
-//            lifecycleScope.launch {
-//                if (ShellManager.getMode() != ShellManager.Mode.NONE) {
-//                    val savedList = LShare.readStringList("/apps.txt")
-//                    if (savedList.isEmpty()) {
-//                        // 列表为空的逻辑
-//                    } else {
-//                        appInfoList = MyApplication.Companion.instance.getAppInfoList(savedList)
-//                        adapter.updateData(appInfoList)
-//                    }
-//                }
-//            }
-//        }
+
+
+        // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ShellManager.mode.collect {
+                    if (it != ShellManager.Mode.NONE) {
+                        val savedList = WorkspaceFileManager.readStringList("/apps.txt")
+
+                        if (savedList.isNotEmpty()) {
+                            val appInfoList = MyApplication.instance.getAppInfoList(savedList)
+                            adapter.updateData(appInfoList)
+                        }
+                    }
+                }
+            }
+        }
+
 
         searchbar.setOnClickListener {
             searchEdit.requestFocus()

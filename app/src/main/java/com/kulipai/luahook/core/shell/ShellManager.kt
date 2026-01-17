@@ -1,6 +1,7 @@
 package com.kulipai.luahook.core.shell
 
 import android.content.Context
+import androidx.lifecycle.Observer
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.topjohnwu.superuser.Shell
@@ -52,13 +53,24 @@ object ShellManager {
             // 显式尝试获取一次 Shell，会触发 root 权限申请（如必要）
             else if (Shizuku.getBinder() != null && Shizuku.pingBinder()) {
                 //shizuku
+                if (ShizukuApi.isPermissionGranted.value == false) {
+                    ShizukuApi.requestShizuku()
 
-                ShizukuApi.bindShizuku(context)
-//                {
-//                    mode = if (userService != null) Mode.SHIZUKU else Mode.NONE
-//                    LShare.init(context)
-//                    onInitialized?.invoke()
-//                }
+                }
+
+                // ✅ 用 forever observer 等权限
+                ShizukuApi.isPermissionGranted.observeForever(object : Observer<Boolean> {
+                    override fun onChanged(value: Boolean) {
+                        if (value) {
+                            ShizukuApi.isPermissionGranted.removeObserver(this)
+
+                            ShizukuApi.bindShizuku(context)
+                            setMode(Mode.SHIZUKU)
+                            WorkspaceFileManager.init(context)
+                        }
+                    }
+                })
+
             } else {
                 //no
                 setMode(Mode.NONE)
