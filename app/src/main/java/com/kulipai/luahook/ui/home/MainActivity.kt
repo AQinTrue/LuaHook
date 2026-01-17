@@ -142,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         val fragments = listOf(
             HomeFragment(),
             AppsFragment(),
+            ProjectFragment(),
             PluginsFragment()
         )
         binding.viewPager2.adapter = object : FragmentStateAdapter(this) {
@@ -157,7 +158,9 @@ class MainActivity : AppCompatActivity() {
             .setIcon(R.drawable.home_24px)
         menu.add(Menu.NONE, 1, 1, getString(R.string.apps))
             .setIcon(R.drawable.apps_24px)
-        menu.add(Menu.NONE, 2, 2, getString(R.string.plugins))
+        menu.add(Menu.NONE, 2, 2, getString(R.string.project))
+            .setIcon(R.drawable.work_24px)
+        menu.add(Menu.NONE, 3, 3, getString(R.string.plugins))
             .setIcon(R.drawable.extension_24px)
 
         binding.bottomBar.setOnItemSelectedListener {
@@ -178,6 +181,7 @@ class MainActivity : AppCompatActivity() {
         val icons = listOf(
             R.drawable.home_24px to R.drawable.home_fill_24px,
             R.drawable.apps_24px to R.drawable.apps_24px,
+            R.drawable.work_24px to R.drawable.work_24px_fill,
             R.drawable.extension_24px to R.drawable.extension_fill_24px
         )
         for (i in 0 until menu.size) {

@@ -130,4 +130,5 @@
     <string name="print_all_params">打印所有参数</string>
     <string name="print_return">打印返回值</string>
     <string name="print_stack">打印堆栈</string>
+    <string name="project">项目</string>
 </resources>
