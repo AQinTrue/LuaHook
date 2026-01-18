@@ -128,4 +128,13 @@ dependencies {
     implementation(libs.nanohttpd)
 
 
+    //引入DialogX主体
+    implementation(libs.dialogx)
+    //非必须 DialogX官方提供的主题样式
+    implementation(libs.dialogxkongzuestyle)
+    implementation (libs.dialogxmiuistyle)
+    implementation(libs.dialogxiosstyle)
+    implementation(libs.dialogxmaterialyou)
+
+
 }

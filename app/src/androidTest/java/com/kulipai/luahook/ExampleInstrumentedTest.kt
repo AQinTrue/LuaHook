@@ -22,4 +22,7 @@ class ExampleInstrumentedTest {
         assertEquals("com.kulipai.luahook", appContext.packageName)
     }
 
+
+
+
 }

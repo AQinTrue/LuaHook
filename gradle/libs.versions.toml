@@ -4,6 +4,7 @@ annotation = "1.9.1"
 apiVersion = "13.1.5"
 core = "6.0.0"
 dexkit = "2.0.7"
+dialogx = "0.0.50-v2"
 fragmentKtx = "1.8.9"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
@@ -37,6 +38,11 @@ androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-view
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
 core = { module = "com.github.topjohnwu.libsu:core", version.ref = "core" }
 dexkit = { module = "org.luckypray:dexkit", version.ref = "dexkit" }
+dialogx = { module = "com.github.suzhelan.DialogX:DialogX", version.ref = "dialogx" }
+dialogxiosstyle = { module = "com.github.suzhelan.DialogX:DialogXIOSStyle", version.ref = "dialogx" }
+dialogxkongzuestyle = { module = "com.github.suzhelan.DialogX:DialogXKongzueStyle", version.ref = "dialogx" }
+dialogxmaterialyou = { module = "com.github.suzhelan.DialogX:DialogXMaterialYou", version.ref = "dialogx" }
+dialogxmiuistyle = { module = "com.github.suzhelan.DialogX:DialogXMIUIStyle", version.ref = "dialogx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

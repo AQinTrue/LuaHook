@@ -37,6 +37,7 @@ import com.kulipai.luahook.databinding.ActivityAppsEditBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.utils.d
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
@@ -319,6 +320,8 @@ class AppsEdit : AppCompatActivity() {
     fun saveScript(script: String) {
         val path = WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
         WorkspaceFileManager.write(path, script)
+
+
     }
 
     // TODO)) 封装
