@@ -65,8 +65,8 @@ object ShellManager {
                             ShizukuApi.isPermissionGranted.removeObserver(this)
 
                             ShizukuApi.bindShizuku(context)
-                            setMode(Mode.SHIZUKU)
-                            WorkspaceFileManager.init(context)
+//                            setMode(Mode.SHIZUKU)
+//                            WorkspaceFileManager.init(context)
                         }
                     }
                 })
