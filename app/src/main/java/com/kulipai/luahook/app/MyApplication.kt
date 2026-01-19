@@ -4,13 +4,13 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import com.google.android.material.color.DynamicColors
-import com.kulipai.luahook.ui.home.AppInfo
-import com.kulipai.luahook.ui.home.getInstalledApps
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.crash.AppCrashHandler
 import com.kulipai.luahook.core.language.LanguageUtils
+import com.kulipai.luahook.core.pm.PackageUtils.getInstalledApps
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.xposed.XposedScope
+import com.kulipai.luahook.data.model.AppInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,64 +1,31 @@
 package com.kulipai.luahook.ui.home
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.annotation.AttrRes
 import androidx.appcompat.R
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.kulipai.luahook.databinding.ActivityMainHomeBinding
-import com.kulipai.luahook.ui.script.editor.global.EditActivity
+import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionCode
+import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionName
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.theme.ColorUtils.getDynamicColor
 import com.kulipai.luahook.core.xposed.XposedScope
-import kotlinx.coroutines.DelicateCoroutinesApi
+import com.kulipai.luahook.databinding.FragmentHomeHomeBinding
+import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
 
-    private var _binding: ActivityMainHomeBinding? = null
+    private var _binding: FragmentHomeHomeBinding? = null
     private val binding get() = _binding!!
 
-    // TODO)) 封装
-    private fun getAppVersionName(context: Context): String {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName!!
-        } catch (_: PackageManager.NameNotFoundException) {
-            "Unknown"
-        }
-    }
-
-    // TODO)) 封装
-    fun getAppVersionCode(context: Context): Long {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.longVersionCode // 注意这里使用 longVersionCode，在旧版本中是 versionCode (Int)
-        } catch (_: PackageManager.NameNotFoundException) {
-            -1 // 或者其他表示未找到的数值
-        }
-    }
-
-    // TODO)) 封装
-    fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {
-        val typedValue = TypedValue()
-        context.theme.resolveAttribute(colorAttributeResId, typedValue, true)
-        return if (typedValue.resourceId != 0) {
-            ContextCompat.getColor(context, typedValue.resourceId)
-        } else {
-            typedValue.data
-        }
-    }
 
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -172,15 +139,13 @@ class HomeFragment : Fragment() {
     }
 
 
-    @OptIn(DelicateCoroutinesApi::class)
-    @SuppressLint("MissingInflatedId", "SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = ActivityMainHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentHomeHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 

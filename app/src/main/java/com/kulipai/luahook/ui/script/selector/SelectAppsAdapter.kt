@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.home.AppInfo
+import com.kulipai.luahook.data.model.AppInfo
 
 
 fun getDynamicColor(context: Context, @AttrRes colorAttributeResId: Int): Int {

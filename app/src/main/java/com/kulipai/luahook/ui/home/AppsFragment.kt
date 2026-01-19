@@ -7,7 +7,6 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
@@ -17,7 +16,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -32,15 +30,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.kulipai.luahook.ui.script.editor.app.AppsEdit
-import com.kulipai.luahook.ui.script.selector.SelectApps
-import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.R
+import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.data.model.AppInfo
+import com.kulipai.luahook.databinding.FragmentHomeAppsBinding
+import com.kulipai.luahook.ui.script.editor.app.AppsEdit
+import com.kulipai.luahook.ui.script.selector.SelectApps
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -50,92 +47,62 @@ import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-data class AppInfo(
-    val appName: String,
-    val packageName: String,
-    val versionName: String,
-    val versionCode: Long,
-    val isSystemApp: Boolean = false
-)
-
-// TODO)) 封装
-fun getInstalledApps(context: Context): List<AppInfo> {
-    val pm = context.packageManager
-    val apps = mutableListOf<AppInfo>()
-    val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-
-    for (app in packages) {
-        // 过滤掉系统应用（有启动项的）
-        if (pm.getLaunchIntentForPackage(app.packageName) != null) {
-            val appName = pm.getApplicationLabel(app).toString()
-            val packageName = app.packageName
-            pm.getApplicationIcon(app)
-
-            try {
-                val packageInfo = pm.getPackageInfo(packageName, 0)
-                val versionName = packageInfo.versionName ?: "N/A"
-                val versionCode =
-                    packageInfo.longVersionCode
-
-//                apps.add(AppInfo(appName, packageName, icon, versionName, versionCode))
-                apps.add(AppInfo(appName, packageName, versionName, versionCode))
-            } catch (_: PackageManager.NameNotFoundException) {
-                // 忽略未找到的包
-            }
-        }
-    }
-
-    return apps.sortedBy { it.appName.lowercase() }
-}
-
 
 class AppsFragment : Fragment() {
+
+
+    private var _binding: FragmentHomeAppsBinding? = null
+    private val binding get() = _binding!!
+
+
     private lateinit var adapter: AppsAdapter
     private var appInfoList: List<AppInfo> = emptyList()
 
 
-
-    // --- **修改点 1：将 launcher 的初始化移到这里，作为成员变量** ---
     private val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 
         }
 
-
-    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        _binding = FragmentHomeAppsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+
+    @SuppressLint("MissingInflatedId")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         var searchJob: Job? = null
         // 加载 Fragment 的布局
-        val view = inflater.inflate(R.layout.fragment_home_apps, container, false)
-        val rec: RecyclerView by lazy { view.findViewById(R.id.rec) }
-        val fab1: MaterialButton by lazy { view.findViewById(R.id.fab1) }
-        val fab2: MaterialButton by lazy { view.findViewById(R.id.fab2) }
-        val fab: FloatingActionButton by lazy { view.findViewById(R.id.fab) }
-        val searchEdit: EditText by lazy { view.findViewById(R.id.search_bar_text_view) }
-        val clearImage: ImageView by lazy { view.findViewById(R.id.clear_text) }
-        val searchbar: MaterialCardView by lazy { view.findViewById(R.id.searchbar) }
+
+//        val fab1: MaterialButton by lazy { view.findViewById(R.id.fab1) }
+//        val fab2: MaterialButton by lazy { view.findViewById(R.id.fab2) }
+//        val fab: FloatingActionButton by lazy { view.findViewById(R.id.fab) }
+//        val binding.searchBarTextView: EditText by lazy { view.findViewById(R.id.search_bar_text_view) }
+//        val binding.clearText: ImageView by lazy { view.findViewById(R.id.clear_text) }
+//        val searchbar: MaterialCardView by lazy { view.findViewById(R.id.searchbar) }
 
         // 设置rec的bottom高度适配
         activity?.findViewById<BottomNavigationView>(R.id.bottomBar)?.let { bottomNavigationView ->
             val bottomBarHeight = bottomNavigationView.height
 
-            rec.setPadding(
-                rec.paddingLeft,
-                rec.paddingTop,
-                rec.paddingRight,
+            binding.rec.setPadding(
+                binding.rec.paddingLeft,
+                binding.rec.paddingTop,
+                binding.rec.paddingRight,
                 bottomBarHeight
             )
         }
 
         adapter = AppsAdapter(emptyList(), requireContext()) // 先传空列表
-        rec.layoutManager = LinearLayoutManager(requireContext())
-        rec.adapter = adapter
-
+        binding.rec.layoutManager = LinearLayoutManager(requireContext())
+        binding.rec.adapter = adapter
 
 
         // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
@@ -155,34 +122,34 @@ class AppsFragment : Fragment() {
         }
 
 
-        searchbar.setOnClickListener {
-            searchEdit.requestFocus()
+        binding.searchbar.setOnClickListener {
+            binding.searchBarTextView.requestFocus()
             // 显示软键盘
             val imm =
                 requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
+            imm.showSoftInput(binding.searchBarTextView, InputMethodManager.SHOW_IMPLICIT)
         }
 
 
         //搜索
-        searchEdit.doAfterTextChanged { s ->
+        binding.searchBarTextView.doAfterTextChanged { s ->
             s.toString()
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
                 if (appInfoList.isNotEmpty()) {
                     delay(100) // 延迟300ms
-                    filterAppList(s.toString().trim(), clearImage)
+                    filterAppList(s.toString().trim())
                 }
             }
         }
 
-        clearImage.setOnClickListener {
-            searchEdit.setText("")
-            clearImage.visibility = View.INVISIBLE
+        binding.clearText.setOnClickListener {
+            binding.searchBarTextView.setText("")
+            binding.clearText.visibility = View.INVISIBLE
         }
 
 
-        rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
+        binding.rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
                 outRect: Rect,
                 view: View,
@@ -196,33 +163,42 @@ class AppsFragment : Fragment() {
         })
 
 
-        fab1.setOnClickListener {
+        binding.fab1.setOnClickListener {
             if (ShellManager.mode.value != ShellManager.Mode.NONE) {
                 val intent = Intent(requireContext(), SelectApps::class.java)
                 launcher.launch(intent)
             } else {
-                Toast.makeText(requireContext(), resources.getString(R.string.Inactive_modules), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    resources.getString(R.string.Inactive_modules),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
-        fab2.setOnClickListener {
+        binding.fab2.setOnClickListener {
             openFilePicker()
         }
 
         //fab点击
         var isOpen = false
-        fab.setOnClickListener {
+        binding.fab.setOnClickListener {
             val rotateAnimator =
-                ObjectAnimator.ofFloat(fab, "rotation", fab.rotation, fab.rotation + 45f)
+                ObjectAnimator.ofFloat(
+                    binding.fab,
+                    "rotation",
+                    binding.fab.rotation,
+                    binding.fab.rotation + 45f
+                )
             rotateAnimator.duration = 300
             rotateAnimator.start()
             if (isOpen) {
-                hideFabWithAnimation(fab1)
-                hideFabWithAnimation(fab2, 300)
+                hideFabWithAnimation(binding.fab1)
+                hideFabWithAnimation(binding.fab2, 300)
                 isOpen = !isOpen
             } else {
-                showFabWithAnimation(fab2)
-                showFabWithAnimation(fab1, 350)
+                showFabWithAnimation(binding.fab2)
+                showFabWithAnimation(binding.fab1, 350)
                 isOpen = !isOpen
             }
         }
@@ -237,16 +213,16 @@ class AppsFragment : Fragment() {
 //            }
 //
 //        }
-        return view
     }
 
-
-    private fun filterAppList(query: String, clearImage: ImageView) {
+    // TODO)) 封装，传入一个clearText这个ImageView
+    private fun filterAppList(query: String)
+    {
         val filteredList = if (query.isEmpty()) {
-            clearImage.visibility = View.INVISIBLE
+            binding.clearText.visibility = View.INVISIBLE
             appInfoList // 显示全部
         } else {
-            clearImage.visibility = View.VISIBLE
+            binding.clearText.visibility = View.VISIBLE
             appInfoList.filter {
                 it.appName.contains(query, ignoreCase = true) ||
                         it.packageName.contains(query, ignoreCase = true)
@@ -322,6 +298,8 @@ class AppsFragment : Fragment() {
             }
         }
 
+
+    // TODO)) 封装，
     /**
      * 调用系统文件选择器来选择文件。
      * 使用 Storage Access Framework (SAF) 的 ACTION_OPEN_DOCUMENT。
@@ -336,6 +314,7 @@ class AppsFragment : Fragment() {
         pickFileLauncher.launch(arrayOf("*/*"))
     }
 
+    // TODO)) 封装，
     /**
      * 读取指定 URI 的文件内容并显示。
      *
@@ -371,18 +350,22 @@ class AppsFragment : Fragment() {
 
 //            fileContentTextView.text = "文件名: $fileName\n\n文件内容:\n${stringBuilder.toString()}"
         } catch (e: Exception) {
-            Log.e("FilePicker", resources.getString(R.string.read_file_failed)+"${e.message}", e)
+            Log.e("FilePicker", resources.getString(R.string.read_file_failed) + "${e.message}", e)
 //            fileContentTextView.text = "读取文件失败: ${e.message}"
         }
     }
 
-
+    // TODO)) 封装，
     @OptIn(DelicateCoroutinesApi::class)
     fun loadScript(script: String) {
         // 解析参数
         val param = WorkspaceFileManager.parseParameters(script)
         if (param?.name.isNullOrEmpty() || param.packageName.isNullOrEmpty()) {
-            Toast.makeText(requireActivity(), resources.getString(R.string.read_file_failed), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireActivity(),
+                resources.getString(R.string.read_file_failed),
+                Toast.LENGTH_SHORT
+            ).show()
         } else {
             // apps列表
             val appList = WorkspaceFileManager.readStringList("/apps.txt")
@@ -402,7 +385,8 @@ class AppsFragment : Fragment() {
 
 
             // appscript
-            val path2 = WorkspaceFileManager.AppScript + "/" + param.packageName + "/" + param.name + ".lua"
+            val path2 =
+                WorkspaceFileManager.AppScript + "/" + param.packageName + "/" + param.name + ".lua"
             WorkspaceFileManager.write(path2, script)
 
             lifecycleScope.launch {
@@ -422,9 +406,6 @@ class AppsFragment : Fragment() {
         }
 
     }
-
-
-
 
 
 }
