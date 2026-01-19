@@ -15,6 +15,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.script.manager.MultiScriptActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.data.model.AppInfo
 
 class AppsAdapter(private var apps: List<AppInfo>, private val context: Context) :
     RecyclerView.Adapter<AppsAdapter.AppsViewHolder>() {

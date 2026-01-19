@@ -13,14 +13,12 @@ fun Throwable.log(text: String = "Throwable"): Throwable {
     return this
 }
 
-fun String.d(text: String = "Debug"): String {
-    Log.d(TAG, this)
-    return this
+fun Any.d(text: String = "Debug") {
+    Log.d(TAG, this.toString())
 }
 
-fun String.e(text: String = "Error"): String {
-    Log.e(TAG, this)
-    return this
+fun Any.e(text: String = "Error") {
+    Log.e(TAG, this.toString())
 }
 
 fun printStackTrace() {

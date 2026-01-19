@@ -7,20 +7,33 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.kulipai.luahook.R
+import com.kulipai.luahook.databinding.FragmentHomePluginsBinding
+import com.kulipai.luahook.databinding.FragmentHomeProjectBinding
 
 class PluginsFragment: Fragment() {
 
+    private var _binding: FragmentHomePluginsBinding? = null
+    private val binding get() = _binding!!
 
-    @SuppressLint("MissingInflatedId", "SetTextI18n")
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        _binding = FragmentHomePluginsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        val view = inflater.inflate(R.layout.fragment_home_plugins, container, false)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        return view
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 }

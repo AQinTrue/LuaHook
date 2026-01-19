@@ -23,9 +23,9 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
-import com.kulipai.luahook.ui.home.AppInfo
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.xposed.XposedScope
+import com.kulipai.luahook.data.model.AppInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
