@@ -18,7 +18,7 @@ class PluginsFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        val view = inflater.inflate(R.layout.activity_main_plugins, container, false)
+        val view = inflater.inflate(R.layout.fragment_home_plugins, container, false)
 
         return view
     }
