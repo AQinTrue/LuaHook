@@ -58,7 +58,7 @@ data class AppInfo(
     val isSystemApp: Boolean = false
 )
 
-
+// TODO)) 封装
 fun getInstalledApps(context: Context): List<AppInfo> {
     val pm = context.packageManager
     val apps = mutableListOf<AppInfo>()
@@ -111,7 +111,7 @@ class AppsFragment : Fragment() {
 
         var searchJob: Job? = null
         // 加载 Fragment 的布局
-        val view = inflater.inflate(R.layout.activity_main_apps, container, false)
+        val view = inflater.inflate(R.layout.fragment_home_apps, container, false)
         val rec: RecyclerView by lazy { view.findViewById(R.id.rec) }
         val fab1: MaterialButton by lazy { view.findViewById(R.id.fab1) }
         val fab2: MaterialButton by lazy { view.findViewById(R.id.fab2) }

@@ -18,7 +18,7 @@ class ProjectFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        val view = inflater.inflate(R.layout.activity_main_plugins, container, false)
+        val view = inflater.inflate(R.layout.fragment_home_project, container, false)
 
         return view
     }
