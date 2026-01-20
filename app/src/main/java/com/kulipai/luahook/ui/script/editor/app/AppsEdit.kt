@@ -29,15 +29,16 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.manual.Manual
-import com.kulipai.luahook.ui.script.setting.ScriptSetActivity
-import com.kulipai.luahook.ui.script.editor.SymbolAdapter
-import com.kulipai.luahook.ui.script.editor.ToolAdapter
-import com.kulipai.luahook.databinding.ActivityAppsEditBinding
-import com.kulipai.luahook.ui.logcat.LogCatActivity
+import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.databinding.ActivityAppsEditBinding
+import com.kulipai.luahook.ui.logcat.LogCatActivity
+import com.kulipai.luahook.ui.manual.Manual
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
+import com.kulipai.luahook.ui.script.editor.SymbolAdapter
+import com.kulipai.luahook.ui.script.editor.ToolAdapter
+import com.kulipai.luahook.ui.script.setting.ScriptSetActivity
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
@@ -48,12 +49,10 @@ import kotlinx.coroutines.withContext
 import org.luaj.Globals
 import java.io.File
 
-class AppsEdit : AppCompatActivity() {
+class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
     // 文件分享
     private val FILE_PROVIDER_AUTHORITY = "com.kulipai.luahook.fileprovider"
-
-    lateinit var binding: ActivityAppsEditBinding
 
     // 全局变量
     private lateinit var currentPackageName: String
@@ -71,41 +70,20 @@ class AppsEdit : AppCompatActivity() {
         saveScript(binding.editor.text.toString())
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityAppsEditBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+    override fun inflateBinding(inflater: LayoutInflater): ActivityAppsEditBinding {
+        return ActivityAppsEditBinding.inflate(inflater)
+    }
+
+    override fun initView() {
         setSupportActionBar(binding.toolbar)
-
-
 
         // 监听窗口边距变化（包括状态栏、导航栏、IME键盘）
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, insets ->
-            // 重点：同时获取 systemBars (导航栏等) 和 ime (键盘) 的 Insets
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
             )
-
-            // 将这些边距应用为 Padding
-            // 这样，当键盘弹出时，bottom padding 会变成键盘高度
-            // 因为 XML 中编辑器是 weight=1，它会自动缩小高度，底栏被顶在键盘上方
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-
-            // 返回 insets 让其他部分也能处理（视情况而定，通常这就够了）
             insets
-        }
-
-        // 核心修复逻辑结束 ==============================================
-
-        // 接收传递信息
-        val intent = getIntent()
-        if (intent != null) {
-            currentPackageName = intent.getStringExtra("packageName").toString()
-            scriptDescription = intent.getStringExtra("scriptDescription").toString()
-            scripName = intent.getStringExtra("scripName").toString()
-            title = scripName
         }
 
         binding.symbolRecyclerView.layoutManager =
@@ -113,7 +91,7 @@ class AppsEdit : AppCompatActivity() {
         binding.symbolRecyclerView.adapter = SymbolAdapter(binding.editor)
 
         // soraEditor
-        initLuaEditor(binding.editor,binding.errMessage)
+        initLuaEditor(binding.editor, binding.errMessage)
 
         val tool = listOf(
             resources.getString(R.string.gen_hook_code),
@@ -124,27 +102,33 @@ class AppsEdit : AppCompatActivity() {
         binding.toolRec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.toolRec.adapter = ToolAdapter(tool, binding.editor, this)
+        
+        initSearchPanel()
+    }
 
-
-        // TODO)) 把read统一
-        fun read(path: String): String {
-            if (File(path).exists()) {
-                return File(path).readText()
-            }
-            return ""
+    override fun initData() {
+        // 接收传递信息
+        val intent = intent
+        if (intent != null) {
+            currentPackageName = intent.getStringExtra("packageName").toString()
+            scriptDescription = intent.getStringExtra("scriptDescription").toString()
+            scripName = intent.getStringExtra("scripName").toString()
+            title = scripName
         }
 
-        // TODO)) 弄个统一获取路径或者读取的函数
         val scriptPath = "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-        val script = read(scriptPath)
+        if (File(scriptPath).exists()) {
+             binding.editor.setText(File(scriptPath).readText(), null)
+        } else {
+             binding.editor.setText("", null)
+        }
+    }
 
-        binding.editor.setText(script, null)
-
+    override fun initEvent() {
         binding.fab.setOnClickListener {
             saveScript(binding.editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
         }
-        initSearchPanel()
     }
 
     // 菜单
