@@ -4,26 +4,22 @@ import android.animation.Animator
 import android.animation.Animator.AnimatorListener
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
+import com.kulipai.luahook.core.base.BaseFragment
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.data.model.AppInfo
@@ -48,11 +45,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 
-class AppsFragment : Fragment() {
-
-
-    private var _binding: FragmentHomeAppsBinding? = null
-    private val binding get() = _binding!!
+class AppsFragment : BaseFragment<FragmentHomeAppsBinding>() {
 
 
     private lateinit var adapter: AppsAdapter
@@ -64,29 +57,10 @@ class AppsFragment : Fragment() {
 
         }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentHomeAppsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-
-    @SuppressLint("MissingInflatedId")
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun initView() {
+        super.initView()
         var searchJob: Job? = null
         // 加载 Fragment 的布局
-
-//        val fab1: MaterialButton by lazy { view.findViewById(R.id.fab1) }
-//        val fab2: MaterialButton by lazy { view.findViewById(R.id.fab2) }
-//        val fab: FloatingActionButton by lazy { view.findViewById(R.id.fab) }
-//        val binding.searchBarTextView: EditText by lazy { view.findViewById(R.id.search_bar_text_view) }
-//        val binding.clearText: ImageView by lazy { view.findViewById(R.id.clear_text) }
-//        val searchbar: MaterialCardView by lazy { view.findViewById(R.id.searchbar) }
 
         // 设置rec的bottom高度适配
         activity?.findViewById<BottomNavigationView>(R.id.bottomBar)?.let { bottomNavigationView ->
@@ -213,11 +187,19 @@ class AppsFragment : Fragment() {
 //            }
 //
 //        }
+
+    }
+
+
+    override fun inflateBinding(
+        inflater: LayoutInflater,
+        container: ViewGroup?
+    ): FragmentHomeAppsBinding {
+        return FragmentHomeAppsBinding.inflate(inflater, container, false)
     }
 
     // TODO)) 封装，传入一个clearText这个ImageView
-    private fun filterAppList(query: String)
-    {
+    private fun filterAppList(query: String) {
         val filteredList = if (query.isEmpty()) {
             binding.clearText.visibility = View.INVISIBLE
             appInfoList // 显示全部

@@ -2,84 +2,60 @@ package com.kulipai.luahook.ui.script.selector
 
 import android.content.pm.ApplicationInfo
 import android.graphics.Rect
-import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.ImageView
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
+import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.xposed.XposedScope
 import com.kulipai.luahook.data.model.AppInfo
+import com.kulipai.luahook.databinding.ActivitySelectAppsBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SelectApps : AppCompatActivity() {
+class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
 
     private var selectApps = mutableListOf<String>()
     private var searchJob: Job? = null
-    private lateinit var allApps: List<AppInfo> // 全部 app
-    private lateinit var availableAppsToShow: List<AppInfo> // 当前显示 app
+    private lateinit var allApps: List<AppInfo>
+    private lateinit var availableAppsToShow: List<AppInfo>
     private lateinit var adapter: SelectAppsAdapter
     private var isLoaded = false
-    private var showSystemApps = false // ← 是否显示系统应用的开关状态
+    private var showSystemApps = false
 
-    private val rec: RecyclerView by lazy { findViewById(R.id.rec) }
-    private val fab: FloatingActionButton by lazy { findViewById(R.id.fab) }
-    private val searchEdit: EditText by lazy { findViewById(R.id.search_bar_text_view) }
-    private val clearImage: ImageView by lazy { findViewById(R.id.clear_text) }
-    private val searchbar: MaterialCardView by lazy { findViewById(R.id.searchbar) }
-    private val toolbar: Toolbar by lazy { findViewById(R.id.toolbar) }
+    override fun inflateBinding(inflater: LayoutInflater): ActivitySelectAppsBinding {
+        return ActivitySelectAppsBinding.inflate(inflater)
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun initView() {
         DynamicColors.applyToActivityIfAvailable(this)
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_select_apps)
-
-        setSupportActionBar(toolbar)
+        
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationOnClickListener { finish() }
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, 0, systemBars.right, 0)
             insets
         }
 
-        val selectedPackageNames = WorkspaceFileManager.readStringList("/apps.txt")
-        selectApps = selectedPackageNames.toMutableList()
+        binding.rec.layoutManager = LinearLayoutManager(this)
 
-        adapter = SelectAppsAdapter(emptyList(), this, selectApps)
-        rec.layoutManager = LinearLayoutManager(this)
-        rec.adapter = adapter
-
-        val app = application as MyApplication
-        lifecycleScope.launch {
-            allApps = app.getAppListAsync()
-            refreshAppList()
-            isLoaded = true
-        }
-
-        rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
+        binding.rec.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
                 outRect: Rect,
                 view: View,
@@ -91,40 +67,59 @@ class SelectApps : AppCompatActivity() {
                 }
             }
         })
+    }
 
-        searchbar.setOnClickListener {
-            searchEdit.requestFocus()
+    override fun initData() {
+        val selectedPackageNames = WorkspaceFileManager.readStringList("/apps.txt")
+        selectApps = selectedPackageNames.toMutableList()
+
+        adapter = SelectAppsAdapter(emptyList(), this, selectApps)
+        binding.rec.adapter = adapter
+
+        val app = application as MyApplication
+        lifecycleScope.launch {
+            allApps = app.getAppListAsync()
+            refreshAppList()
+            isLoaded = true
+        }
+    }
+
+    override fun initEvent() {
+        binding.toolbar.setNavigationOnClickListener { finish() }
+
+        binding.searchbar.setOnClickListener {
+            binding.searchBarTextView.requestFocus()
             val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(searchEdit, InputMethodManager.SHOW_IMPLICIT)
+            imm.showSoftInput(binding.searchBarTextView, InputMethodManager.SHOW_IMPLICIT)
         }
 
-        searchEdit.doAfterTextChanged { s ->
+        binding.searchBarTextView.doAfterTextChanged { s ->
             searchJob?.cancel()
             searchJob = CoroutineScope(Dispatchers.Main).launch {
                 if (isLoaded) {
                     delay(100)
-                    filterAppList(s.toString().trim(), clearImage)
+                    filterAppList(s.toString().trim())
                 }
             }
         }
 
-        clearImage.setOnClickListener {
-            searchEdit.setText("")
-            clearImage.visibility = View.INVISIBLE
+        binding.clearText.setOnClickListener {
+            binding.searchBarTextView.setText("")
+            binding.clearText.visibility = View.INVISIBLE
         }
 
-        fab.setOnClickListener {
+        binding.fab.setOnClickListener {
+            val selectedPackageNames = WorkspaceFileManager.readStringList("/apps.txt")
             WorkspaceFileManager.writeStringList("/apps.txt", selectApps)
             XposedScope.requestManyScope(
                 this,
-                (selectApps - selectedPackageNames).toMutableList(),
+                (selectApps - selectedPackageNames.toSet()).toMutableList(),
                 0
             )
             finish()
         }
     }
 
-    /** 重新根据 showSystemApps 筛选列表 */
     private fun refreshAppList() {
         val selectedPackagesSet = selectApps.toSet()
         availableAppsToShow = allApps.filter { appInfo ->
@@ -134,7 +129,6 @@ class SelectApps : AppCompatActivity() {
         adapter.updateData(availableAppsToShow)
     }
 
-    /** 判断是否是系统应用 */
     private fun isSystemApp(appInfo: AppInfo): Boolean {
         return try {
             val pm = packageManager
@@ -145,12 +139,12 @@ class SelectApps : AppCompatActivity() {
         }
     }
 
-    private fun filterAppList(query: String, clearImage: ImageView) {
+    private fun filterAppList(query: String) {
         val filteredList = if (query.isEmpty()) {
-            clearImage.visibility = View.INVISIBLE
+            binding.clearText.visibility = View.INVISIBLE
             availableAppsToShow
         } else {
-            clearImage.visibility = View.VISIBLE
+            binding.clearText.visibility = View.VISIBLE
             availableAppsToShow.filter {
                 it.appName.contains(query, ignoreCase = true) ||
                         it.packageName.contains(query, ignoreCase = true)
@@ -159,14 +153,12 @@ class SelectApps : AppCompatActivity() {
         adapter.updateData(filteredList)
     }
 
-    /** 创建菜单 */
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_select_apps, menu)
         menu?.findItem(R.id.action_show_system)?.isChecked = showSystemApps
         return true
     }
 
-    /** 菜单点击 */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_show_system -> {

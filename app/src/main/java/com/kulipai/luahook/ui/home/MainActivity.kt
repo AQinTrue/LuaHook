@@ -1,14 +1,12 @@
 package com.kulipai.luahook.ui.home
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,44 +16,49 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.R
-import com.kulipai.luahook.ui.script.editor.app.AppsEdit
-import com.kulipai.luahook.ui.script.editor.global.EditActivity
-import com.kulipai.luahook.ui.setting.SettingsActivity
-import com.kulipai.luahook.databinding.ActivityMainBinding
-import com.kulipai.luahook.core.shizuku.ShizukuApi
+import com.kulipai.luahook.app.MyApplication
+import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.shizuku.ShizukuApi
+import com.kulipai.luahook.databinding.ActivityMainBinding
+import com.kulipai.luahook.ui.script.editor.app.AppsEdit
+import com.kulipai.luahook.ui.script.editor.global.EditActivity
+import com.kulipai.luahook.ui.setting.SettingsActivity
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity<ActivityMainBinding>() {
 
-    lateinit var binding: ActivityMainBinding
-
-    // TODO)) 用一个object或者viewModel封装一下，在变化的时候响应式变化
-    private lateinit var lastLanguage: String
-    private lateinit var settingsLauncher: ActivityResultLauncher<Intent>
+    private var lastLanguage: String = ""
+    
+    private val settingsLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (LanguageUtils.getCurrentLanguage(this) != lastLanguage) recreate()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         LanguageUtils.applyLanguage(this)
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+    }
 
+    override fun inflateBinding(inflater: LayoutInflater): ActivityMainBinding {
+        return ActivityMainBinding.inflate(inflater)
+    }
 
-        registerActivityResult()
+    override fun initView() {
         setupToolbar()
         setupInsets()
-//        observeViewModel()
-        checkLastState()
-        initAppData()
         setupViewPager()
         setupBottomBar()
+    }
+
+    override fun initData() {
+        checkLastState()
+        initAppData()
     }
 
     // --------------------- Toolbar ---------------------
@@ -74,19 +77,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun registerActivityResult() {
-        settingsLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            if (LanguageUtils.getCurrentLanguage(this) != lastLanguage) recreate()
-        }
-    }
-
-    // --------------------- ViewModel ---------------------
-
-
-
-
     // --------------------- 状态恢复 ---------------------
 
     private fun checkLastState() {
@@ -98,7 +88,6 @@ class MainActivity : AppCompatActivity() {
                     putExtra("appName", prefs.getString("appName", ""))
                 })
             }
-
             "global" -> startActivity(Intent(this, EditActivity::class.java))
         }
         prefs.edit { putString("current", "null") }
@@ -113,13 +102,12 @@ class MainActivity : AppCompatActivity() {
             if (ShellManager.mode.value != ShellManager.Mode.NONE) {
                 val savedList = getSavedAppList()
                 if (savedList.isNotEmpty()) {
-                    MyApplication.Companion.instance.getAppInfoList(savedList)
+                    MyApplication.instance.getAppInfoList(savedList)
                 }
             }
         }
     }
 
-    // TODO)) 封装
     private fun getSavedAppList(): MutableList<String> {
         val serialized = WorkspaceFileManager.read("/apps.txt")
         return if (serialized.isNotBlank()) serialized.split(",").toMutableList()
@@ -129,7 +117,7 @@ class MainActivity : AppCompatActivity() {
     // --------------------- Insets ---------------------
 
     private fun setupInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, 0, bars.right, 0)
             insets
@@ -152,7 +140,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomBar() {
-
         val menu = binding.bottomBar.menu
         menu.add(Menu.NONE, 0, 0, getString(R.string.home))
             .setIcon(R.drawable.home_24px)
@@ -191,7 +178,6 @@ class MainActivity : AppCompatActivity() {
 
     // --------------------- Shizuku 权限逻辑 ---------------------
 
-
     override fun onStart() {
         super.onStart()
         Shizuku.addRequestPermissionResultListener(ShizukuApi.permissionListener)
@@ -201,6 +187,4 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         Shizuku.removeRequestPermissionResultListener(ShizukuApi.permissionListener)
     }
-
-
 }

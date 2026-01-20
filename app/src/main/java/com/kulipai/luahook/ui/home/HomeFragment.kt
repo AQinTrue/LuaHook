@@ -1,15 +1,13 @@
 package com.kulipai.luahook.ui.home
 
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.R
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.kulipai.luahook.core.base.BaseFragment
 import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionCode
 import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionName
 import com.kulipai.luahook.core.shell.ShellManager
@@ -20,16 +18,11 @@ import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class HomeFragment : Fragment() {
+class HomeFragment : BaseFragment<FragmentHomeHomeBinding>() {
 
 
-    private var _binding: FragmentHomeHomeBinding? = null
-    private val binding get() = _binding!!
-
-
-    @SuppressLint("SetTextI18n")
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun initView() {
+        super.initView()
 
         var frameworkName = ""
 
@@ -136,22 +129,14 @@ class HomeFragment : Fragment() {
             }
         }
 
+
     }
 
-
-    override fun onCreateView(
+    override fun inflateBinding(
         inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+        container: ViewGroup?
+    ): FragmentHomeHomeBinding {
+        return FragmentHomeHomeBinding.inflate(inflater, container, false)
 
-        _binding = FragmentHomeHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
