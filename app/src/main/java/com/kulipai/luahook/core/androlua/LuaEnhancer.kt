@@ -1,4 +1,4 @@
-package com.kulipai.luahook.core.androlua
+package com.androlua
 
 import android.content.Context
 import android.content.ContextWrapper
