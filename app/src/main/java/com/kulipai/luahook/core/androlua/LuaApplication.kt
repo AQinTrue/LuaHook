@@ -1,4 +1,4 @@
-package com.kulipai.luahook.core.androlua
+package com.androlua
 
 import android.annotation.SuppressLint
 import android.app.Application
