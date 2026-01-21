@@ -42,3 +42,8 @@
 -keep class io.dingyi222666.sora.lua.tool.** { *; }
 -dontwarn io.github.rosemoe.oniguruma.OnigNative
 -keep class org.nanohttpd.protocols.http.** { *; }
+-dontwarn dx.proxy.Enhancer
+-dontwarn dx.proxy.EnhancerInterface
+-dontwarn dx.proxy.MethodFilter
+-dontwarn dx.proxy.MethodInterceptor
+-dontwarn dx.proxy.MethodProxy
