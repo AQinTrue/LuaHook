@@ -18,7 +18,7 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:navigationIcon="@drawable/file_open_24px"
+                app:navigationIcon="@drawable/menu_24px"
                 app:title="Project Editor" />
             
             <com.google.android.material.tabs.TabLayout

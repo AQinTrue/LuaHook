@@ -26,13 +26,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
              if (list != null) {
                  selectedScope.clear()
                  selectedScope.addAll(list)
-                 if (selectedScope.isEmpty()) {
-                     binding.tvScope.text = "全部"
-                     selectedScope.add("all")
-                 } else {
-                     binding.tvScope.text = "Selected ${selectedScope.size} apps"
-                     // If user explicitly selected apps, we assume they mean specific scope.
-                 }
+                 updateScopeChips()
              }
         }
     }
@@ -45,23 +39,206 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         setSupportActionBar(binding.toolbar)
         binding.toolbar.setNavigationOnClickListener { finish() }
         
-        binding.tvScope.text = "全部"
-        selectedScope.add("all")
+        // Initial state: "all" if empty? Or empty means global? 
+        // Logic: Empty list usually means no scope or all? 
+        // Let's assume initially "All" is selected.
+        if (selectedScope.isEmpty()) {
+            selectedScope.add("all")
+        }
+        updateScopeChips()
+    }
+
+    private fun updateScopeChips() {
+        binding.chipGroupScope.removeAllViews()
+        for (pkg in selectedScope) {
+            val chip = com.google.android.material.chip.Chip(this)
+            chip.text = if (pkg == "all") "All Apps" else pkg
+            chip.isCloseIconVisible = true
+            chip.setOnCloseIconClickListener {
+                selectedScope.remove(pkg)
+                updateScopeChips()
+            }
+            binding.chipGroupScope.addView(chip)
+        }
+    }
+    
+    private fun showIconSelectionDialog() {
+        val options = arrayOf("Select from Gallery", "Select Symbol")
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Choose Icon")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pickIcon.launch("image/*")
+                    1 -> showSymbolSelectionDialog()
+                }
+            }
+            .show()
+    }
+    
+    private fun showSymbolSelectionDialog() {
+        // Use custom layout to avoid conflicting with other modules
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_glyph_picker, null)
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recycler_glyphs)
+        val progressBar = dialogView.findViewById<android.widget.ProgressBar>(R.id.progress_bar)
+        
+        // Dense Grid: 6 columns
+        recyclerView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(this, 6)
+        
+        // Use local Adapter class to avoid global namespace pollution if possible, or rename
+        val adapter = ProjectGlyphAdapter { symbol ->
+            selectedIconUnicode = symbol
+            selectedIconPath = null
+            
+            // Render
+            val font = try {
+                androidx.core.content.res.ResourcesCompat.getFont(this, R.font.material_symbols)
+            } catch (e: Exception) { null }
+            
+            binding.imgProjectIcon.setImageBitmap(textToBitmap(symbol, font))
+            // Dismiss dialog handled via captured reference
+        }
+        recyclerView.adapter = adapter
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Select Symbol")
+            .setView(dialogView)
+            .setPositiveButton("Cancel", null)
+            .create()
+
+        adapter.onItemClick = { symbol ->
+             selectedIconUnicode = symbol
+             selectedIconPath = null
+             val font = try {
+                 androidx.core.content.res.ResourcesCompat.getFont(this, R.font.material_symbols)
+             } catch (e: Exception) { null }
+             
+             binding.imgProjectIcon.setImageBitmap(textToBitmap(symbol, font))
+             dialog.dismiss()
+        }
+
+        dialog.show()
+        
+        // Async Load
+        Thread {
+            val validSymbols = mutableListOf<String>()
+            val paint = android.graphics.Paint()
+            try {
+                // Load font specifically for checking glyphs
+                val typeface = androidx.core.content.res.ResourcesCompat.getFont(this, R.font.material_symbols)
+                paint.typeface = typeface
+                
+                // Scan \u0001 to \uffff
+                for (code in 0xe000..0xeFFF) {
+                    val str = String(Character.toChars(code))
+                    if (paint.hasGlyph(str)) {
+                        validSymbols.add(str)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            runOnUiThread {
+                progressBar.visibility = android.view.View.GONE
+                adapter.setData(validSymbols)
+            }
+        }.start()
+    }
+    
+    // Updated textToBitmap
+    private fun textToBitmap(text: String, typeface: android.graphics.Typeface? = null): android.graphics.Bitmap {
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        paint.textSize = 100f
+        
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true)
+        paint.color = typedValue.data
+        
+        paint.textAlign = android.graphics.Paint.Align.LEFT
+        if (typeface != null) paint.typeface = typeface
+        
+        val baseline = -paint.ascent() 
+        val width = (paint.measureText(text) + 0.5f).toInt().coerceAtLeast(1)
+        val height = (baseline + paint.descent() + 0.5f).toInt().coerceAtLeast(1)
+        val image = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(image)
+        canvas.drawText(text, 0f, baseline, paint)
+        return image
+    }
+    
+    // Dedicated Adapter for Project Creation
+    class ProjectGlyphAdapter(var onItemClick: (String) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<ProjectGlyphAdapter.ViewHolder>() {
+        private val symbols = mutableListOf<String>()
+        
+        fun setData(list: List<String>) {
+            symbols.clear()
+            symbols.addAll(list)
+            notifyDataSetChanged()
+        }
+        
+        class ViewHolder(view: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+             val textView: android.widget.TextView = view.findViewById(R.id.tv_glyph)
+        }
+        
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_picker_glyph, parent, false)
+            return ViewHolder(view)
+        }
+        
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+             val symbol = symbols[position]
+             holder.textView.text = symbol
+             
+             // Set material font
+             try {
+                // Consider caching this type/font lookup
+                val font = androidx.core.content.res.ResourcesCompat.getFont(holder.itemView.context, R.font.material_symbols)
+                holder.textView.typeface = font
+             } catch(e: Exception) {}
+             
+             holder.itemView.setOnClickListener { onItemClick(symbol) }
+        }
+        
+        override fun getItemCount() = symbols.size
+    }
+
+    private fun showAddScopeDialog() {
+        val input = com.google.android.material.textfield.TextInputEditText(this)
+        input.hint = "com.example.package"
+        val layout = com.google.android.material.textfield.TextInputLayout(this)
+        layout.addView(input)
+        layout.setPadding(32, 16, 32, 0)
+        
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Add Package Scope")
+            .setView(layout)
+            .setPositiveButton("Add") { _, _ ->
+                val text = input.text.toString().trim()
+                if (text.isNotEmpty() && !selectedScope.contains(text)) {
+                    // Remove 'all' if adding specific
+                    if (selectedScope.contains("all")) selectedScope.remove("all")
+                    selectedScope.add(text)
+                    updateScopeChips()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun initEvent() {
-        binding.btnSelectIcon.setOnClickListener {
-            pickIcon.launch("image/*")
+        binding.cardIconPreview.setOnClickListener {
+            showIconSelectionDialog()
         }
         
         binding.btnSelectScope.setOnClickListener {
              val intent = Intent(this, ScopeSelectorActivity::class.java)
-             // If we have current selection, pass it.
-             // If "all" is in list, we pass empty to indicate no specific selection? 
-             // Or clear logic.
              val current = if (selectedScope.contains("all")) ArrayList() else ArrayList(selectedScope)
              intent.putStringArrayListExtra("current_scope", current)
              scopeLauncher.launch(intent)
+        }
+        
+        binding.btnAddManualScope.setOnClickListener {
+            showAddScopeDialog()
         }
 
         binding.btnCreate.setOnClickListener {
@@ -75,6 +252,11 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
             }
             
             var cacheIconPath: String? = null
+            // ... (rest of icon logic same as before, but handle bitmap generation from unicode if chosen) ...
+            // Wait, ProjectManager.createProject takes iconPath OR iconUnicode.
+            // If unicode is selected, we pass it.
+            // If image is selected, we pass path.
+            
             if (selectedIconPath != null) {
                 try {
                     val inputStream = contentResolver.openInputStream(Uri.parse(selectedIconPath))
@@ -88,6 +270,20 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+            } else if (selectedIconUnicode != null) {
+                // We might want to save the generated bitmap as icon.png even if it's unicode, 
+                // so it shows up in file system lists easily? 
+                // Previous logic allowed passing unicode string. 
+                // But ProjectList shows image from file.
+                // Best to save it as file.
+                val bmp = textToBitmap(selectedIconUnicode!!)
+                val tempFile = File(externalCacheDir, "temp_icon_unicode.png")
+                try {
+                    tempFile.outputStream().use { out ->
+                        bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                    cacheIconPath = tempFile.absolutePath
+                } catch(e: Exception) { e.printStackTrace() }
             }
 
             val success = ProjectManager.createProject(
@@ -95,7 +291,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                 description = desc,
                 author = author,
                 iconPath = cacheIconPath,
-                iconUnicode = selectedIconUnicode,
+                iconUnicode = "\\u"+ selectedIconUnicode?.codePointAt(0)?.toHexString(), // We can still pass it for meta info
                 scope = selectedScope
             )
             
@@ -111,6 +307,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
     private val pickIcon = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
              selectedIconPath = it.toString()
+             selectedIconUnicode = null
              binding.imgProjectIcon.setImageURI(it)
         }
     }

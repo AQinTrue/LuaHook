@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.Observer
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.utils.dd
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

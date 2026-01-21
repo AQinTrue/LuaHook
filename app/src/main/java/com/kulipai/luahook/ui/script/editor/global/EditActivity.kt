@@ -102,7 +102,7 @@ class EditActivity : AppCompatActivity() {
         val appDescriptionTextView: TextView = view.findViewById(R.id.app_description)
 
         // 设置应用信息
-        appLogoImageView.setImageResource(R.drawable.logo)
+        appLogoImageView.setImageResource(R.drawable.luna)
         appNameTextView.text = "LuaHook"
         appVersionTextView.text = getAppVersionName(this)
 
