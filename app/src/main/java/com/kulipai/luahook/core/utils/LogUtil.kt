@@ -3,10 +3,10 @@ package com.kulipai.luahook.core.utils
 import android.util.Log
 
 
-fun Any.d() {
+fun Any.dd() {
     Log.d("Debug", this.toString())
 }
 
-fun Any.e() {
+fun Any.ee() {
     Log.e("Debug", this.toString())
 }

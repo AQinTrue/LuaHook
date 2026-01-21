@@ -23,14 +23,11 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shizuku.ShizukuApi
-import com.kulipai.luahook.core.utils.d
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.ui.setting.SettingsActivity
 import kotlinx.coroutines.launch
-import org.luaj.Globals
-import org.luaj.lib.jse.JsePlatform
 import rikka.shizuku.Shizuku
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
