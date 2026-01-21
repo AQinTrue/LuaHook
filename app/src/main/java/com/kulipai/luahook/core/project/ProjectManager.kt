@@ -107,12 +107,12 @@ object ProjectManager {
         }
         
         val initLua = """
-            name = "$name"
-            description = "$description"
-            author = "$author"
-            icon = "$iconValue"
-            scope = ${scopeLua.trimIndent()}
-        """.trimIndent()
+name = "$name"
+description = "$description"
+author = "$author"
+icon = "$iconValue"
+scope = ${scopeLua.trimIndent()}
+""".trimIndent()
         
         if (!WorkspaceFileManager.write("$projectRelativePath/init.lua", initLua)) return false
         
