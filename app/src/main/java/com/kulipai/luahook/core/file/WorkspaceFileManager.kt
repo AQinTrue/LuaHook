@@ -186,6 +186,10 @@ object WorkspaceFileManager {
         }
     }
 
+    fun ensureReadable(path: String) {
+        ShellManager.shell("chmod 666 \"$path\"")
+    }
+
 
     // 定义一个数据类来存储解析后的参数
     data class FileParameters(
