@@ -6,6 +6,7 @@ import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
+import com.kulipai.luahook.core.utils.dd
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XposedBridge
@@ -73,6 +74,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
 
+
         // app单独脚本
         if (lpparam.packageName in selectAppsList) {
 
@@ -97,6 +99,59 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 }
             }
         }
+        
+        // Project Hooks
+        try {
+            val projectInfo = WorkspaceFileManager.readMap("/Project/info.json")
+            for ((projectName, isEnabled) in projectInfo) {
+                 if (isEnabled == true) {
+                      try {
+
+                           // Use a temporary global for verifying scope to avoid polluting the main context if we reuse it?
+                           // Actually we create new globals for each script execution, so it's fine.
+                           val tempGlobals = createGlobals(lpparam, projectName)
+                           val projectDir = "/Project/$projectName"
+                           val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
+                           
+                           // Execute init.lua to populate variables
+                           tempGlobals.load(initScript).call()
+                           
+                           val scope = tempGlobals.get("scope")
+                           var shouldRun = false
+                           
+                           if (scope.isstring() && scope.tojstring() == "all") {
+                                shouldRun = true
+                           } else if (scope.istable()) {
+                                val len = scope.length()
+                                for (i in 1..len) {
+                                    if (scope.get(i).tojstring() == lpparam.packageName) {
+                                         shouldRun = true
+                                         break
+                                    }
+                                }
+                           }
+                           
+                           if (shouldRun) {
+
+                                val mainScript = WorkspaceFileManager.read("$projectDir/main.lua")
+                                // Load main.lua (we can reuse tempGlobals or create new one)
+                                // Standard practice: if init.lua defines configs that main.lua needs, stick to same globals.
+                                // If init.lua is just metadata, maybe clean globals? 
+                                // User said "load init.lua... then name=... lua variables to store".
+                                // And "main.lua" is the code.
+                                // Usually main.lua might expect those variables.
+                                tempGlobals.load(mainScript).call()
+                           }
+                      } catch (e: Exception) {
+                           val err = LuaUtil.simplifyLuaError(e.toString())
+                           "${lpparam.packageName}:[Project:$projectName]:$err".e()
+                      }
+                 }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
 
     }
 

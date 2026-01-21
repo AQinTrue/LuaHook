@@ -19,7 +19,7 @@
             android:layout_height="48dp"
             android:layout_marginEnd="16dp"
             android:contentDescription="logo"
-            android:src="@drawable/logo" />
+            android:src="@drawable/luna" />
 
         <LinearLayout
             android:layout_width="0dp"

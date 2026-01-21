@@ -23,10 +23,15 @@ object WorkspaceFileManager {
 
     fun read(relativePath: String): String {
         val fullPath = DIR + relativePath
-        if (File(fullPath).exists()) {
-            return File(fullPath).readText()
+        val file = File(fullPath)
+        if (file.exists() && file.canRead()) {
+            return file.readText()
         }
-        return ""
+        
+        return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
+            is ShellResult.Success -> result.stdout
+            is ShellResult.Error -> ""
+        }
     }
 
 
@@ -43,6 +48,7 @@ object WorkspaceFileManager {
         rm -f "$path"
         touch "$path"
         echo "$base64Content" | base64 -d > "$path"
+        chmod 666 "$path"
     """.trimIndent()
 
         val result = ShellManager.shell(script)
@@ -167,7 +173,7 @@ object WorkspaceFileManager {
 
 
         // 不存在则尝试创建
-        val result = ShellManager.shell("mkdir -p \"$path\"")
+        val result = ShellManager.shell("mkdir -p \"$path\"\nchmod 777 \"$path\"")
         return when(result) {
             is ShellResult.Error -> {
                 false

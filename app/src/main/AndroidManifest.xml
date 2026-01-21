@@ -20,6 +20,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="35">
+        <activity android:name=".ui.project.config.ProjectConfigActivity"
+            android:exported="false" />
+        <activity android:name=".ui.project.editor.ProjectEditorActivity"
+            android:exported="false" />
+        <activity android:name=".ui.script.selector.ScopeSelectorActivity"
+            android:exported="false" />
+        <activity android:name=".ui.project.create.CreateProjectActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.error.ErrorActivity"
             android:exported="false" />

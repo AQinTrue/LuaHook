@@ -13,6 +13,7 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager.Mode
 import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
+import com.kulipai.luahook.core.utils.dd
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 
@@ -79,6 +80,7 @@ object ShizukuApi {
 
 
 
+
         Shizuku.bindUserService(args, object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
 
@@ -92,11 +94,15 @@ object ShizukuApi {
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
+
                 isServiceConnected.value = false
                 userService = null
 
             }
         })
+
+
+
 
     }
 

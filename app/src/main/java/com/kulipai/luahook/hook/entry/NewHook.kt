@@ -83,6 +83,8 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
 
 //        app单独脚本
 
+
+        // app单独脚本
         if (lpparam.packageName in selectAppsList) {
 
             for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
@@ -104,6 +106,48 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
                 }
             }
         }
+        
+        // Project Hooks
+        try {
+            val projectInfo = WorkspaceFileManager.readMap("/Project/info.json")
+            for ((projectName, isEnabled) in projectInfo) {
+                 if (isEnabled == true) {
+                      try {
+                           val tempGlobals = createGlobals(lpparam, projectName)
+                           val projectDir = "/Project/$projectName"
+                           val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
+                           
+                           tempGlobals.load(initScript).call()
+                           
+                           val scope = tempGlobals.get("scope")
+                           var shouldRun = false
+                           
+                           if (scope.isstring() && scope.tojstring() == "all") {
+                                shouldRun = true
+                           } else if (scope.istable()) {
+                                val len = scope.length()
+                                for (i in 1..len) {
+                                    if (scope.get(i).tojstring() == lpparam.packageName) {
+                                         shouldRun = true
+                                         break
+                                    }
+                                }
+                           }
+                           
+                           if (shouldRun) {
+                                val mainScript = WorkspaceFileManager.read("$projectDir/main.lua")
+                                tempGlobals.load(mainScript).call()
+                           }
+                      } catch (e: Exception) {
+                           val err = LuaUtil.simplifyLuaError(e.toString())
+                           "${lpparam.packageName}:[Project:$projectName]:$err".e()
+                      }
+                 }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
 
     }
 
