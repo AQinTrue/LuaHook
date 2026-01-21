@@ -103,11 +103,12 @@ class ProjectAdapter(
         // Let's enable it.
         holder.binding.projectSettings.visibility = android.view.View.VISIBLE
         holder.binding.projectSettings.setOnClickListener {
-            // Go to config page? Or just Editor?
-            // Since "ProjectFragment" has "Project Settings" and "Project Switch".
-            // Maybe "Settings" -> Project Config (Name, Icon, Scope)?
-            // For now, redirect to Editor as well, or a hypothetical Settings Activity.
-            // I'll just open Editor for now as it's the main interaction.
+             val intent = android.content.Intent(context, com.kulipai.luahook.ui.project.config.ProjectConfigActivity::class.java)
+             intent.putExtra("project_name", project.name)
+             context.startActivity(intent)
+        }
+        
+        holder.itemView.setOnClickListener {
             onProjectClick(project)
         }
     }

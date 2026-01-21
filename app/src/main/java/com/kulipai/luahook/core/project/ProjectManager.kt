@@ -16,7 +16,7 @@ data class Project(
 
 object ProjectManager {
 
-    private const val INFO_JSON = "/Project/info.json"
+    const val INFO_JSON = "/Project/info.json"
 
     fun getProjects(): List<Project> {
         val projects = mutableListOf<Project>()
