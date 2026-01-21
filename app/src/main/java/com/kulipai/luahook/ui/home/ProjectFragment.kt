@@ -31,6 +31,22 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
             },
             onProjectToggle = { project, isEnabled ->
                 ProjectManager.setProjectEnabled(project.name, isEnabled)
+            },
+            onProjectLongClick = { project ->
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("删除项目")
+                    .setMessage("确定要删除项目 ${project.name} 吗？此操作不可恢复。")
+                    .setPositiveButton("删除") { _, _ ->
+                        try {
+                            ProjectManager.deleteProject(project.name)
+                            loadProjects()
+                             Toast.makeText(requireContext(), "已删除 ${project.name}", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(requireContext(), "删除失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
             }
         )
         binding.projectRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())

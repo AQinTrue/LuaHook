@@ -42,6 +42,7 @@ class AndroLuaLanguage(
 
         languageNames.addAll(AndroLuaLanguage.names)
 
+
         addBasePackage("io", package_io.split('|'));
         addBasePackage("string", package_string.split('|'));
         addBasePackage("luajava", package_luajava.split('|'));
@@ -227,6 +228,50 @@ class AndroLuaLanguage(
             "write|read|get_module_base|getModuleBase|module_base|sleep|resolve_symbol|readDword|writeDword|readFloat|writeFloat|readByte|writeByte|readPoint"
 
 
+        val luaHookKey = listOf(
+            "hook",
+            "replace",
+//            "Xposed",
+            "import",
+            "log",
+            "setField",
+            "getField",
+            "invoke",
+            "file",
+            "http",
+            "sp",
+            "xsp",
+            "lpparam",
+            "suparam",
+            "json",
+            "imports",
+//            "new",
+//            "newInstance",
+//            "getConstructor",
+            "clearDrawableCache",
+            "loadDrawableFromFile",
+            "loadDrawableAsync",
+            "loadDrawableSync",
+            "resources",
+            "hookcotr",
+            "hookctor",
+            "injectActivity",
+            "XposedBridge",
+            "XposedHelpers",
+//            "createProxy",
+            "DexKitBridge",
+            "findClass",
+            "DexFinder",
+            "hookAll",
+            "XpHelper",
+            "arrayOf",
+            "Task",
+            "callMethod",
+            "getStaticField",
+            "setStaticField",
+            "native",
+            "loadDex"
+        )
 
 
 
@@ -236,7 +281,7 @@ class AndroLuaLanguage(
             keywordTarget.split('|')
 
         private val names =
-            functionTarget.split('|')
+            functionTarget.split('|')+luaHookKey
 
     }
 }

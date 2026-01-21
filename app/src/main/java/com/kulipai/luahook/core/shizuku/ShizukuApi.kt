@@ -13,7 +13,6 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager.Mode
 import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
-import com.kulipai.luahook.core.utils.dd
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 
@@ -65,16 +64,17 @@ object ShizukuApi {
 
 
     fun bindShizuku(context: Context) {
-        if (!isBinderAvailable.value!! || !isPermissionGranted.value!!) {
+        if (isBinderAvailable.value != true || isPermissionGranted.value != true) {
             // Err
             return
         }
 
+        if (isServiceConnected.value == true) return
 
         val args = Shizuku.UserServiceArgs(
             ComponentName(context.packageName, UserService::class.java.name)
         ).daemon(false)
-            .processNameSuffix("LuaHook_Shizuku")
+            .processNameSuffix("adb")
             .debuggable(BuildConfig.DEBUG)
             .version(BuildConfig.VERSION_CODE)
 
@@ -83,12 +83,12 @@ object ShizukuApi {
 
         Shizuku.bindUserService(args, object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-
                 if (binder != null && binder.pingBinder()) {
                     userService = IUserService.Stub.asInterface(binder)
                     isServiceConnected.value = true
                     setMode(Mode.SHIZUKU)
                     WorkspaceFileManager.init(context)
+
                     // Successful
                 }
             }

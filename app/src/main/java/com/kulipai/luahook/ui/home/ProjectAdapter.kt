@@ -16,7 +16,8 @@ import java.io.File
 class ProjectAdapter(
     private val projects: MutableList<Project>,
     private val onProjectClick: (Project) -> Unit,
-    private val onProjectToggle: (Project, Boolean) -> Unit
+    private val onProjectToggle: (Project, Boolean) -> Unit,
+    private val onProjectLongClick: (Project) -> Unit
 ) : RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder>() {
 
     class ProjectViewHolder(val binding: ItemProjectCardBinding) :
@@ -110,6 +111,11 @@ class ProjectAdapter(
         
         holder.itemView.setOnClickListener {
             onProjectClick(project)
+        }
+
+        holder.itemView.setOnLongClickListener {
+            onProjectLongClick(project)
+            true
         }
     }
 

@@ -11,7 +11,8 @@ data class Project(
     val icon: String, // Path or unicode
     val author: String = "",
     val description: String = "",
-    val scope: List<String> = emptyList() // "all" or list of packages
+    val scope: List<String> = emptyList(), // "all" or list of packages
+    val launcher: String = "" // Package to launch for testing
 )
 
 object ProjectManager {
@@ -35,13 +36,8 @@ object ProjectManager {
                 var author = ""
                 var desc = ""
                 var scopeList = mutableListOf<String>()
+                var launcher = ""
 
-                // Try to load init.lua using a simplified parser or regex if possible, 
-                // but user asked to use JsePlatform to load it?
-                // "globals.load(init.lua代码) globals.get("icon")"
-                // Reading code manually to avoid executing potential harmful code just for listing? 
-                // But user instruction was specific: load it.
-                
                 try {
                     val luaCode = WorkspaceFileManager.read(initPath)
                     if (luaCode.isNotEmpty()) {
@@ -52,6 +48,7 @@ object ProjectManager {
                             icon = globals.get("icon").optjstring("icon.png")
                             author = globals.get("author").optjstring("")
                             desc = globals.get("description").optjstring("")
+                            launcher = globals.get("launcher").optjstring("")
                             
                             val scopeLua = globals.get("scope")
                             if (scopeLua.isstring()) {
@@ -70,13 +67,13 @@ object ProjectManager {
                     e.printStackTrace()
                 }
 
-                projects.add(Project(name, isEnabled, icon, author, desc, scopeList))
+                projects.add(Project(name, isEnabled, icon, author, desc, scopeList, launcher))
             }
         }
         return projects
     }
 
-    fun createProject(name: String, description: String, author: String, iconPath: String?, iconUnicode: String?, scope: List<String>): Boolean {
+    fun createProject(name: String, description: String, author: String, iconPath: String?, iconUnicode: String?, scope: List<String>, launcher: String): Boolean {
         if (name.isEmpty()) return false
         
         val projectRelativePath = "${WorkspaceFileManager.Project}/$name"
@@ -111,6 +108,7 @@ name = "$name"
 description = "$description"
 author = "$author"
 icon = "$iconValue"
+launcher = "$launcher"
 scope = ${scopeLua.trimIndent()}
 """.trimIndent()
         
