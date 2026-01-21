@@ -1,5 +1,6 @@
 package com.kulipai.luahook.ui.project.editor
 
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.Menu
@@ -17,6 +18,7 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.databinding.ActivityProjectEditorBinding
+import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
@@ -307,6 +309,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         menu?.add(0, 3, 0, "Redo")?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 4, 0, "Format")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 5, 0, "LogCat")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
         return true
     }
@@ -384,6 +387,12 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 true
             }
 
+            5->{
+                val intent = Intent(this, LogCatActivity::class.java)
+                startActivity(intent)
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -395,23 +404,34 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             val project = projects.find { it.name == projectName }
             runOnUiThread {
                 if (project != null) {
-                    if (project.scope.contains("all")) {
-                        Toast.makeText(
-                            this,
-                            "Scope is 'All'. Please open any app to test.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else if (project.scope.isNotEmpty()) {
-                        val pkg = project.scope[0]
+                    var pkgToLaunch = project.launcher
+                    if (pkgToLaunch.isEmpty()) {
+                        if (project.scope.contains("all")) {
+                            Toast.makeText(
+                                this,
+                                "Scope is 'All' and no Launcher defined.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@runOnUiThread
+                        } else if (project.scope.isNotEmpty()) {
+                            pkgToLaunch = project.scope[0]
+                        }
+                    }
+
+                    if (pkgToLaunch.isNotEmpty()) {
                         try {
-                            val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
+                            val launchIntent = packageManager.getLaunchIntentForPackage(pkgToLaunch)
                             if (launchIntent != null) {
-                                Toast.makeText(this, "Launching $pkg...", Toast.LENGTH_SHORT).show()
+                                // Force stop before launching
+                                ShellManager.shell("am force-stop $pkgToLaunch")
+                                Thread.sleep(300) // Small delay to ensure it stopped
+                                
+//                                Toast.makeText(this, "Launching $pkgToLaunch...", Toast.LENGTH_SHORT).show()
                                 startActivity(launchIntent)
                             } else {
                                 Toast.makeText(
                                     this,
-                                    "Could not find launch intent for $pkg",
+                                    "Could not find launch intent for $pkgToLaunch",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -423,7 +443,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                             ).show()
                         }
                     } else {
-                        Toast.makeText(this, "No scope defined.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "No launcher or scope defined.", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     Toast.makeText(this, "Project info not found.", Toast.LENGTH_SHORT).show()

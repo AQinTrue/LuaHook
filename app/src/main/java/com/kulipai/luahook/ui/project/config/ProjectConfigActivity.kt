@@ -77,6 +77,8 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         // Populate UI
         binding.etProjectName.setText(currentProject!!.name)
         binding.etProjectDesc.setText(currentProject!!.description)
+        binding.etProjectAuthor.setText(currentProject!!.author)
+        binding.etProjectLauncher.setText(currentProject!!.launcher)
         
         // Disable rename for now? Usually renaming projects implies moving folders.
         // Let's allow it if user requested "modify name". 
@@ -208,9 +210,11 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
                 } catch(e: Exception) { e.printStackTrace() }
         }
 
+        val newAuthor = binding.etProjectAuthor.text.toString().trim()
+        val newLauncher = binding.etProjectLauncher.text.toString().trim()
+
         // Re-generate init.lua
         // We preserve author
-        val author = currentProject?.author ?: ""
         val scopeLua = if (selectedScope.contains("all")) "\"all\"" else {
             "{\n" + selectedScope.joinToString(",\n") { "    \"$it\"" } + "\n}"
         }
@@ -218,8 +222,9 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         val newInitLua = """
 name = "$newName"
 description = "$newDesc"
-author = "$author"
+author = "$newAuthor"
 icon = "$iconValue"
+launcher = "$newLauncher"
 scope = ${scopeLua.trimIndent()}
 """.trimIndent()
 

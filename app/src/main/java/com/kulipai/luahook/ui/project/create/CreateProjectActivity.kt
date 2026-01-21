@@ -46,6 +46,9 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
             selectedScope.add("all")
         }
         updateScopeChips()
+        
+        val savedAuthor = getSharedPreferences("conf", MODE_PRIVATE).getString("author", "")
+        binding.etProjectAuthor.setText(savedAuthor)
     }
 
     private fun updateScopeChips() {
@@ -244,8 +247,14 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         binding.btnCreate.setOnClickListener {
             val name = binding.etProjectName.text.toString()
             val desc = binding.etProjectDesc.text.toString()
-            val author = getSharedPreferences("conf", MODE_PRIVATE).getString("author", "") ?: ""
+            val author = binding.etProjectAuthor.text.toString()
+            val launcher = binding.etProjectLauncher.text.toString()
             
+            // Save author for next time
+            if (author.isNotEmpty()) {
+                getSharedPreferences("conf", MODE_PRIVATE).edit().putString("author", author).apply()
+            }
+
             if (name.isBlank()) {
                 binding.etProjectName.error = resources.getString(R.string.input_id)
                 return@setOnClickListener
@@ -292,7 +301,8 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                 author = author,
                 iconPath = cacheIconPath,
                 iconUnicode = "\\u"+ selectedIconUnicode?.codePointAt(0)?.toHexString(), // We can still pass it for meta info
-                scope = selectedScope
+                scope = selectedScope,
+                launcher = launcher
             )
             
             if (success) {
