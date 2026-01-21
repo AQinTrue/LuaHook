@@ -13,7 +13,6 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shell.ShellManager.Mode
 import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
-import com.kulipai.luahook.core.utils.dd
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 

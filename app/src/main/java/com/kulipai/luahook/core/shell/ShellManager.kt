@@ -2,12 +2,9 @@ package com.kulipai.luahook.core.shell
 
 import android.content.Context
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.core.utils.dd
+import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.topjohnwu.superuser.Shell
-import rikka.shizuku.Shizuku
 
 /**
  * ShellManager

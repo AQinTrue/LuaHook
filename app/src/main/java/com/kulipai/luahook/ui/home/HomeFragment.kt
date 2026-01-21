@@ -12,7 +12,6 @@ import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionName
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.theme.ColorUtils.getDynamicColor
-import com.kulipai.luahook.core.utils.dd
 import com.kulipai.luahook.core.xposed.XposedScope
 import com.kulipai.luahook.databinding.FragmentHomeHomeBinding
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
@@ -129,9 +128,7 @@ class HomeFragment : BaseFragment<FragmentHomeHomeBinding>() {
         }
 
         binding.card.setOnClickListener {
-            ShizukuApi.isBinderAvailable.value?.dd()
             if (ShizukuApi.isPermissionGranted.value == true && ShizukuApi.isServiceConnected.value == false) {
-                ShizukuApi.isServiceConnected.value?.dd()
                 ShizukuApi.bindShizuku(requireContext())
 
             }

@@ -5,6 +5,7 @@ import android.util.Base64
 import com.kulipai.luahook.core.log.d
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
+import com.kulipai.luahook.core.utils.dd
 import org.json.JSONObject
 import java.io.File
 
@@ -119,9 +120,10 @@ object WorkspaceFileManager {
 
 
     fun rm(file: String): Boolean {
-        val path = "$DIR/$file"
-        val script = "rm -f \"$path\""
+        val path = "$DIR$file"
+        val script = "rm -rf \"$path\""
         val result = ShellManager.shell(script)
+        result.dd()
         return when(result) {
             is ShellResult.Error -> {
                 false

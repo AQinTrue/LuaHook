@@ -21,15 +21,15 @@ class LuaImport(
     private val classLoader: ClassLoader,
     private val thisLoader: ClassLoader,
 ) {
-    fun registerTo(env: Globals, packageName: String) {
+    fun registerTo(env: Globals, packageName: String, projectName: String = "") {
 
         env["require"] = object : OneArgFunction() {
             override fun call(scriptName: LuaValue): LuaValue {
                 try {
-                    return env.load(read(WorkspaceFileManager.AppScript + "/" + packageName + "/" + scriptName + ".lua"))
+                    return env.load(read(WorkspaceFileManager.Project + "/" + projectName + "/" + scriptName + ".lua"))
                         .call()
                 } catch (e: Exception) {
-                    ("[Error] | Package: $packageName | Script: $scriptName | Message: "+ LuaUtil.simplifyLuaError(
+                    ("[Error] | Package: $packageName | Script: $scriptName | Message: " + LuaUtil.simplifyLuaError(
                         e.toString()
                     )).d()
                 }

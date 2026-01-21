@@ -1,23 +1,27 @@
 package com.kulipai.luahook.ui.project.editor
 
+import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.TextView
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.databinding.ActivityProjectEditorBinding
-import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
-import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initEditor
-import com.kulipai.luahook.ui.script.editor.SymbolAdapter
+import com.myopicmobile.textwarrior.common.AutoIndent
+import com.myopicmobile.textwarrior.common.Flag
+import com.myopicmobile.textwarrior.common.LuaParser
+import org.luaj.Globals
 import java.io.File
 
 class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
@@ -120,25 +124,30 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         }
 
         // Handle Back Press for Drawer
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    binding.drawerLayout.closeDrawer(GravityCompat.START)
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        binding.drawerLayout.closeDrawer(GravityCompat.START)
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
                 }
-            }
-        })
+            })
 
         // Find header in drawer to set refresh listener
-        val navParams = binding.navView.layoutParams // Accessing to ensure it exists
-        val headerView = binding.navView.getChildAt(0)
-        headerView.setOnClickListener {
-            refreshFileList()
+        // Bind Sidebar Buttons
+        binding.btnNewFile.setOnClickListener {
+            showCreateDialog(isFolder = false)
+        }
+        binding.btnNewFolder.setOnClickListener {
+            showCreateDialog(isFolder = true)
         }
 
-        binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+        binding.tabLayout.addOnTabSelectedListener(object :
+            com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
                 tab?.text?.let { filename ->
                     if (filename.toString() != currentFile) {
@@ -147,6 +156,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     }
                 }
             }
+
             override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
         })
@@ -163,8 +173,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         }
 
         // Try Shell ls -F
-        val result = com.kulipai.luahook.core.shell.ShellManager.shell("ls -F \"$currentExplorerPath\"")
-        if (result is com.kulipai.luahook.core.shell.ShellResult.Success) {
+        val result = ShellManager.shell("ls -F \"$currentExplorerPath\"")
+        if (result is ShellResult.Success) {
             val lines = result.stdout.split("\n")
             for (line in lines) {
                 val trimmed = line.trim()
@@ -175,7 +185,10 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     if (name.endsWith("/")) {
                         isDir = true
                         name = name.dropLast(1)
-                    } else if (name.endsWith("*") || name.endsWith("@") || name.endsWith("=") || name.endsWith("|")) {
+                    } else if (name.endsWith("*") || name.endsWith("@") || name.endsWith("=") || name.endsWith(
+                            "|"
+                        )
+                    ) {
                         name = name.dropLast(1)
                     }
 
@@ -195,14 +208,57 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun showImagePreview(file: FileItem) {
-        val dialog = android.app.AlertDialog.Builder(this)
-        val imageView = android.widget.ImageView(this)
-        val bitmap = android.graphics.BitmapFactory.decodeFile(file.path)
+        val dialog = MaterialAlertDialogBuilder(this)
+        val imageView = ImageView(this)
+        val bitmap = BitmapFactory.decodeFile(file.path)
         imageView.setImageBitmap(bitmap)
         imageView.adjustViewBounds = true
         dialog.setView(imageView)
         dialog.setPositiveButton("Close", null)
         dialog.show()
+    }
+
+    private fun showCreateDialog(isFolder: Boolean) {
+        val title = if (isFolder) "Create Folder" else "Create File"
+
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
+        val input = view.findViewById<android.widget.TextView>(R.id.edit)
+        input.hint = "Name"
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(view)
+            .setPositiveButton("Create") { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isNotEmpty()) {
+                    createItem(name, isFolder)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun createItem(name: String, isFolder: Boolean) {
+        if (isFolder) {
+            val fullPath = "$currentExplorerPath/$name"
+            if (WorkspaceFileManager.ensureDirectoryExists(fullPath)) {
+                Toast.makeText(this, "Folder created", Toast.LENGTH_SHORT).show()
+                loadFileList()
+            } else {
+                Toast.makeText(this, "Failed to create folder", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // WorkspaceFileManager.write expects path relative to DIR, starting with /
+            val relDir = currentExplorerPath.removePrefix(WorkspaceFileManager.DIR)
+            val relPath = "$relDir/$name"
+
+            if (WorkspaceFileManager.write(relPath, "")) {
+                Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show()
+                loadFileList()
+            } else {
+                Toast.makeText(this, "Failed to create file", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun refreshFileList() {
@@ -229,19 +285,29 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
     private fun switchToFile(filename: String) {
         currentFile = filename
-        val content = WorkspaceFileManager.read("${WorkspaceFileManager.Project}/$projectName/$filename")
+        val content =
+            WorkspaceFileManager.read("${WorkspaceFileManager.Project}/$projectName/$filename")
         binding.editor.setText(content)
     }
 
     private fun saveCurrentFile() {
-        WorkspaceFileManager.write("${WorkspaceFileManager.Project}/$projectName/$currentFile", binding.editor.text.toString())
+        WorkspaceFileManager.write(
+            "${WorkspaceFileManager.Project}/$projectName/$currentFile",
+            binding.editor.text.toString()
+        )
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 1, 0, "Save")?.setIcon(R.drawable.save_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 2, 0, "Undo")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 3, 0, "Redo")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 1, 0, "Save")?.setIcon(R.drawable.save_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 2, 0, "Undo")?.setIcon(R.drawable.undo_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 3, 0, "Redo")?.setIcon(R.drawable.redo_24px)
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 4, 0, "Format")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+
         return true
     }
 
@@ -252,13 +318,72 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 runProject()
                 true
             }
+
             1 -> { // Save
                 saveCurrentFile()
                 Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
                 true
             }
-            2 -> { binding.editor.undo(); true }
-            3 -> { binding.editor.redo(); true }
+
+            2 -> {
+                binding.editor.undo(); true
+            }
+
+            3 -> {
+                binding.editor.redo(); true
+            }
+
+            4 -> {
+                try {
+                    val editor = binding.editor
+                    // 1. 保存当前状态
+                    val cursorLine = editor.cursor.leftLine
+                    val cursorColumn = editor.cursor.leftColumn
+                    val currentScrollY = editor.offsetY // 获取当前滚动纵坐标
+
+                    val luaCode = editor.text.toString()
+                    LuaParser.lexer(luaCode, Globals(), Flag())
+                    val formattedCode = AutoIndent.format(luaCode, 2)
+
+                    // 获取 Content 对象
+                    val content = editor.text
+
+                    // 2. 使用 batchEdit 进行原子操作（关键步骤）
+                    // 这告诉编辑器这一系列操作是一个整体，Undo 时会一步撤销回格式化前
+                    content.beginBatchEdit()
+
+                    // 删除全部内容 (从 0,0 到 最后一行,最后一列)
+                    content.delete(
+                        0,
+                        0,
+                        content.lineCount - 1,
+                        content.getColumnCount(content.lineCount - 1)
+                    )
+
+                    // 插入格式化后的代码
+                    content.insert(0, 0, formattedCode)
+
+                    // 结束编辑
+                    content.endBatchEdit()
+
+                    // 3. 恢复光标位置
+                    val targetLine = cursorLine.coerceAtMost(content.lineCount - 1)
+                    val targetCol = if (targetLine == cursorLine) cursorColumn else 0
+                    editor.setSelection(targetLine, targetCol)
+
+                    // 4. 强制恢复视角（解决概率性跳回第一行的问题）
+                    if (!editor.scroller.isFinished) {
+                        editor.scroller.forceFinished(true)
+                    }
+                    editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -271,7 +396,11 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             runOnUiThread {
                 if (project != null) {
                     if (project.scope.contains("all")) {
-                        Toast.makeText(this, "Scope is 'All'. Please open any app to test.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this,
+                            "Scope is 'All'. Please open any app to test.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     } else if (project.scope.isNotEmpty()) {
                         val pkg = project.scope[0]
                         try {
@@ -280,10 +409,18 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                                 Toast.makeText(this, "Launching $pkg...", Toast.LENGTH_SHORT).show()
                                 startActivity(launchIntent)
                             } else {
-                                Toast.makeText(this, "Could not find launch intent for $pkg", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    this,
+                                    "Could not find launch intent for $pkg",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(this, "Error launching: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                this,
+                                "Error launching: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     } else {
                         Toast.makeText(this, "No scope defined.", Toast.LENGTH_SHORT).show()
@@ -303,14 +440,19 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
 data class FileItem(val name: String, val path: String, val isDirectory: Boolean)
 
-class FileListAdapter(private val files: MutableList<FileItem>, private val onClick: (FileItem) -> Unit) : androidx.recyclerview.widget.RecyclerView.Adapter<FileListAdapter.ViewHolder>() {
-    
-    class ViewHolder(view: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+class FileListAdapter(
+    private val files: MutableList<FileItem>,
+    private val onClick: (FileItem) -> Unit
+) : androidx.recyclerview.widget.RecyclerView.Adapter<FileListAdapter.ViewHolder>() {
+
+    class ViewHolder(view: android.view.View) :
+        androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
         val textView: android.widget.TextView = view.findViewById(R.id.file_name)
     }
 
     override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
-        val view = android.view.LayoutInflater.from(parent.context).inflate(R.layout.item_project_file, parent, false)
+        val view = android.view.LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_project_file, parent, false)
         return ViewHolder(view)
     }
 
@@ -325,12 +467,10 @@ class FileListAdapter(private val files: MutableList<FileItem>, private val onCl
             item.name.endsWith(".png") || item.name.endsWith(".jpg") || item.name.endsWith(".jpeg") -> R.drawable.description_24px
             else -> R.drawable.file_open_24px
         }
-        
+
         holder.textView.setCompoundDrawablesWithIntrinsicBounds(iconRes, 0, 0, 0)
         holder.itemView.setOnClickListener { onClick(item) }
     }
-
-
 
 
     override fun getItemCount() = files.size

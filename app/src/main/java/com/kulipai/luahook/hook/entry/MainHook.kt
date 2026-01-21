@@ -6,7 +6,6 @@ import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
-import com.kulipai.luahook.core.utils.dd
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XposedBridge
@@ -109,7 +108,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
                            // Use a temporary global for verifying scope to avoid polluting the main context if we reuse it?
                            // Actually we create new globals for each script execution, so it's fine.
-                           val tempGlobals = createGlobals(lpparam, projectName)
+                           val tempGlobals = createGlobals(lpparam, projectName,projectName)
                            val projectDir = "/Project/$projectName"
                            val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
                            
@@ -157,7 +156,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
 
     // 创建一个Hook的lua环境
-    fun createGlobals(lpparam: LPParam, scriptName: String = ""): Globals {
+    fun createGlobals(lpparam: LPParam, scriptName: String = "",projectName: String=""): Globals {
         val globals: Globals = JsePlatform.standardGlobals()
 
         //加载Lua模块
@@ -171,7 +170,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         LuaActivity(null).registerTo(globals)
         HookLib(lpparam, scriptName).registerTo(globals)
 
-        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals,lpparam.packageName)
+        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals,lpparam.packageName,projectName)
         LuaUtil.loadBasicLib(globals)
 
         return globals
