@@ -61,6 +61,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         initAppData()
     }
 
+    override fun initEvent() {
+
+
+    }
+
     // --------------------- Toolbar ---------------------
 
     private fun setupToolbar() {

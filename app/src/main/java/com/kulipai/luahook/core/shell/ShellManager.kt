@@ -1,13 +1,12 @@
 package com.kulipai.luahook.core.shell
 
 import android.content.Context
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.utils.dd
 import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import rikka.shizuku.Shizuku
 
 /**
@@ -21,11 +20,11 @@ object ShellManager {
     }
 
 
-    private var _mode = MutableStateFlow(Mode.NONE)
-    var mode = _mode.asStateFlow()
+    var mode = MutableLiveData(Mode.NONE)
+//    var mode: LiveData<Mode> = mode
 
     fun setMode(newMode: Mode) {
-        _mode.value = newMode
+        mode.value = newMode
     }
 
 
@@ -50,34 +49,30 @@ object ShellManager {
                 setMode(Mode.ROOT)
                 WorkspaceFileManager.init(context)
 
-            }
-            // 显式尝试获取一次 Shell，会触发 root 权限申请（如必要）
-            else if (Shizuku.getBinder() != null && Shizuku.pingBinder()) {
-                //shizuku
-                if (ShizukuApi.isPermissionGranted.value == false) {
-                    ShizukuApi.requestShizuku()
-
-                }
-
-                // ✅ 用 forever observer 等权限
-                ShizukuApi.isPermissionGranted.observeForever(object : Observer<Boolean> {
-                    override fun onChanged(value: Boolean) {
-                        if (value) {
-                            ShizukuApi.isPermissionGranted.removeObserver(this)
-
-                            ShizukuApi.bindShizuku(context)
-//                            setMode(Mode.SHIZUKU)
-//                            WorkspaceFileManager.init(context)
-                        }
-                    }
-                })
-
             } else {
-                //no
-                setMode(Mode.NONE)
+                // try shizuku
+                observeShizuku(context)
             }
         }
 
+    }
+
+    private fun observeShizuku(context: Context) {
+        ShizukuApi.isBinderAvailable.observeForever {
+            if (it == true) {
+                if (ShizukuApi.isPermissionGranted.value == true) {
+                    ShizukuApi.bindShizuku(context)
+                } else {
+                    ShizukuApi.requestShizuku()
+                }
+            }
+        }
+
+        ShizukuApi.isPermissionGranted.observeForever {
+            if (it == true) {
+                ShizukuApi.bindShizuku(context)
+            }
+        }
     }
 
 
