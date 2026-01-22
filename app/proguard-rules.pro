@@ -25,14 +25,17 @@
 -keep class top.sacz.xphelper.** {*;}
 -keep class com.androlua.** { *; }
 -keep class com.kulipai.luahook.** {*;}
+-keepclassmembers class com.kulipai.luahook.** {*;}
 # 保留整个 LuaJ 库
 -keep class org.luaj.** { *; }
+-keepclassmembers class org.luaj.** { *; }
+-keep class org.luaj.vm2.** { *; }
+-keepclassmembers class org.luaj.vm2.** { *; }
 -dontwarn org.luaj.**
 -keep class com.myopicmobile.** { *; }
 -keep class androidx.** { *; }
 -keep class com.google.android.material.** { *; }
 -keep class io.github.libxposed.** { *; }
--keep class dx.** { *; }
 -dontwarn com.androlua.**
 -dontwarn kotlin.Cloneable$DefaultImpls
 -keep class org.eclipse.tm4e.languageconfiguration.internal.model.** { *; }
@@ -42,8 +45,4 @@
 -keep class io.dingyi222666.sora.lua.tool.** { *; }
 -dontwarn io.github.rosemoe.oniguruma.OnigNative
 -keep class org.nanohttpd.protocols.http.** { *; }
--dontwarn dx.proxy.Enhancer
--dontwarn dx.proxy.EnhancerInterface
--dontwarn dx.proxy.MethodFilter
--dontwarn dx.proxy.MethodInterceptor
--dontwarn dx.proxy.MethodProxy
+-keep class com.kongzue.** { *; }

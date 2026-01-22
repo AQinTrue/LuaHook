@@ -26,3 +26,8 @@
 -dontwarn org.luaj.**
 -dontwarn com.androlua.**
 -keep class org.joni.ast.** { *; }
+-keep class dx.** { *; }
+-keep class org.luaj.** { *; }
+-keepclassmembers class org.luaj.** { *; }
+-keep class org.luaj.vm2.** { *; }
+-keepclassmembers class org.luaj.vm2.** { *; }
