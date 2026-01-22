@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import com.kulipai.luahook.hook.api.HookLib
 import com.kulipai.luahook.hook.api.LuaActivity
 import com.kulipai.luahook.hook.api.LuaImport
+import com.kulipai.luahook.hook.api.LuaProject
 import com.kulipai.luahook.hook.api.LuaUtil
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XposedBridge
@@ -78,6 +79,8 @@ fun createGlobals(
         projectName
     )
     LuaUtil.loadBasicLib(globals)
+
+    LuaProject(projectName).registerTo(globals)
 
 
 
