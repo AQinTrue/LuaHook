@@ -23,15 +23,20 @@ object WorkspaceFileManager {
 
 
     fun read(relativePath: String): String {
-        val fullPath = DIR + relativePath
-        val file = File(fullPath)
-        if (file.exists() && file.canRead()) {
-            return file.readText()
-        }
-        
-        return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
-            is ShellResult.Success -> result.stdout
-            is ShellResult.Error -> ""
+        try {
+            val fullPath = DIR + relativePath
+            val file = File(fullPath)
+            if (file.exists() && file.canRead()) {
+                return file.readText()
+            }
+
+            return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
+                is ShellResult.Success -> result.stdout
+                is ShellResult.Error -> ""
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ""
         }
     }
 
@@ -85,11 +90,11 @@ object WorkspaceFileManager {
      * @return 读取到的 Map，如果失败则返回空 Map
      */
     fun readMap(file: String): MutableMap<String, Any?> {
-        val jsonString = read(file)
-        if (jsonString.isEmpty()) {
-            return mutableMapOf()
-        }
         return try {
+            val jsonString = read(file)
+            if (jsonString.isEmpty()) {
+                return mutableMapOf()
+            }
             val jsonObject = JSONObject(jsonString)
             val map = mutableMapOf<String, Any?>()
             val keys = jsonObject.keys()
