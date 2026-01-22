@@ -12,18 +12,40 @@
         android:paddingTop="8dp"
         android:paddingBottom="180dp" />
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/fab_create_project"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="246dp"
+        app:icon="@drawable/add_24px" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/fab_import_project"
+        android:alpha="0"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+        android:layout_gravity="end|bottom"
+        app:cornerRadius="12dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="190dp"
+        app:icon="@drawable/import_24px" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="124dp"
-        android:text="创建项目"
-        android:textColor="?attr/colorOnSecondaryContainer"
-        android:backgroundTint="?attr/colorSecondaryContainer"
-        app:icon="@drawable/add_24px"
-        app:iconTint="?attr/colorOnSecondaryContainer" />
+        android:contentDescription="@string/push"
+        android:src="@drawable/add_24px" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

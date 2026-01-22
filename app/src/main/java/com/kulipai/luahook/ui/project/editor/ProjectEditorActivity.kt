@@ -309,6 +309,19 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         )
     }
 
+    private val exportLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        uri?.let {
+            Toast.makeText(this, "Exporting...", Toast.LENGTH_SHORT).show()
+            Thread {
+                val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(this, projectName, it)
+                runOnUiThread {
+                    if (success) Toast.makeText(this, "Export Success", Toast.LENGTH_SHORT).show()
+                    else Toast.makeText(this, "Export Failed", Toast.LENGTH_SHORT).show()
+                }
+            }.start()
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Run Button with Custom View for Long Press
         val runItem = menu?.add(0, 0, 0, "Run")
@@ -347,6 +360,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 4, 0, "Format")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 5, 0, "LogCat")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 6, 0, "Export")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
         return true
     }
@@ -427,6 +441,11 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             5 -> {
                 val intent = Intent(this, LogCatActivity::class.java)
                 startActivity(intent)
+                true
+            }
+
+            6 -> {
+                exportLauncher.launch("$projectName.zip")
                 true
             }
 
