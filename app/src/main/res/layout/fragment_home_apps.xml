@@ -98,7 +98,7 @@
         app:cornerRadius="12dp"
         android:layout_marginEnd="30dp"
         android:layout_marginBottom="246dp"
-        app:icon="@drawable/new_window_24px" />
+        app:icon="@drawable/add_24px" />
 
 
     <com.google.android.material.button.MaterialButton
