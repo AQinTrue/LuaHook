@@ -3,19 +3,13 @@ package com.kulipai.luahook.hook.entry
 import android.annotation.SuppressLint
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
-import com.kulipai.luahook.hook.api.HookLib
-import com.kulipai.luahook.hook.api.LuaActivity
-import com.kulipai.luahook.hook.api.LuaImport
 import com.kulipai.luahook.hook.api.LuaUtil
 import de.robv.android.xposed.IXposedHookZygoteInit
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import org.json.JSONArray
-import org.luaj.Globals
 import org.luaj.LuaValue
-import org.luaj.lib.jse.CoerceJavaToLua
-import org.luaj.lib.jse.JsePlatform
 import top.sacz.xphelper.XpHelper
 
 /**
@@ -72,7 +66,8 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
         try {
             //排除自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = createGlobals(lpparam, "[GLOBAL]").load(luaScript)
+                val chunk: LuaValue =
+                    createGlobals(this, lpparam, suparam, "[GLOBAL]").load(luaScript)
                 chunk.call()
             }
         } catch (e: Exception) {
@@ -90,12 +85,12 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
             for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
                 try {
                     if (v is Boolean) {  // 兼容旧版luahook的存储格式
-                        createGlobals(lpparam, scriptName)
+                        createGlobals(this, lpparam, suparam, scriptName)
                             .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                             .call()
                     } else if ((v is JSONArray)) {
                         if (v[0] as Boolean) {
-                            createGlobals(lpparam, scriptName)
+                            createGlobals(this, lpparam, suparam, scriptName)
                                 .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                                 .call()
                         }
@@ -113,7 +108,8 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
             for ((projectName, isEnabled) in projectInfo) {
                 if (isEnabled == true) {
                     try {
-                        val tempGlobals = createGlobals(lpparam, projectName, projectName)
+                        val tempGlobals =
+                            createGlobals(this, lpparam, suparam, projectName, projectName)
                         val projectDir = "/Project/$projectName"
                         val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
 
@@ -149,29 +145,6 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
         }
 
 
-    }
-
-
-    fun createGlobals(
-        lpparam: LPParam,
-        scriptName: String = "",
-        projectName: String = ""
-    ): Globals {
-        val globals: Globals = JsePlatform.standardGlobals()
-
-        //加载Lua模块
-        globals["this"] = CoerceJavaToLua.coerce(this)
-        globals["suparam"] = CoerceJavaToLua.coerce(suparam)
-        LuaActivity(null).registerTo(globals)
-        HookLib(lpparam, scriptName).registerTo(globals)
-        LuaUtil.loadBasicLib(globals)
-        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(
-            globals,
-            lpparam.packageName,
-            projectName
-        )
-
-        return globals
     }
 
 

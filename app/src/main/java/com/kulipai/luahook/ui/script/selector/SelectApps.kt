@@ -116,6 +116,7 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
                 (selectApps - selectedPackageNames.toSet()).toMutableList(),
                 0
             )
+            setResult(RESULT_OK)
             finish()
         }
     }

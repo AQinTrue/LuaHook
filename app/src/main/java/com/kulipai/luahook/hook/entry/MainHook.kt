@@ -63,7 +63,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         try {
             // 排除模块自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = createGlobals(lpparam, "[GLOBAL]").load(luaScript)
+                val chunk: LuaValue = createGlobals(this,lpparam,suparam, "[GLOBAL]").load(luaScript)
                 chunk.call()
             }
         } catch (e: Exception) {
@@ -82,12 +82,12 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 try {
 
                     if (v is Boolean) { // 兼容旧版luahook的存储格式
-                        createGlobals(lpparam, scriptName)
+                        createGlobals(this,lpparam,suparam, scriptName)
                             .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                             .call()
                     } else if ((v is JSONArray)) { // 新的格式，包含是否启用，描述和版本信息
                         if (v[0] as Boolean) {
-                            createGlobals(lpparam, scriptName)
+                            createGlobals(this,lpparam,suparam, scriptName)
                                 .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
                                 .call()
                         }
@@ -108,7 +108,7 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
                            // Use a temporary global for verifying scope to avoid polluting the main context if we reuse it?
                            // Actually we create new globals for each script execution, so it's fine.
-                           val tempGlobals = createGlobals(lpparam, projectName,projectName)
+                           val tempGlobals = createGlobals(this,lpparam,suparam, projectName,projectName)
                            val projectDir = "/Project/$projectName"
                            val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
                            
@@ -152,28 +152,6 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
 
 
-    }
-
-
-    // 创建一个Hook的lua环境
-    fun createGlobals(lpparam: LPParam, scriptName: String = "",projectName: String=""): Globals {
-        val globals: Globals = JsePlatform.standardGlobals()
-
-        //加载Lua模块
-        globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
-        globals["DexFinder"] = CoerceJavaToLua.coerce(DexFinder::class.java)
-        globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
-        globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
-        globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
-        globals["this"] = CoerceJavaToLua.coerce(this)
-        globals["suparam"] = CoerceJavaToLua.coerce(suparam)
-        LuaActivity(null).registerTo(globals)
-        HookLib(lpparam, scriptName).registerTo(globals)
-
-        LuaImport(lpparam.classLoader, this::class.java.classLoader!!).registerTo(globals,lpparam.packageName,projectName)
-        LuaUtil.loadBasicLib(globals)
-
-        return globals
     }
 
 }

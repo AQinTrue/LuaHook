@@ -52,7 +52,7 @@ class AppsFragment : BaseFragment<FragmentHomeAppsBinding>() {
 
     private val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-
+            refreshData()
         }
 
     override fun initView() {
@@ -79,18 +79,12 @@ class AppsFragment : BaseFragment<FragmentHomeAppsBinding>() {
 
         // 在处理 Fragment 视图相关的操作时，使用 viewLifecycleOwner.lifecycleScope 更安全
         ShellManager.mode.observe(viewLifecycleOwner) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                if (it != ShellManager.Mode.NONE) {
-                    val savedList = WorkspaceFileManager.readStringList("/apps.txt")
-
-                    if (savedList.isNotEmpty()) {
-                        val appInfoList = MyApplication.instance.getAppInfoList(savedList)
-                        adapter.updateData(appInfoList)
-                    }
-                }
-
+            if (it != ShellManager.Mode.NONE) {
+                refreshData()
             }
         }
+
+
 
         binding.searchbar.setOnClickListener {
             binding.searchBarTextView.requestFocus()
@@ -192,6 +186,21 @@ class AppsFragment : BaseFragment<FragmentHomeAppsBinding>() {
         container: ViewGroup?
     ): FragmentHomeAppsBinding {
         return FragmentHomeAppsBinding.inflate(inflater, container, false)
+    }
+
+    private fun refreshData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (ShellManager.mode.value != ShellManager.Mode.NONE) {
+                val savedList = WorkspaceFileManager.readStringList("/apps.txt")
+                if (savedList.isNotEmpty()) {
+                    appInfoList = MyApplication.instance.getAppInfoList(savedList)
+                    adapter.updateData(appInfoList)
+                } else {
+                    appInfoList = emptyList()
+                    adapter.updateData(emptyList())
+                }
+            }
+        }
     }
 
     // TODO)) 封装，传入一个clearText这个ImageView
