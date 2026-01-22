@@ -247,6 +247,11 @@ scope = ${scopeLua.trimIndent()}
                 selectedScope.remove(pkg)
                 updateScopeChips()
             }
+            chip.setOnClickListener {
+                if (pkg != "all") {
+                    binding.etProjectLauncher.setText(pkg)
+                }
+            }
             binding.chipGroupScope.addView(chip)
         }
     }
@@ -347,6 +352,7 @@ scope = ${scopeLua.trimIndent()}
                     if (selectedScope.contains("all")) selectedScope.remove("all")
                     selectedScope.add(text)
                     updateScopeChips()
+                    binding.etProjectLauncher.setText(text)
                 }
             }
             .setNegativeButton("Cancel", null)

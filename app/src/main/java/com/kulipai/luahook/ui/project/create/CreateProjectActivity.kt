@@ -61,6 +61,11 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                 selectedScope.remove(pkg)
                 updateScopeChips()
             }
+            chip.setOnClickListener {
+                if (pkg != "all") {
+                    binding.etProjectLauncher.setText(pkg)
+                }
+            }
             binding.chipGroupScope.addView(chip)
         }
     }
@@ -222,6 +227,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                     if (selectedScope.contains("all")) selectedScope.remove("all")
                     selectedScope.add(text)
                     updateScopeChips()
+                    binding.etProjectLauncher.setText(text)
                 }
             }
             .setNegativeButton("Cancel", null)
