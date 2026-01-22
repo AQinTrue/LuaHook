@@ -5,12 +5,15 @@ import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.Toast
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
@@ -307,8 +310,35 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)
-            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        // Run Button with Custom View for Long Press
+        val runItem = menu?.add(0, 0, 0, "Run")
+        runItem?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+
+        val runView = ImageView(this)
+        runView.setImageResource(R.drawable.play_arrow_24px)
+        val padding = (8 * resources.displayMetrics.density).toInt()
+        runView.setPadding(padding, padding, padding, padding)
+
+        val outValue = android.util.TypedValue()
+        theme.resolveAttribute(
+            androidx.appcompat.R.attr.selectableItemBackgroundBorderless,
+            outValue,
+            true
+        )
+        runView.setBackgroundResource(outValue.resourceId)
+        runView.contentDescription = "Run"
+
+        runView.setOnClickListener {
+            saveCurrentFile()
+            runProject()
+        }
+        runView.setOnLongClickListener {
+            showRunSelectionDialog()
+            true
+        }
+
+        runItem?.actionView = runView
+
         menu?.add(0, 1, 0, "Save")?.setIcon(R.drawable.save_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 2, 0, "Undo")?.setIcon(R.drawable.undo_24px)
@@ -394,7 +424,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 true
             }
 
-            5->{
+            5 -> {
                 val intent = Intent(this, LogCatActivity::class.java)
                 startActivity(intent)
                 true
@@ -404,14 +434,77 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         }
     }
 
-    private fun runProject() {
+    private fun showRunSelectionDialog() {
+        val dialogView = android.widget.LinearLayout(this)
+        dialogView.orientation = android.widget.LinearLayout.VERTICAL
+        dialogView.setPadding(32, 24, 32, 0)
+
+        // Manual Input
+        val inputLayout = com.google.android.material.textfield.TextInputLayout(this)
+        inputLayout.boxBackgroundMode =
+            com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
+        inputLayout.hint = "Package Name"
+
+        val input = com.google.android.material.textfield.TextInputEditText(this)
+        inputLayout.addView(input)
+        dialogView.addView(inputLayout)
+
+        // Scope Chips
+        val chipGroup = ChipGroup(this)
+        chipGroup.setPadding(0, 24, 0, 0)
+
+        val scroll = ScrollView(this)
+        scroll.addView(chipGroup)
+        // Constrain height if needed?
+
+        dialogView.addView(
+            scroll, android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        // Load scopes
+        Thread {
+            val projects = com.kulipai.luahook.core.project.ProjectManager.getProjects()
+            val project = projects.find { it.name == projectName }
+            val scopes = project?.scope ?: emptyList()
+            runOnUiThread {
+                for (scope in scopes) {
+                    if (scope != "all") {
+                        val chip = com.google.android.material.chip.Chip(this)
+                        chip.text = scope
+                        chip.setOnClickListener {
+                            input.setText(scope)
+                        }
+                        chipGroup.addView(chip)
+                    }
+                }
+            }
+        }.start()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Select Launch App")
+            .setView(dialogView)
+            .setPositiveButton("Run") { _, _ ->
+                val pkg = input.text.toString().trim()
+                if (pkg.isNotEmpty()) {
+                    saveCurrentFile()
+                    runProject(pkg)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun runProject(launcherPackage: String? = null) {
         // Run on IO to avoid main thread block if scanning projects
         Thread {
             val projects = com.kulipai.luahook.core.project.ProjectManager.getProjects()
             val project = projects.find { it.name == projectName }
             runOnUiThread {
                 if (project != null) {
-                    var pkgToLaunch = project.launcher
+                    var pkgToLaunch = launcherPackage ?: project.launcher
                     if (pkgToLaunch.isEmpty()) {
                         if (project.scope.contains("all")) {
                             Toast.makeText(
@@ -432,7 +525,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                                 // Force stop before launching
                                 ShellManager.shell("am force-stop $pkgToLaunch")
                                 Thread.sleep(300) // Small delay to ensure it stopped
-                                
+
 //                                Toast.makeText(this, "Launching $pkgToLaunch...", Toast.LENGTH_SHORT).show()
                                 startActivity(launchIntent)
                             } else {
@@ -450,7 +543,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                             ).show()
                         }
                     } else {
-                        Toast.makeText(this, "No launcher or scope defined.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "No launcher or scope defined.", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 } else {
                     Toast.makeText(this, "Project info not found.", Toast.LENGTH_SHORT).show()
