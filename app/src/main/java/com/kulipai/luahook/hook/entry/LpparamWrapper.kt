@@ -1,8 +1,22 @@
 package com.kulipai.luahook.hook.entry
 
+import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.kulipai.luahook.hook.api.HookLib
+import com.kulipai.luahook.hook.api.LuaActivity
+import com.kulipai.luahook.hook.api.LuaImport
+import com.kulipai.luahook.hook.api.LuaUtil
+import de.robv.android.xposed.IXposedHookZygoteInit
+import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import io.github.libxposed.api.XposedModuleInterface
+import org.luaj.Globals
+import org.luaj.lib.jse.CoerceJavaToLua
+import org.luaj.lib.jse.JsePlatform
+import org.luckypray.dexkit.DexKitBridge
+import top.sacz.xphelper.XpHelper
+import top.sacz.xphelper.dexkit.DexFinder
 
 /**
  * 统一抽象化api100和低于100的hook的部分接口
@@ -33,4 +47,39 @@ class ModuleInterfaceParamWrapper(val origin: XposedModuleInterface.PackageLoade
     override val processName: String get() = LPParam_processName
     override val isFirstApplication: Boolean get() = origin.isFirstPackage
 
+}
+
+
+// 创建一个Hook的lua环境
+
+fun createGlobals(
+    context: Any,
+    lpparam: LPParam,
+    suparam: IXposedHookZygoteInit.StartupParam,
+    scriptName: String = "",
+    projectName: String = ""
+): Globals {
+    val globals: Globals = JsePlatform.standardGlobals()
+
+    //加载Lua模块
+    globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
+    globals["DexFinder"] = CoerceJavaToLua.coerce(DexFinder::class.java)
+    globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
+    globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
+    globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
+    globals["this"] = CoerceJavaToLua.coerce(context)
+    globals["suparam"] = CoerceJavaToLua.coerce(suparam)
+    LuaActivity(null).registerTo(globals)
+    HookLib(lpparam, scriptName).registerTo(globals)
+
+    LuaImport(lpparam.classLoader, context::class.java.classLoader!!).registerTo(
+        globals,
+        lpparam.packageName,
+        projectName
+    )
+    LuaUtil.loadBasicLib(globals)
+
+
+
+    return globals
 }
