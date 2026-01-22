@@ -20,6 +20,7 @@ import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.databinding.ActivityProjectEditorBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
+import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
@@ -53,6 +54,12 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
+
+
+        binding.symbolRecyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.symbolRecyclerView.adapter = SymbolAdapter(binding.editor)
+
         // SoraEditor integration
         initLuaEditor(binding.editor, binding.errorMessage)
 
