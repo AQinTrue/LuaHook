@@ -76,6 +76,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         if (projectName.isEmpty()) finish()
 
         title = projectName
+        binding.toolbar.title = projectName
         projectDir = "${WorkspaceFileManager.DIR}${WorkspaceFileManager.Project}/$projectName"
         currentExplorerPath = projectDir
 
