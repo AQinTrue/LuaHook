@@ -87,7 +87,7 @@ class ProjectAdapter(
             holder.binding.projectSymbol.text = project.icon
 
         } else {
-
+            holder.binding.projectImage.visibility = View.VISIBLE
             holder.binding.projectImage.setImageResource(R.mipmap.ic_launcher)
         }
 
