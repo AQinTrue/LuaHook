@@ -227,21 +227,21 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         imageView.setImageBitmap(bitmap)
         imageView.adjustViewBounds = true
         dialog.setView(imageView)
-        dialog.setPositiveButton("Close", null)
+        dialog.setPositiveButton(getString(R.string.action_close), null)
         dialog.show()
     }
 
     private fun showCreateDialog(isFolder: Boolean) {
-        val title = if (isFolder) "Create Folder" else "Create File"
+        val title = if (isFolder) getString(R.string.title_create_folder) else getString(R.string.title_create_file)
 
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
         val input = view.findViewById<android.widget.TextView>(R.id.edit)
-        input.hint = "Name"
+        input.hint = getString(R.string.hint_name)
 
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
             .setView(view)
-            .setPositiveButton("Create") { _, _ ->
+            .setPositiveButton(getString(R.string.action_create)) { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isNotEmpty()) {
                     createItem(name, isFolder)
@@ -255,10 +255,10 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         if (isFolder) {
             val fullPath = "$currentExplorerPath/$name"
             if (WorkspaceFileManager.ensureDirectoryExists(fullPath)) {
-                Toast.makeText(this, "Folder created", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_folder_created), Toast.LENGTH_SHORT).show()
                 loadFileList()
             } else {
-                Toast.makeText(this, "Failed to create folder", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_folder_create_failed), Toast.LENGTH_SHORT).show()
             }
         } else {
             // WorkspaceFileManager.write expects path relative to DIR, starting with /
@@ -266,16 +266,16 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             val relPath = "$relDir/$name"
 
             if (WorkspaceFileManager.write(relPath, "")) {
-                Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_file_created), Toast.LENGTH_SHORT).show()
                 loadFileList()
             } else {
-                Toast.makeText(this, "Failed to create file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_file_create_failed), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun refreshFileList() {
-        Toast.makeText(this, "Refreshing files...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.msg_refreshing_files), Toast.LENGTH_SHORT).show()
         loadFileList()
     }
 
@@ -312,12 +312,12 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
     private val exportLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         uri?.let {
-            Toast.makeText(this, "Exporting...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_exporting), Toast.LENGTH_SHORT).show()
             Thread {
                 val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(this, projectName, it)
                 runOnUiThread {
-                    if (success) Toast.makeText(this, "Export Success", Toast.LENGTH_SHORT).show()
-                    else Toast.makeText(this, "Export Failed", Toast.LENGTH_SHORT).show()
+                    if (success) Toast.makeText(this, getString(R.string.msg_export_success), Toast.LENGTH_SHORT).show()
+                    else Toast.makeText(this, getString(R.string.msg_export_failed), Toast.LENGTH_SHORT).show()
                 }
             }.start()
         }
@@ -325,7 +325,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Run Button with Custom View for Long Press
-        val runItem = menu?.add(0, 0, 0, "Run")
+        val runItem = menu?.add(0, 0, 0, getString(R.string.action_run))
         runItem?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
 
         val runView = ImageView(this)
@@ -340,7 +340,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             true
         )
         runView.setBackgroundResource(outValue.resourceId)
-        runView.contentDescription = "Run"
+        runView.contentDescription = getString(R.string.action_run)
 
         runView.setOnClickListener {
             saveCurrentFile()
@@ -353,15 +353,15 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         runItem?.actionView = runView
 
-        menu?.add(0, 1, 0, "Save")?.setIcon(R.drawable.save_24px)
+        menu?.add(0, 1, 0, getString(R.string.action_save))?.setIcon(R.drawable.save_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 2, 0, "Undo")?.setIcon(R.drawable.undo_24px)
+        menu?.add(0, 2, 0, getString(R.string.action_undo))?.setIcon(R.drawable.undo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 3, 0, "Redo")?.setIcon(R.drawable.redo_24px)
+        menu?.add(0, 3, 0, getString(R.string.action_redo))?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 4, 0, "Format")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, "LogCat")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 6, 0, "Export")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 4, 0, getString(R.string.action_format))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 5, 0, getString(R.string.action_logcat))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 6, 0, getString(R.string.action_export))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
         return true
     }
@@ -376,7 +376,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
             1 -> { // Save
                 saveCurrentFile()
-                Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_saved_short), Toast.LENGTH_SHORT).show()
                 true
             }
 
@@ -433,7 +433,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
 
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_format_failed, e.message), Toast.LENGTH_SHORT).show()
                 }
 
                 true
@@ -463,7 +463,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         val inputLayout = com.google.android.material.textfield.TextInputLayout(this)
         inputLayout.boxBackgroundMode =
             com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
-        inputLayout.hint = "Package Name"
+        inputLayout.hint = getString(R.string.hint_package_name)
 
         val input = com.google.android.material.textfield.TextInputEditText(this)
         inputLayout.addView(input)
@@ -504,9 +504,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         }.start()
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Select Launch App")
+            .setTitle(getString(R.string.title_select_launch_app))
             .setView(dialogView)
-            .setPositiveButton("Run") { _, _ ->
+            .setPositiveButton(getString(R.string.action_run)) { _, _ ->
                 val pkg = input.text.toString().trim()
                 if (pkg.isNotEmpty()) {
                     saveCurrentFile()
@@ -529,7 +529,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                         if (project.scope.contains("all")) {
                             Toast.makeText(
                                 this,
-                                "Scope is 'All' and no Launcher defined.",
+                                getString(R.string.msg_scope_all_no_launcher),
                                 Toast.LENGTH_LONG
                             ).show()
                             return@runOnUiThread
@@ -551,23 +551,23 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                             } else {
                                 Toast.makeText(
                                     this,
-                                    "Could not find launch intent for $pkgToLaunch",
+                                    getString(R.string.msg_no_launch_intent, pkgToLaunch),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         } catch (e: Exception) {
                             Toast.makeText(
                                 this,
-                                "Error launching: ${e.message}",
+                                getString(R.string.msg_launch_error, e.message),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
-                        Toast.makeText(this, "No launcher or scope defined.", Toast.LENGTH_SHORT)
+                        Toast.makeText(this, getString(R.string.msg_no_launcher_defined), Toast.LENGTH_SHORT)
                             .show()
                     }
                 } else {
-                    Toast.makeText(this, "Project info not found.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_project_info_not_found), Toast.LENGTH_SHORT).show()
                 }
             }
         }.start()

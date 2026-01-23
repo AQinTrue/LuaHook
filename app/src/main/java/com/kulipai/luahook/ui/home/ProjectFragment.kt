@@ -31,10 +31,10 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
             uri?.let {
                 val success = ProjectManager.importProject(requireContext(), it)
                 if (success) {
-                    Toast.makeText(requireContext(), "Import Success", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_import_success), Toast.LENGTH_SHORT).show()
                     loadProjects()
                 } else {
-                    Toast.makeText(requireContext(), "Import Failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_import_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -59,18 +59,18 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
             },
             onProjectLongClick = { project ->
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("删除项目")
-                    .setMessage("确定要删除项目 ${project.name} 吗？此操作不可恢复。")
-                    .setPositiveButton("删除") { _, _ ->
+                    .setTitle(getString(com.kulipai.luahook.R.string.title_delete_project))
+                    .setMessage(getString(com.kulipai.luahook.R.string.msg_confirm_delete_project, project.name))
+                    .setPositiveButton(getString(com.kulipai.luahook.R.string.action_delete)) { _, _ ->
                         try {
                             ProjectManager.deleteProject(project.name)
                             loadProjects()
-                             Toast.makeText(requireContext(), "已删除 ${project.name}", Toast.LENGTH_SHORT).show()
+                             Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_deleted_project, project.name), Toast.LENGTH_SHORT).show()
                         } catch (e: Exception) {
-                            Toast.makeText(requireContext(), "删除失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_delete_failed, e.message), Toast.LENGTH_SHORT).show()
                         }
                     }
-                    .setNegativeButton("取消", null)
+                    .setNegativeButton(getString(com.kulipai.luahook.R.string.cancel), null)
                     .show()
             }
         )

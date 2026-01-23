@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/arrow_back_24px"
-            app:title="Create Project"
+            app:title="@string/title_create_project"
             app:titleCentered="true" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -63,7 +63,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Tap to change icon"
+                    android:text="@string/tap_to_change_icon"
                     android:textAppearance="?attr/textAppearanceCaption"
                     android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>
@@ -72,7 +72,7 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Project Name">
+                android:hint="@string/hint_project_name">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_project_name"
@@ -86,7 +86,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Description">
+                android:hint="@string/hint_description">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_project_desc"
@@ -100,7 +100,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Author">
+                android:hint="@string/hint_author">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_project_author"
@@ -114,7 +114,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Launcher Package (Optional)">
+                android:hint="@string/hint_launcher_package">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_project_launcher"
@@ -129,7 +129,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"
-                android:text="Target Scope"
+                android:text="@string/target_scope"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <com.google.android.material.chip.ChipGroup
@@ -152,14 +152,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:text="Select Apps" />
+                    android:text="@string/btn_select_apps" />
 
                 <Button
                     android:id="@+id/btn_add_manual_scope"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Add Package" />
+                    android:text="@string/btn_add_package" />
 
             </LinearLayout>
 
@@ -173,7 +173,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="32dp"
-                android:text="Create Project" />
+                android:text="@string/btn_create_project" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

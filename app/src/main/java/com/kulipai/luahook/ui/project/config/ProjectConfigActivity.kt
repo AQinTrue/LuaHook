@@ -51,9 +51,9 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
 
     override fun initView() {
         setSupportActionBar(binding.toolbar)
-        binding.toolbar.title = "Project Settings"
+        binding.toolbar.title = getString(R.string.title_project_settings)
         binding.toolbar.setNavigationOnClickListener { finish() }
-        binding.btnCreate.text = "Save Changes" // Reusing layout, button ID is btn_create
+        binding.btnCreate.text = getString(R.string.btn_save_changes) // Reusing layout, button ID is btn_create
     }
 
     override fun initData() {
@@ -69,7 +69,7 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         currentProject = projects.find { it.name == originalProjectName }
         
         if (currentProject == null) {
-            Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_project_not_found), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -134,7 +134,7 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         val newDesc = binding.etProjectDesc.text.toString().trim()
         
         if (newName.isEmpty()) {
-             binding.etProjectName.error = "Name cannot be empty"
+             binding.etProjectName.error = getString(R.string.err_name_empty)
              return
         }
         
@@ -142,7 +142,7 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         if (newName != originalProjectName) {
             // Check if exists
              if (WorkspaceFileManager.directoryExists("${WorkspaceFileManager.DIR}${WorkspaceFileManager.Project}/$newName")) {
-                 Toast.makeText(this, "Project name already exists", Toast.LENGTH_SHORT).show()
+                 Toast.makeText(this, getString(R.string.err_project_exists), Toast.LENGTH_SHORT).show()
                  return
              }
              // Move directory
@@ -154,7 +154,7 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
              // Note: Renaming also requires updating info.json key!
              
              if (mvResult !is com.kulipai.luahook.core.shell.ShellResult.Success) {
-                 Toast.makeText(this, "Failed to rename folder", Toast.LENGTH_SHORT).show()
+                 Toast.makeText(this, getString(R.string.err_rename_failed), Toast.LENGTH_SHORT).show()
                  return
              }
              
@@ -230,7 +230,7 @@ scope = ${scopeLua.trimIndent()}
 
         WorkspaceFileManager.write("${WorkspaceFileManager.Project}/$newName/init.lua", newInitLua)
         
-        Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.msg_saved), Toast.LENGTH_SHORT).show()
         finish()
     }
     
@@ -241,7 +241,7 @@ scope = ${scopeLua.trimIndent()}
         binding.chipGroupScope.removeAllViews()
         for (pkg in selectedScope) {
             val chip = com.google.android.material.chip.Chip(this)
-            chip.text = if (pkg == "all") "All Apps" else pkg
+            chip.text = if (pkg == "all") getString(R.string.text_all_apps) else pkg
             chip.isCloseIconVisible = true
             chip.setOnCloseIconClickListener {
                 selectedScope.remove(pkg)
@@ -281,9 +281,9 @@ scope = ${scopeLua.trimIndent()}
         recyclerView.adapter = adapter
 
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Select Symbol")
+            .setTitle(getString(R.string.title_select_symbol))
             .setView(dialogView)
-            .setPositiveButton("Cancel", null)
+            .setPositiveButton(getString(R.string.cancel), null)
             .create()
 
         adapter.onItemClick = { symbol ->
@@ -323,9 +323,9 @@ scope = ${scopeLua.trimIndent()}
     }
      
     private fun showIconSelectionDialog() {
-        val options = arrayOf("Select from Gallery", "Select Symbol")
+        val options = arrayOf(getString(R.string.option_select_gallery), getString(R.string.option_select_symbol))
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Choose Icon")
+            .setTitle(getString(R.string.title_choose_icon))
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> pickIcon.launch("image/*")
@@ -343,9 +343,9 @@ scope = ${scopeLua.trimIndent()}
         layout.setPadding(32, 16, 32, 0)
         
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Add Package Scope")
+            .setTitle(getString(R.string.title_add_scope))
             .setView(layout)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(getString(R.string.action_add)) { _, _ ->
                 val text = input.text.toString().trim()
                 if (text.isNotEmpty() && !selectedScope.contains(text)) {
                     // Remove 'all' if adding specific
@@ -355,7 +355,7 @@ scope = ${scopeLua.trimIndent()}
                     binding.etProjectLauncher.setText(text)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
     

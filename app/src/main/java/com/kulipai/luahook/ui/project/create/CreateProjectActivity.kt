@@ -12,6 +12,7 @@ import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.databinding.ActivityCreateProjectBinding
 import com.kulipai.luahook.ui.script.selector.ScopeSelectorActivity
 import java.io.File
+import androidx.core.graphics.createBitmap
 
 class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
 
@@ -55,7 +56,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         binding.chipGroupScope.removeAllViews()
         for (pkg in selectedScope) {
             val chip = com.google.android.material.chip.Chip(this)
-            chip.text = if (pkg == "all") "All Apps" else pkg
+            chip.text = if (pkg == "all") getString(R.string.text_all_apps) else pkg
             chip.isCloseIconVisible = true
             chip.setOnCloseIconClickListener {
                 selectedScope.remove(pkg)
@@ -71,9 +72,9 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
     }
     
     private fun showIconSelectionDialog() {
-        val options = arrayOf("Select from Gallery", "Select Symbol")
+        val options = arrayOf(getString(R.string.option_select_gallery), getString(R.string.option_select_symbol))
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Choose Icon")
+            .setTitle(getString(R.string.title_choose_icon))
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> pickIcon.launch("image/*")
@@ -108,9 +109,9 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         recyclerView.adapter = adapter
 
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Select Symbol")
+            .setTitle(getString(R.string.title_select_symbol))
             .setView(dialogView)
-            .setPositiveButton("Cancel", null)
+            .setPositiveButton(getString(R.string.cancel), null)
             .create()
 
         adapter.onItemClick = { symbol ->
@@ -168,7 +169,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         val baseline = -paint.ascent() 
         val width = (paint.measureText(text) + 0.5f).toInt().coerceAtLeast(1)
         val height = (baseline + paint.descent() + 0.5f).toInt().coerceAtLeast(1)
-        val image = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val image = createBitmap(width, height)
         val canvas = android.graphics.Canvas(image)
         canvas.drawText(text, 0f, baseline, paint)
         return image
@@ -218,9 +219,9 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
         layout.setPadding(32, 16, 32, 0)
         
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Add Package Scope")
+            .setTitle(getString(R.string.title_add_scope))
             .setView(layout)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(getString(R.string.action_add)) { _, _ ->
                 val text = input.text.toString().trim()
                 if (text.isNotEmpty() && !selectedScope.contains(text)) {
                     // Remove 'all' if adding specific
@@ -230,7 +231,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                     binding.etProjectLauncher.setText(text)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
@@ -315,7 +316,7 @@ class CreateProjectActivity : BaseActivity<ActivityCreateProjectBinding>() {
                 Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
                 finish()
             } else {
-                Toast.makeText(this, "Created Failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_create_failed), Toast.LENGTH_SHORT).show()
             }
         }
     }

@@ -19,7 +19,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:navigationIcon="@drawable/menu_24px"
-                app:title="Project Editor" />
+                app:title="@string/title_project_editor" />
             
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_layout"
@@ -86,7 +86,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingStart="8dp"
-                android:text="Project Files"
+                android:text="@string/title_project_files"
                 android:textAppearance="?attr/textAppearanceTitleMedium"/>
 
             <ImageView
@@ -96,7 +96,7 @@
                 android:padding="8dp"
                 android:src="@drawable/add_24px"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="New File"
+                android:contentDescription="@string/cd_new_file"
                 app:tint="?attr/colorControlNormal"/>
 
             <ImageView
@@ -106,7 +106,7 @@
                 android:padding="8dp"
                 android:src="@drawable/folder"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="New Folder"
+                android:contentDescription="@string/cd_new_folder"
                 app:tint="?attr/colorControlNormal"/>
 
         </LinearLayout>
