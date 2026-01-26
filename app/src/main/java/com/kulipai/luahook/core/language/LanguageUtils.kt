@@ -12,56 +12,95 @@ import java.util.Locale
 object LanguageUtils {
 
     private const val KEY_LANGUAGE = "key_language"
-    const val LANGUAGE_CHINESE = "zh"
-    const val LANGUAGE_CHINESE_TRADITIONAL  = "zh-TW"
+    
+    // Language Codes
+    const val LANGUAGE_FOLLOW_SYSTEM = "system"
+    const val LANGUAGE_GERMAN = "de"
     const val LANGUAGE_ENGLISH = "en"
-    const val LANGUAGE_DEFAULT = "zh" // 表示默认语言
+    const val LANGUAGE_SPANISH = "es"
+    const val LANGUAGE_FRENCH = "fr"
+    const val LANGUAGE_HINDI = "hi"
+    const val LANGUAGE_JAPANESE = "ja"
+    const val LANGUAGE_CHINESE_TRADITIONAL = "zh-TW"
+    const val LANGUAGE_CHINESE_SIMPLIFIED = "zh-CN"
+    const val LANGUAGE_KOREAN = "ko"
+    const val LANGUAGE_PORTUGUESE = "pt"
 
-    // 设置语言
+    // Default value
+    const val LANGUAGE_DEFAULT = LANGUAGE_FOLLOW_SYSTEM
+
+    /**
+     * Set language
+     */
     fun changeLanguage(context: Context, language: String) {
-        val locale = when (language) {
-            LANGUAGE_CHINESE -> Locale.SIMPLIFIED_CHINESE
-            LANGUAGE_CHINESE_TRADITIONAL -> Locale.TRADITIONAL_CHINESE
-            LANGUAGE_ENGLISH -> Locale.ENGLISH
-            else -> Locale.getDefault()
-        }
+        val locale = getLocaleByCode(language)
 
         Locale.setDefault(locale)
         val resources = context.resources
         val configuration = Configuration(resources.configuration)
         configuration.setLocale(locale)
+        configuration.setLayoutDirection(locale) // Support RTL
         resources.updateConfiguration(configuration, resources.displayMetrics)
 
         val appContext = context.applicationContext
         val appResources = appContext.resources
         val appConfig = Configuration(appResources.configuration)
         appConfig.setLocale(locale)
+        appConfig.setLayoutDirection(locale) // Support RTL
         appResources.updateConfiguration(appConfig, appResources.displayMetrics)
 
         val preferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         preferences.edit { putString(KEY_LANGUAGE, language) }
     }
 
-    // 切换到默认语言
-    fun resetToDefaultLanguage(context: Context) {
-        // 清空保存的语言设置
-        val preferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-        preferences.edit() { remove(KEY_LANGUAGE) }
-
-        // 应用默认语言
-        val configuration = context.resources.configuration
-        configuration.setLocale(Locale.getDefault())
-        context.createConfigurationContext(configuration)
+    /**
+     * Get Locale from code
+     */
+    private fun getLocaleByCode(language: String): Locale {
+        if (language == LANGUAGE_FOLLOW_SYSTEM) {
+            return getSystemLocale()
+        }
+        return when (language) {
+            LANGUAGE_GERMAN -> Locale.GERMAN
+            LANGUAGE_ENGLISH -> Locale.ENGLISH
+            LANGUAGE_SPANISH -> Locale("es")
+            LANGUAGE_FRENCH -> Locale.FRENCH
+            LANGUAGE_HINDI -> Locale("hi")
+            LANGUAGE_JAPANESE -> Locale.JAPANESE
+            LANGUAGE_CHINESE_TRADITIONAL -> Locale.TRADITIONAL_CHINESE
+            LANGUAGE_CHINESE_SIMPLIFIED -> Locale.SIMPLIFIED_CHINESE
+            "zh" -> Locale.SIMPLIFIED_CHINESE // Backward compatibility
+            LANGUAGE_KOREAN -> Locale.KOREAN
+            LANGUAGE_PORTUGUESE -> Locale("pt")
+            else -> Locale.ENGLISH
+        }
     }
 
-    // 应用语言设置
+    /**
+     * Get system locale
+     */
+    private fun getSystemLocale(): Locale {
+        val systemConfig = android.content.res.Resources.getSystem().configuration
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            systemConfig.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            systemConfig.locale
+        }
+    }
+
+    /**
+     * Apply language settings
+     */
     fun applyLanguage(context: Context) {
         val preferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         val language = preferences.getString(KEY_LANGUAGE, LANGUAGE_DEFAULT) ?: LANGUAGE_DEFAULT
         changeLanguage(context, language)
     }
 
-    // 获取当前语言
+    /**
+     * Get current language code
+     */
     fun getCurrentLanguage(context: Context): String {
         val preferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         return preferences.getString(KEY_LANGUAGE, LANGUAGE_DEFAULT) ?: LANGUAGE_DEFAULT

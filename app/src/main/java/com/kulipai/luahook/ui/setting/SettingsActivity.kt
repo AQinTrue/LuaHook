@@ -43,13 +43,41 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
 
     @SuppressLint("RestrictedApi")
     fun showLanguagePickerDialog(context: Context) {
-        val languages = arrayOf("English", "简体中文", "繁體中文")
-        val languageCodes = arrayOf(
-            LanguageUtils.LANGUAGE_ENGLISH, LanguageUtils.LANGUAGE_CHINESE,
-            LanguageUtils.LANGUAGE_CHINESE_TRADITIONAL
+        val languages = arrayOf(
+            resources.getString(R.string.follow_system),
+            "Deutsch",
+            "English",
+            "Español",
+            "Français",
+            "हिन्दी",
+            "日本語",
+            "繁體中文",
+            "简体中文",
+            "한국어",
+            "Português"
         )
-        val currentLanguage = LanguageUtils.getCurrentLanguage(context)
-        val checkedItem = languageCodes.indexOf(currentLanguage)
+        val languageCodes = arrayOf(
+            LanguageUtils.LANGUAGE_FOLLOW_SYSTEM,
+            LanguageUtils.LANGUAGE_GERMAN,
+            LanguageUtils.LANGUAGE_ENGLISH,
+            LanguageUtils.LANGUAGE_SPANISH,
+            LanguageUtils.LANGUAGE_FRENCH,
+            LanguageUtils.LANGUAGE_HINDI,
+            LanguageUtils.LANGUAGE_JAPANESE,
+            LanguageUtils.LANGUAGE_CHINESE_TRADITIONAL,
+            LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED,
+            LanguageUtils.LANGUAGE_KOREAN,
+            LanguageUtils.LANGUAGE_PORTUGUESE
+        )
+        
+        var currentLanguage = LanguageUtils.getCurrentLanguage(context)
+        // Handle legacy "zh" if present in shared prefs
+        if (currentLanguage == "zh") currentLanguage = LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED
+        
+        var checkedItem = languageCodes.indexOf(currentLanguage)
+        // If not found (e.g. system default changed effectively or legacy code issue), default to first item (System) or English logic? 
+        // Actually if currentLanguage is "system", it matches index 0.
+        if (checkedItem == -1) checkedItem = 0 // Default to System if unknown
 
         MaterialAlertDialogBuilder(context)
             .setTitle(resources.getString(R.string.Select_language))

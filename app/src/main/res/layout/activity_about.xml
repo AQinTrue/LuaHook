@@ -171,7 +171,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Developer"
+                                        android:text="@string/kulipai_contribute"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
                                 </LinearLayout>
                             </LinearLayout>
@@ -219,7 +219,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="@string/trans_design"
+                                        android:text="@string/california_contribute"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                                 </LinearLayout>
@@ -267,7 +267,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Tester"
+                                        android:text="@string/padi_contribute"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
                                 </LinearLayout>
                             </LinearLayout>
@@ -316,7 +316,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="@string/translate"
+                                        android:text="@string/eleven_contribute"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
                                 </LinearLayout>
                             </LinearLayout>
@@ -364,7 +364,7 @@
                                     <com.google.android.material.textview.MaterialTextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="nativeHook、优化代码"
+                                        android:text="@string/carrot_contribute"
                                         android:textAppearance="?attr/textAppearanceBodyMedium" />
                                 </LinearLayout>
                             </LinearLayout>
