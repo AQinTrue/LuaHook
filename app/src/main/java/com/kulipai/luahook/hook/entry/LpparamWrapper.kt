@@ -63,11 +63,6 @@ fun createGlobals(
     val globals: Globals = JsePlatform.standardGlobals()
 
     //加载Lua模块
-    globals["XpHelper"] = CoerceJavaToLua.coerce(XpHelper::class.java)
-    globals["DexFinder"] = CoerceJavaToLua.coerce(DexFinder::class.java)
-    globals["XposedHelpers"] = CoerceJavaToLua.coerce(XposedHelpers::class.java)
-    globals["XposedBridge"] = CoerceJavaToLua.coerce(XposedBridge::class.java)
-    globals["DexKitBridge"] = CoerceJavaToLua.coerce(DexKitBridge::class.java)
     globals["this"] = CoerceJavaToLua.coerce(context)
     globals["suparam"] = CoerceJavaToLua.coerce(suparam)
     LuaActivity(null).registerTo(globals)

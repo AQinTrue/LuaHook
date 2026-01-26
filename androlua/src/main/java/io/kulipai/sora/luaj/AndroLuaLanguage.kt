@@ -270,7 +270,9 @@ class AndroLuaLanguage(
             "getStaticField",
             "setStaticField",
             "native",
-            "loadDex"
+            "loadDex",
+            "printFields",
+            "printStackTrace"
         )
 
 
