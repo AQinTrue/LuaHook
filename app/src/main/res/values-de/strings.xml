@@ -203,8 +203,8 @@ https://luahook.kulipai.top/activate.html
     <string name="action_close">Herunterfahren</string>
     <string name="msg_saved_short">Gerettet</string>
     <string name="kulipai_contribute">Entwicklung</string>
-    <string name="carrot_contribute">einheimischer Hook</string>
+    <string name="carrot_contribute">Natürliche Merkmale</string>
     <string name="eleven_contribute">Übersetzung</string>
-    <string name="padi_contribute">nativeHook, Testentwicklung, Öffentlichkeitsarbeit</string>
+    <string name="padi_contribute">Native Features, Testentwicklung, Öffentlichkeitsarbeit</string>
     <string name="california_contribute">Übersetzung, Teil des Interface-Designs</string>
 </resources>

@@ -199,8 +199,8 @@
     <string name="action_close">Close</string>
     <string name="msg_saved_short">Saved</string>
     <string name="kulipai_contribute">development</string>
-    <string name="carrot_contribute">nativeHook</string>
+    <string name="carrot_contribute">Native features</string>
     <string name="eleven_contribute">Translation</string>
-    <string name="padi_contribute">nativeHook, test development, publicity</string>
+    <string name="padi_contribute">Native features, test development, publicity</string>
     <string name="california_contribute">Translation, part of the interface design</string>
 </resources>

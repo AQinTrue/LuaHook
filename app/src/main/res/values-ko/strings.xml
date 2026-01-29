@@ -203,8 +203,8 @@ https://luahook.kulipai.top/activate.html
     <string name="action_close">끄세요</string>
     <string name="msg_saved_short">저장</string>
     <string name="kulipai_contribute">개발</string>
-    <string name="carrot_contribute">네이티브훅</string>
+    <string name="carrot_contribute">토착 특징</string>
     <string name="eleven_contribute">번역</string>
-    <string name="padi_contribute">nativeHook, 테스트 개발, 홍보</string>
+    <string name="padi_contribute">네이티브 기능, 테스트 개발, 홍보</string>
     <string name="california_contribute">번역, 인터페이스 디자인의 일부입니다</string>
 </resources>

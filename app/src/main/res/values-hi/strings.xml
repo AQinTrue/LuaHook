@@ -203,8 +203,8 @@ https://luahook.kulipai.top/activate.html
     <string name="action_close">बंद करो</string>
     <string name="msg_saved_short">सहेजा गया</string>
     <string name="kulipai_contribute">विकास</string>
-    <string name="carrot_contribute">नेटिवहुक</string>
+    <string name="carrot_contribute">मूल विशेषताएं</string>
     <string name="eleven_contribute">अनुवाद</string>
-    <string name="padi_contribute">नेटिवहुक, परीक्षण विकास, प्रचार</string>
+    <string name="padi_contribute">मूल विशेषताएं, परीक्षण विकास, प्रचार</string>
     <string name="california_contribute">अनुवाद, इंटरफ़ेस डिज़ाइन का हिस्सा</string>
 </resources>
