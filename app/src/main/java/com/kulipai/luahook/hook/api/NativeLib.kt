@@ -30,6 +30,13 @@ class NativeLib {
     external fun readPoint(ptr: Long, offsets: LongArray): Long
     external fun safeRead(ptr: Long, size: Int): ByteArray?
     external fun safeWrite(ptr: Long, data: ByteArray): Boolean
+    external fun invoke(
+        addr: Long,
+        gprs: LongArray,
+        fprs: DoubleArray,
+        stack: LongArray,
+        retType: Int
+    ): Long
 
     data class HookConfig(
         val onEnter: LuaValue?,
@@ -829,6 +836,89 @@ class NativeLib {
         }
 
         t["get_module_base"] = t["module_base"]
+
+        t["NativeFunction"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val addr = LuaPointer.unwrap(args.arg(1))
+                val retTypeStr = args.optjstring(2, "void")
+                val argTypes = args.arg(3)
+                
+                val retType = when(retTypeStr.lowercase()) {
+                    "int", "s32", "u32", "s64", "u64", "long", "ptr", "pointer" -> RET_INT
+                    "float" -> RET_FLOAT
+                    "double" -> RET_DOUBLE
+                    "void" -> RET_VOID
+                    else -> RET_INT
+                }
+                
+                val argTypeList = ArrayList<String>()
+                if (argTypes.istable()) {
+                    val n = argTypes.length()
+                    for(i in 0 until n) {
+                        argTypeList.add(argTypes.get(i+1).tojstring())
+                    }
+                }
+                
+                return object : VarArgFunction() {
+                    override fun invoke(args: Varargs): LuaValue {
+                        val gprs = LongArray(8)
+                        val fprs = DoubleArray(8)
+                        val stack = ArrayList<Long>()
+                        var gprIdx = 0
+                        var fprIdx = 0
+                        
+                        for(i in 0 until argTypeList.size) {
+                            val type = argTypeList[i]
+                            val luaVal = args.arg(i+1)
+                            
+                            when(type) {
+                                "int", "long", "ptr", "pointer" -> {
+                                    val v = LuaPointer.unwrap(luaVal)
+                                    if(gprIdx < 8) {
+                                        gprs[gprIdx++] = v
+                                    } else {
+                                        stack.add(v)
+                                    }
+                                }
+                                "float", "double" -> {
+                                    val v = luaVal.todouble()
+                                    if(fprIdx < 8) {
+                                        fprs[fprIdx++] = v
+                                    } else {
+                                        // Stack slots are 64-bit
+                                        // If float, packed in low 32 bits?
+                                        // If double, packed in 64 bits.
+                                        if (type == "float") {
+                                            val bits = java.lang.Float.floatToRawIntBits(v.toFloat()).toLong()
+                                            stack.add(bits and 0xFFFFFFFFL)
+                                        } else {
+                                            val bits = java.lang.Double.doubleToRawLongBits(v)
+                                            stack.add(bits)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Handle variable args if more args provided than types? 
+                        // User might just provide "int" for everything in varargs context.
+                        // For now strict mapping.
+                        
+                        val stackArray = LongArray(stack.size) { stack[it] }
+                        
+                        val retVal = invoke(addr, gprs, fprs, stackArray, retType)
+                        
+                        return when(retType) {
+                            RET_VOID -> NIL
+                            RET_INT -> LuaPointer(retVal, this@NativeLib)
+                            RET_FLOAT -> valueOf(java.lang.Float.intBitsToFloat(retVal.toInt()).toDouble())
+                            RET_DOUBLE -> valueOf(java.lang.Double.longBitsToDouble(retVal))
+                            else -> LuaPointer(retVal, this@NativeLib)
+                        }
+                    }
+                }
+            }
+        }
 
         t["hook"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
