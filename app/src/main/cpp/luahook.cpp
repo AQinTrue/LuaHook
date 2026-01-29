@@ -13,6 +13,7 @@
 #include <cctype>
 #include <algorithm>
 #include "dobby.h"
+#include "xdl.h"
 
 #define LOG_TAG "LuaHookNative"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
@@ -99,6 +100,21 @@ static int get_prot_for_addr(uintptr_t addr) {
     }
     fclose(fp);
     return -1;
+}
+
+static bool read_ptr_value(uintptr_t addr, uint64_t *out) {
+    if (!out) return false;
+    if (sizeof(void *) == 8) {
+        uint64_t v = 0;
+        if (!safe_read_memory((void *) addr, &v, sizeof(v))) return false;
+        *out = v;
+        return true;
+    } else {
+        uint32_t v = 0;
+        if (!safe_read_memory((void *) addr, &v, sizeof(v))) return false;
+        *out = (uint64_t) v;
+        return true;
+    }
 }
 
 // =============================================================
@@ -620,26 +636,132 @@ Java_com_kulipai_luahook_hook_api_NativeLib_registerGenericHook(JNIEnv *env, job
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_kulipai_luahook_hook_api_NativeLib_moduleBase(JNIEnv *env, jobject thiz, jstring name) {
     if (!name) return 0;
-    const char *pkg = env->GetStringUTFChars(name, nullptr);
+    const char *module_name = env->GetStringUTFChars(name, nullptr);
+    if (!module_name) return 0;
+
+    jlong base = 0;
+    void *handle = xdl_open(module_name, XDL_DEFAULT);
+    if (handle != nullptr) {
+        xdl_info_t info;
+        if (xdl_info(handle, XDL_DI_DLINFO, &info) == 0 && info.dli_fbase) {
+            base = (jlong) (uintptr_t) info.dli_fbase;
+        }
+        xdl_close(handle);
+    }
+
+    env->ReleaseStringUTFChars(name, module_name);
+    return base;
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_kulipai_luahook_hook_api_NativeLib_resolveSymbol(JNIEnv *env, jobject thiz, jstring module,
+                                                          jstring name) {
+    if (!module || !name) return 0;
+    const char *module_chars = env->GetStringUTFChars(module, nullptr);
+    const char *name_chars = env->GetStringUTFChars(name, nullptr);
+    if (!module_chars || !name_chars) {
+        if (module_chars) env->ReleaseStringUTFChars(module, module_chars);
+        if (name_chars) env->ReleaseStringUTFChars(name, name_chars);
+        return 0;
+    }
+
+    jlong result = 0;
+    void *handle = xdl_open(module_chars, XDL_DEFAULT);
+    if (handle != nullptr) {
+        void *symbol = xdl_sym(handle, name_chars, nullptr);
+        if (symbol == nullptr) symbol = xdl_dsym(handle, name_chars, nullptr);
+        if (symbol != nullptr) result = (jlong) (uintptr_t) symbol;
+        xdl_close(handle);
+    }
+
+    env->ReleaseStringUTFChars(module, module_chars);
+    env->ReleaseStringUTFChars(name, name_chars);
+    return result;
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_kulipai_luahook_hook_api_NativeLib_getModuleBase(JNIEnv *env, jobject thiz,
+                                                          jstring module_name,
+                                                          jstring module_field) {
+    if (!module_name || !module_field) return 0;
+    const char *mod = env->GetStringUTFChars(module_name, nullptr);
+    const char *field = env->GetStringUTFChars(module_field, nullptr);
+    if (!mod || !field) {
+        if (mod) env->ReleaseStringUTFChars(module_name, mod);
+        if (field) env->ReleaseStringUTFChars(module_field, field);
+        return 0;
+    }
+
+    char *tmp = strdup(mod);
+    const char *mod_name = tmp ? strtok(tmp, ":") : nullptr;
+    const char *isbss = tmp ? strtok(nullptr, ":") : nullptr;
+    if (!mod_name) {
+        if (tmp) free(tmp);
+        env->ReleaseStringUTFChars(module_name, mod);
+        env->ReleaseStringUTFChars(module_field, field);
+        return 0;
+    }
+
     FILE *fp = fopen("/proc/self/maps", "r");
     if (!fp) {
-        env->ReleaseStringUTFChars(name, pkg);
+        if (tmp) free(tmp);
+        env->ReleaseStringUTFChars(module_name, mod);
+        env->ReleaseStringUTFChars(module_field, field);
         return 0;
     }
 
     char line[512];
     jlong base = 0;
+    int flag = 0;
     while (fgets(line, sizeof(line), fp)) {
-        if (strstr(line, pkg)) {
+        if (strstr(line, mod_name) && strstr(line, field)) {
+            flag = 1;
+            if (!isbss) {
+                char *end;
+                base = (jlong) strtoull(line, &end, 16);
+                break;
+            }
+        }
+        if (flag == 1 && strstr(line, "[anon:.bss]")) {
             char *end;
-            // 必须使用 strtoull 确保 64 位地址解析正确，防止 Narrowing conversion
             base = (jlong) strtoull(line, &end, 16);
             break;
         }
     }
     fclose(fp);
-    env->ReleaseStringUTFChars(name, pkg);
+    if (tmp) free(tmp);
+    env->ReleaseStringUTFChars(module_name, mod);
+    env->ReleaseStringUTFChars(module_field, field);
     return base;
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_kulipai_luahook_hook_api_NativeLib_readPoint(JNIEnv *env, jobject thiz,
+                                                      jlong ptr, jlongArray offsetsArray) {
+    if (ptr == 0) return 0;
+    uint64_t addr = 0;
+    if (!read_ptr_value((uintptr_t) ptr, &addr)) return 0;
+    if (!offsetsArray) return (jlong) addr;
+
+    jsize length = env->GetArrayLength(offsetsArray);
+    if (length == 0) return (jlong) addr;
+    jlong *offsetsPtr = env->GetLongArrayElements(offsetsArray, nullptr);
+    if (!offsetsPtr) return (jlong) addr;
+
+    for (jsize i = 0; i < length; i++) {
+        if (i == length - 1) {
+            addr += (uint64_t) offsetsPtr[i];
+            break;
+        }
+        uint64_t next_addr = 0;
+        if (!read_ptr_value((uintptr_t) (addr + (uint64_t) offsetsPtr[i]), &next_addr)) {
+            addr = 0;
+            break;
+        }
+        addr = next_addr;
+    }
+    env->ReleaseLongArrayElements(offsetsArray, offsetsPtr, JNI_ABORT);
+    return (jlong) addr;
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL
