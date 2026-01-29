@@ -203,8 +203,8 @@ https://luahook.kulipai.top/activate.html
     <string name="action_close">關閉</string>
     <string name="msg_saved_short">已保存</string>
     <string name="kulipai_contribute">開發</string>
-    <string name="carrot_contribute">nativeHook</string>
+    <string name="carrot_contribute">Native 功能</string>
     <string name="eleven_contribute">翻譯</string>
-    <string name="padi_contribute">nativeHook，測試開發，宣傳</string>
+    <string name="padi_contribute">Native 功能，測試開發，宣傳</string>
     <string name="california_contribute">翻譯，部分介面設計</string>
 </resources>

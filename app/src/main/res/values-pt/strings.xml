@@ -203,8 +203,8 @@ https://luahook.kulipai.top/activate.html
     <string name="action_close">Desligar</string>
     <string name="msg_saved_short">salvo</string>
     <string name="kulipai_contribute">Desenvolvimento</string>
-    <string name="carrot_contribute">nativeHook</string>
+    <string name="carrot_contribute">Características nativas</string>
     <string name="eleven_contribute">Tradução</string>
-    <string name="padi_contribute">nativeHook, desenvolvimento de testes, divulgação</string>
+    <string name="padi_contribute">Recursos nativos, desenvolvimento de testes, divulgação</string>
     <string name="california_contribute">Tradução, parte do design da interface</string>
 </resources>

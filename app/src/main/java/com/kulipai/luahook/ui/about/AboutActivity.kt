@@ -91,6 +91,7 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
         val padiGithub = "https://github.com/paditianxiu"
         val elevenGithub = "https://github.com/imconfident11"
         val carrotGithub = "https://github.com/TrialCarrot"
+        val AQinTrueGithub = "https://github.com/AQinTrue"
 
         binding.githubCard.setOnClickListener { openGithubUrl(luaHookGithubUrl) }
         binding.developerKuliPaiRow.setOnClickListener { openGithubUrl(kuliPaiGithubUrl) }
@@ -98,6 +99,8 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
         binding.padi.setOnClickListener { openGithubUrl(padiGithub) }
         binding.eleven.setOnClickListener { openGithubUrl(elevenGithub) }
         binding.carrot.setOnClickListener { openGithubUrl(carrotGithub) }
+        binding.AQinTrue.setOnClickListener { openGithubUrl(AQinTrueGithub) }
+
 
         binding.cardCheckUpdate.setOnClickListener { checkUpdate() }
         binding.cardDonate.setOnClickListener { showDonatePopup(it) }

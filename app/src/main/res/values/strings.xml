@@ -200,8 +200,8 @@
     <string name="action_close">关闭</string>
     <string name="msg_saved_short">已保存</string>
     <string name="kulipai_contribute">开发</string>
-    <string name="carrot_contribute">nativeHook</string>
+    <string name="carrot_contribute">Native 功能</string>
     <string name="eleven_contribute">翻译</string>
-    <string name="padi_contribute">nativeHook,测试开发,宣传</string>
+    <string name="padi_contribute">Native 功能,测试开发,宣传</string>
     <string name="california_contribute">翻译,部分界面设计</string>
 </resources>
