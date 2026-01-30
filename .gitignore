@@ -8,5 +8,5 @@
 .cxx
 local.properties
 /.kotlin
-/app/release
+/app/release/*
 .idea/*

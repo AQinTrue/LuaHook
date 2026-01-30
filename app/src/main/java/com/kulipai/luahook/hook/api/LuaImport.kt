@@ -45,28 +45,37 @@ class LuaImport(
 
         env["loadDex"] = object : OneArgFunction() {
             override fun call(pathValue: LuaValue): LuaValue {
-                var path = pathValue.checkjstring()
-                if (!path.startsWith("/")) {
-                    path =
-                        WorkspaceFileManager.DIR + WorkspaceFileManager.Project + "/" + projectName + "/" + path
-                }
-                WorkspaceFileManager.ensureReadable(path)
-                val file = File(path)
-                if (!file.exists()) {
-                    "loadDex: File not found: $path".e()
-                    return LuaValue.FALSE
-                }
                 return try {
+                    var path = pathValue.checkjstring()
+
+                    if (!path.startsWith("/")) {
+                        path = WorkspaceFileManager.DIR +
+                                WorkspaceFileManager.Project + "/" +
+                                projectName + "/" + path
+                    }
+
+                    // ⭐ 关键：normalize + canonical
+                    val file = File(path).canonicalFile
+                    val canonicalPath = file.path
+
+                    WorkspaceFileManager.ensureReadable(canonicalPath)
+
+                    if (!file.exists()) {
+                        "loadDex: File not found: $canonicalPath".e()
+                        return LuaValue.FALSE
+                    }
+
                     val loader = DexClassLoader(
-                        path,
-                        null,
+                        canonicalPath,
+                        null,   // optimizedDirectory（下面说）
                         null,
                         classLoader
                     )
                     dexLoaders.add(loader)
+
                     LuaValue.TRUE
                 } catch (e: Exception) {
-                    ("loadDex error: " + e.message).e()
+                    ("loadDex error: ${e.message}").e()
                     LuaValue.FALSE
                 }
             }
