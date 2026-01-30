@@ -225,7 +225,7 @@ class AndroLuaLanguage(
             "isFile|isDir|isExists|read|readBytes|write|writeBytes|append|appendBytes|copy|move|rename|delete|getName|getSize"
 
         private const val package_native =
-            "memory|ptr|module_base|getModuleBase|resolve_symbol|readPoint|get_module_base|hook"
+            "memory|ptr|module_base|getModuleBase|resolve_symbol|readPoint|get_module_base|hook|new_function"
 
 
         val luaHookKey = listOf(

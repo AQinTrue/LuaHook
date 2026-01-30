@@ -837,7 +837,7 @@ class NativeLib {
 
         t["get_module_base"] = t["module_base"]
 
-        t["NativeFunction"] = object : VarArgFunction() {
+        t["new_function"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
                 val retTypeStr = args.optjstring(2, "void")
