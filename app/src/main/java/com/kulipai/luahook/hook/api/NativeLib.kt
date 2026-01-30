@@ -63,14 +63,14 @@ class NativeLib {
         val stackTable = LuaTable()
 
         for (i in 0 until gprCount) {
-            rawTable[i + 1] = LuaPointer(regs[i], this)
-            ctx[i + 1] = rawTable[i + 1]
+            rawTable[i] = LuaPointer(regs[i], this)
+            ctx[i] = rawTable[i]
         }
         for (i in 0 until fprCount) {
-            fprTable[i + 1] = LuaPointer(regs[gprCount + i], this)
+            fprTable[i] = LuaPointer(regs[gprCount + i], this)
         }
         for (i in 0 until stackCount) {
-            stackTable[i + 1] = LuaPointer(regs[gprCount + fprCount + i], this)
+            stackTable[i] = LuaPointer(regs[gprCount + fprCount + i], this)
         }
 
         ctx["raw"] = rawTable
@@ -86,18 +86,18 @@ class NativeLib {
         val newRegs = LongArray(regs.size)
         var changed = false
         for (i in 0 until gprCount) {
-            val v = LuaPointer.unwrap(ctx[i + 1])
+            val v = LuaPointer.unwrap(ctx[i])
             newRegs[i] = v
             if (v != regs[i]) changed = true
         }
         for (i in 0 until fprCount) {
-            val v = LuaPointer.unwrap(fprTable[i + 1])
+            val v = LuaPointer.unwrap(fprTable[i])
             val idx = gprCount + i
             newRegs[idx] = v
             if (v != regs[idx]) changed = true
         }
         for (i in 0 until stackCount) {
-            val v = LuaPointer.unwrap(stackTable[i + 1])
+            val v = LuaPointer.unwrap(stackTable[i])
             val idx = gprCount + fprCount + i
             newRegs[idx] = v
             if (v != regs[idx]) changed = true
