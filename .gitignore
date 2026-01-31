@@ -1,12 +1,21 @@
+# Android / Gradle
 *.iml
-.gradle
-/local.properties
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.gradle/
+build/
+.externalNativeBuild/
+.cxx/
+.captures/
+.kotlin/
+
+# Local config
 local.properties
-/.kotlin
-/app/release
-.idea/*
+
+# IDE
+.idea/
+
+# macOS
+.DS_Store
+
+# Release outputs
+/app/release/*.apk
+/app/release/*.aab

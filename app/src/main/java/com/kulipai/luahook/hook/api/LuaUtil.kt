@@ -173,6 +173,13 @@ object LuaUtil {
             }
         }
 
+        _G["getAppLanguage"] = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val locale = java.util.Locale.getDefault()
+                return LuaValue.valueOf(locale.toLanguageTag())
+            }
+        }
+
     }
 
 

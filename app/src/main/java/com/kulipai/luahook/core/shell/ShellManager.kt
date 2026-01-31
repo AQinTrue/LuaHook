@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.shizuku.ShizukuApi
+import com.kulipai.luahook.core.shizuku.ShizukuShellFallback
 import com.topjohnwu.superuser.Shell
+
 
 /**
  * ShellManager
@@ -13,7 +15,7 @@ import com.topjohnwu.superuser.Shell
 object ShellManager {
 
     enum class Mode {
-        ROOT, SHIZUKU, NONE
+        ROOT, SHIZUKU, SHIZUKU_FALLBACK, NONE
     }
 
 
@@ -58,7 +60,7 @@ object ShellManager {
         ShizukuApi.isBinderAvailable.observeForever {
             if (it == true) {
                 if (ShizukuApi.isPermissionGranted.value == true) {
-                    ShizukuApi.bindShizuku(context)
+                    bindShizukuWithFallback(context)
                 } else {
                     ShizukuApi.requestShizuku()
                 }
@@ -67,9 +69,17 @@ object ShellManager {
 
         ShizukuApi.isPermissionGranted.observeForever {
             if (it == true) {
-                ShizukuApi.bindShizuku(context)
+                bindShizukuWithFallback(context)
             }
         }
+    }
+
+    private fun bindShizukuWithFallback(context: Context) {
+        if (ShizukuApi.isServiceConnected.value != true) {
+            setMode(Mode.SHIZUKU_FALLBACK)
+            WorkspaceFileManager.init(context)
+        }
+        ShizukuApi.bindShizuku(context)
     }
 
 
@@ -95,6 +105,15 @@ object ShellManager {
 
             Mode.SHIZUKU -> {
                 ShizukuApi.execShell(cmd)
+            }
+
+            Mode.SHIZUKU_FALLBACK -> {
+                val result = ShizukuShellFallback.exec(cmd)
+                if (result.second) {
+                    ShellResult.Success(result.first)
+                } else {
+                    ShellResult.Error(result.first)
+                }
             }
 
             else -> {

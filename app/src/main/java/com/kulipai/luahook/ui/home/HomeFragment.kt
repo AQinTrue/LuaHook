@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.R
+import androidx.lifecycle.lifecycleScope
 import com.kulipai.luahook.core.base.BaseFragment
 import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionCode
 import com.kulipai.luahook.core.pm.PackageUtils.getAppVersionName
@@ -15,6 +16,8 @@ import com.kulipai.luahook.core.theme.ColorUtils.getDynamicColor
 import com.kulipai.luahook.core.xposed.XposedScope
 import com.kulipai.luahook.databinding.FragmentHomeHomeBinding
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class HomeFragment : BaseFragment<FragmentHomeHomeBinding>() {
 
@@ -100,10 +103,47 @@ class HomeFragment : BaseFragment<FragmentHomeHomeBinding>() {
                     )
                 )
 
+            } else if (newMode == ShellManager.Mode.SHIZUKU_FALLBACK) {
+
+                // 取消显示教程
+                binding.howToActivate.visibility = View.GONE
+
+                binding.status.text = "Shizuku Base$frameworkName"
+                binding.card.setCardBackgroundColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorTertiary
+                    )
+                )
+                binding.status.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+                binding.version.setTextColor(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+                binding.img.setImageResource(com.kulipai.luahook.R.drawable.shizuku_logo)
+                binding.img.setColorFilter(
+                    getDynamicColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnTertiary
+                    )
+                )
+
             } else {
                 //显示教程
+                viewLifecycleOwner.lifecycleScope.launch {
+                    delay(2000)
+                    if (ShellManager.mode.value == ShellManager.Mode.NONE) {
+                        binding.howToActivate.visibility = View.VISIBLE
+                    }
 
-                binding.howToActivate.visibility = View.VISIBLE
+                }
 
             }
 

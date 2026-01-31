@@ -272,7 +272,8 @@ class AndroLuaLanguage(
             "native",
             "loadDex",
             "printFields",
-            "printStackTrace"
+            "printStackTrace",
+            "getAppLanguage"
         )
 
 

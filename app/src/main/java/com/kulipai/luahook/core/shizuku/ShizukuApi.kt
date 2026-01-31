@@ -100,15 +100,10 @@ object ShizukuApi {
 
             }
         })
-
-
-
-
     }
 
 
 
-    // TODO)) userService拿不到用私有接口shell
     fun execShell(cmd: String): ShellResult {
         val service = userService
             ?: return ShellResult.Error("Service not bound")
