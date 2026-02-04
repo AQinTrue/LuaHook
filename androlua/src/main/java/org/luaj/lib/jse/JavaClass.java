@@ -27,6 +27,13 @@ public class JavaClass extends JavaInstance implements CoerceJavaToLua.Coercion 
     static final Map<Class<?>, JavaClass> j = Collections.synchronizedMap(new HashMap());
     static final Map<String, JavaClass> k = Collections.synchronizedMap(new HashMap());
     static final LuaValue l = LuaValue.valueOf("new");
+
+    static {
+        for (Method method : Class.class.getMethods()) {
+            i.put(LuaValue.valueOf(method.getName()), JavaMethod.a(method));
+        }
+    }
+
     final HashMap<LuaValue, Integer> m = new HashMap<>();
     final HashMap<LuaValue, Integer> n = new HashMap<>();
     final HashMap<LuaValue, Integer> o = new HashMap<>();
@@ -36,12 +43,6 @@ public class JavaClass extends JavaInstance implements CoerceJavaToLua.Coercion 
     Map<LuaValue, Field> s;
     Map<LuaValue, LuaValue> t;
     Map<LuaValue, JavaClass> u;
-
-    static {
-        for (Method method : Class.class.getMethods()) {
-            i.put(LuaValue.valueOf(method.getName()), JavaMethod.a(method));
-        }
-    }
 
     JavaClass(Class<?> var1) {
         super(var1);
@@ -206,41 +207,49 @@ public class JavaClass extends JavaInstance implements CoerceJavaToLua.Coercion 
     public LuaValue getMethod(LuaValue var1) {
         if (this.t == null) {
             HashMap<String, List> methodMap = new HashMap<>();
-            Method[] methods = ((Class) super.b).getMethods();
+            Method[] methods = ((Class) super.b).getDeclaredMethods(); // 获取所有
 
             for (Method method : methods) {
-                if (Modifier.isPublic(method.getModifiers())) {
-                    // 获取方法名
-                    String methodName = method.getName();
 
-                    // 从方法映射中获取与该方法名对应的 JavaMethod 列表
-                    List<JavaMethod> methodList = (List<JavaMethod>) methodMap.get(methodName);
-
-                    // 如果该方法名的列表为空，则初始化一个新的列表
-                    if (methodList == null) {
-                        methodList = new ArrayList<>();
-                        methodMap.put(methodName, methodList);
+                if (!method.isAccessible()) {
+                    try {
+                        method.setAccessible(true);
+                    } catch (Exception e) {
                     }
-
-                    // 将该方法转化为 JavaMethod 对象并添加到方法列表中
-                    methodList.add(JavaMethod.a(method));
                 }
+                // 获取方法名
+                String methodName = method.getName();
+
+                // 从方法映射中获取与该方法名对应的 JavaMethod 列表
+                List<JavaMethod> methodList = (List<JavaMethod>) methodMap.get(methodName);
+
+                // 如果该方法名的列表为空，则初始化一个新的列表
+                if (methodList == null) {
+                    methodList = new ArrayList<>();
+                    methodMap.put(methodName, methodList);
+                }
+
+                // 将该方法转化为 JavaMethod 对象并添加到方法列表中
+                methodList.add(JavaMethod.a(method));
+
             }
 
 
             HashMap constructorMap = new HashMap();
-            Constructor[] constructors = ((Class) super.b).getConstructors();
-            if (constructors.length == 0) {
-                constructors = ((Class) super.b).getDeclaredConstructors();
-            }
+            Constructor[] constructors = ((Class) super.b).getDeclaredConstructors();
 
             ArrayList list = new ArrayList();
 
             for (Constructor constructor : constructors) {
-                if (Modifier.isPublic(constructor.getModifiers())) {
+                try {
                     constructor.setAccessible(true);
-                    list.add(JavaConstructor.a(constructor));
+                } catch (SecurityException e) {
+                    // 在某些高版本 Android 或受限环境中，setAccessible 可能会失败
+                    // 如果失败，就跳过这个构造函数，避免崩溃
+                    continue;
                 }
+                list.add(JavaConstructor.a(constructor));
+
             }
 
             switch (list.size()) {
