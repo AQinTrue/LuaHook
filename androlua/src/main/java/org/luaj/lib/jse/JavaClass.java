@@ -207,31 +207,42 @@ public class JavaClass extends JavaInstance implements CoerceJavaToLua.Coercion 
     public LuaValue getMethod(LuaValue var1) {
         if (this.t == null) {
             HashMap<String, List> methodMap = new HashMap<>();
-            Method[] methods = ((Class) super.b).getDeclaredMethods(); // 获取所有
+            // 手动遍历继承链 ---
+            Class<?> clazz = (Class<?>) super.b;
 
-            for (Method method : methods) {
+            // 只要还有父类，就一直往上找
+            while (clazz != null) {
+                // 获取当前这一层类的所有方法（含私有）
+                Method[] methods = clazz.getDeclaredMethods();
 
-                if (!method.isAccessible()) {
+                for (Method method : methods) {
+                    // 尝试暴力破解权限
                     try {
-                        method.setAccessible(true);
-                    } catch (Exception e) {
+                        if (!method.isAccessible()) {
+                            method.setAccessible(true);
+                        }
+                    } catch (SecurityException e) {
+                        // 如果无法访问（比如系统底层限制），就跳过
+                        continue;
                     }
+
+                    String methodName = method.getName();
+                    List<JavaMethod> methodList = (List<JavaMethod>) methodMap.get(methodName);
+
+                    if (methodList == null) {
+                        methodList = new ArrayList<>();
+                        methodMap.put(methodName, methodList);
+                    }
+
+                    // 这里有个小细节：如果子类和父类有同名同参函数（Override），
+                    // 简单的 add 可能会导致列表里有两个一样的函数。
+                    // 但 Luaj 的重载解析机制通常能处理这种情况，或者你可以加个去重逻辑。
+                    // 为了代码简洁和兼容性，直接 add 通常没问题。
+                    methodList.add(JavaMethod.a(method));
                 }
-                // 获取方法名
-                String methodName = method.getName();
 
-                // 从方法映射中获取与该方法名对应的 JavaMethod 列表
-                List<JavaMethod> methodList = (List<JavaMethod>) methodMap.get(methodName);
-
-                // 如果该方法名的列表为空，则初始化一个新的列表
-                if (methodList == null) {
-                    methodList = new ArrayList<>();
-                    methodMap.put(methodName, methodList);
-                }
-
-                // 将该方法转化为 JavaMethod 对象并添加到方法列表中
-                methodList.add(JavaMethod.a(method));
-
+                // 爬向上一级父类
+                clazz = clazz.getSuperclass();
             }
 
 
