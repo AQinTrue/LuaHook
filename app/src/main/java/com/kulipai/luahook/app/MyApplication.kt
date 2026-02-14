@@ -42,6 +42,14 @@ class MyApplication : Application() {
         ShizukuApi.init()//在shell里init？
         // 预加载 shell，确保 MainActivity 能及时拿到状态
         ShellManager.init(applicationContext)
+
+        // 当获取到 Root 或 Shizuku 权限时，清除缓存，以便重新加载完整应用列表
+        ShellManager.mode.observeForever {
+            if (it == ShellManager.Mode.ROOT || it == ShellManager.Mode.SHIZUKU || it == ShellManager.Mode.SHIZUKU_FALLBACK) {
+                cachedAppList = null
+            }
+        }
+
         XposedScope.init()
     }
 

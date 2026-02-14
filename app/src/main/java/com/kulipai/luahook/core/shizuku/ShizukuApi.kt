@@ -81,25 +81,30 @@ object ShizukuApi {
 
 
 
-        Shizuku.bindUserService(args, object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                if (binder != null && binder.pingBinder()) {
-                    userService = IUserService.Stub.asInterface(binder)
-                    isServiceConnected.value = true
-                    setMode(Mode.SHIZUKU)
-                    WorkspaceFileManager.init(context)
+        try {
+            Shizuku.bindUserService(args, object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+                    if (binder != null && binder.pingBinder()) {
+                        userService = IUserService.Stub.asInterface(binder)
+                        isServiceConnected.value = true
+                        setMode(Mode.SHIZUKU)
+                        WorkspaceFileManager.init(context)
 
-                    // Successful
+                        // Successful
+                    }
                 }
-            }
 
-            override fun onServiceDisconnected(name: ComponentName?) {
+                override fun onServiceDisconnected(name: ComponentName?) {
 
-                isServiceConnected.value = false
-                userService = null
+                    isServiceConnected.value = false
+                    userService = null
 
-            }
-        })
+                }
+            })
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            isPermissionGranted.value = false
+        }
     }
 
 
