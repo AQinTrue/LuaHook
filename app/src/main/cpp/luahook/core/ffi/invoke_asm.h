@@ -1,0 +1,29 @@
+#ifndef LUAHOOK_CORE_FFI_INVOKE_ASM_H_
+#define LUAHOOK_CORE_FFI_INVOKE_ASM_H_
+
+// Keep these offsets in sync with LhPackedInvokeArm64 / LhPackedInvokeArm32 in
+// invoke_internal.h and enum LhNativeType in native_type.h. This header is
+// intentionally ASM-safe and must not include C/C++ declarations.
+
+#define LH_ASM_PACKED_INVOKE_ARM64_TARGET 0
+#define LH_ASM_PACKED_INVOKE_ARM64_RETURN_TYPE 8
+#define LH_ASM_PACKED_INVOKE_ARM64_STACK_COUNT 12
+#define LH_ASM_PACKED_INVOKE_ARM64_GPRS 16
+#define LH_ASM_PACKED_INVOKE_ARM64_FPRS 80
+#define LH_ASM_PACKED_INVOKE_ARM64_STACK 144
+
+#define LH_ASM_PACKED_INVOKE_ARM32_TARGET 0
+#define LH_ASM_PACKED_INVOKE_ARM32_RETURN_TYPE 4
+#define LH_ASM_PACKED_INVOKE_ARM32_STACK_COUNT 8
+#define LH_ASM_PACKED_INVOKE_ARM32_GPRS 16
+#define LH_ASM_PACKED_INVOKE_ARM32_STACK 96
+
+#define LH_ASM_NATIVE_VALUE_BITS_OFFSET 8
+
+#define LH_ASM_TYPE_VOID 0
+#define LH_ASM_TYPE_I64 3
+#define LH_ASM_TYPE_U64 4
+#define LH_ASM_TYPE_F32 6
+#define LH_ASM_TYPE_F64 7
+
+#endif  // LUAHOOK_CORE_FFI_INVOKE_ASM_H_

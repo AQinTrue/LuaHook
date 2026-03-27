@@ -1,6 +1,7 @@
 package com.kulipai.luahook.hook.api
 
 import org.luaj.LuaTable
+import org.luaj.LuaError
 import org.luaj.LuaValue
 import org.luaj.LuaUserdata
 import org.luaj.Varargs
@@ -9,6 +10,10 @@ import org.luaj.lib.ZeroArgFunction
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 class NativeLib {
     private val isLoaded: Boolean = try {
@@ -19,70 +24,122 @@ class NativeLib {
         false
     }
 
-    // --- JNI 接口 ---
-    external fun registerGenericHook(addr: Long, retType: Int, argc: Int): Int
-    external fun mallocString(str: String): Long
-    external fun malloc(size: Int): Long
+    // --- JNI interfaces ---
+    external fun hook(addr: Long, returnType: Int, argTypes: IntArray, callbackId: Long): Long
+    external fun unhook(handle: Long): Boolean
+    external fun allocCStringUtf8(str: String): Long
+    external fun alloc(size: Int): Long
     external fun free(ptr: Long)
-    external fun moduleBase(name: String): Long
-    external fun getModuleBase(module_name: String, module_field: String): Long
-    external fun resolveSymbol(module: String, name: String): Long
-    external fun readPoint(ptr: Long, offsets: LongArray): Long
-    external fun safeRead(ptr: Long, size: Int): ByteArray?
-    external fun safeWrite(ptr: Long, data: ByteArray): Boolean
-    external fun invoke(
+    // Resolves the primary module base used by symbol lookup.
+    external fun findModuleBase(name: String): Long
+    // Resolves a /proc/self/maps entry by module expression and permission string.
+    external fun findMapBase(moduleExpr: String, perms: String): Long
+    external fun findSymbol(module: String, symbol: String): Long
+    external fun readPointerChain(ptr: Long, offsets: LongArray): Long
+    external fun readMemory(ptr: Long, size: Int): ByteArray?
+    external fun writeMemory(ptr: Long, data: ByteArray): Boolean
+    // Reads a JNI local ref that is only valid for the current thread envPtr.
+    external fun readJStringUtf8(envPtr: Long, jstringRef: Long): String?
+    // Reads a native-managed global ref created or retained through this API.
+    external fun readManagedJStringUtf8(ref: Long): String?
+    // Creates a native-managed global ref from a Java String on the current thread.
+    external fun createManagedJStringUtf8(text: String): Long
+    // Promotes an existing JNI ref into a native-managed global ref.
+    external fun retainManagedRef(envPtr: Long, ref: Long): Long
+    external fun releaseManagedRef(ref: Long)
+    external fun callFunction(
         addr: Long,
-        gprs: LongArray,
-        fprs: DoubleArray,
-        stack: LongArray,
-        retType: Int
+        returnType: Int,
+        argTypes: IntArray,
+        argBits: LongArray
     ): Long
 
     data class HookConfig(
         val onEnter: LuaValue?,
         val onLeave: LuaValue?,
-        val retType: Int,
-        val argc: Int
+        val returnType: Int,
+        val argTypes: IntArray
+    )
+
+    private data class HookCallbackState(
+        val config: HookConfig,
+        @Volatile var handle: Long = 0L,
+        val inFlightCount: AtomicInteger = AtomicInteger(0),
+        @Volatile var retired: Boolean = false,
+        @Volatile var lastActivityNanos: Long = System.nanoTime()
     )
 
     companion object {
-        const val RET_INT = 0
-        const val RET_FLOAT = 1
-        const val RET_DOUBLE = 3
-        const val RET_VOID = 4
-        val hookCallbacks = ConcurrentHashMap<Int, HookConfig>()
+        const val TYPE_VOID = 0
+        const val TYPE_I32 = 1
+        const val TYPE_U32 = 2
+        const val TYPE_I64 = 3
+        const val TYPE_U64 = 4
+        const val TYPE_PTR = 5
+        const val TYPE_F32 = 6
+        const val TYPE_F64 = 7
+
+        private const val RETIRED_CALLBACK_GRACE_NANOS = 30L * 1_000_000_000L
+
+        private val retiredHookCleanupExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+            Thread(runnable, "NativeLibRetiredHookCleanup").apply {
+                isDaemon = true
+            }
+        }
+
+        private val nextCallbackId = AtomicLong(1)
+        private val hookCallbacks = ConcurrentHashMap<Long, HookCallbackState>()
+        private val pendingHookCallbacks = ConcurrentHashMap<Long, HookCallbackState>()
+        private val callbackStates = ConcurrentHashMap<Long, HookCallbackState>()
+        private val callbackHandles = ConcurrentHashMap<Long, Long>()
+        private val handleCallbacks = ConcurrentHashMap<Long, Long>()
+
+        internal fun hookSignatureUsesStackArgs(argTypes: IntArray, is64BitProcess: Boolean): Boolean {
+            if (argTypes.isEmpty()) return false
+
+            if (!is64BitProcess) {
+                return false
+            }
+
+            var gprIndex = 0
+            var fprIndex = 0
+            for (type in argTypes) {
+                if (type == TYPE_F32 || type == TYPE_F64) {
+                    if (fprIndex < 8) {
+                        fprIndex++
+                    } else {
+                        return true
+                    }
+                } else {
+                    if (gprIndex < 8) {
+                        gprIndex++
+                    } else {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
     }
 
-    // --- 回调入口 ---
-    fun onNativeEnter(index: Int, regs: LongArray): LongArray? {
-        val cfg = hookCallbacks[index] ?: return null
+    // --- Callback entry ---
+    fun onNativeEnter(callbackId: Long, argBits: LongArray): LongArray? {
+        val state = retainHookCallback(callbackId) ?: return null
+        val cfg = state.config
         val onEnter = cfg.onEnter ?: return null
+        if (cfg.argTypes.size != argBits.size) return null
 
         val ctx = LuaTable()
-
-        val gprCount = if (isProcess64Bit()) 8 else 4
-        val fprCount = 8
-        val maxStack = regs.size - gprCount - fprCount
-        val stackCount = cfg.argc.coerceAtLeast(0).coerceAtMost(maxStack.coerceAtLeast(0))
-
-        val rawTable = LuaTable()
-        val fprTable = LuaTable()
-        val stackTable = LuaTable()
-
-        for (i in 0 until gprCount) {
-            rawTable[i] = LuaPointer(regs[i], this)
-            ctx[i] = rawTable[i]
+        val argsTable = LuaTable()
+        for (i in cfg.argTypes.indices) {
+            argsTable[i + 1] = decodeNativeValue(cfg.argTypes[i], argBits[i])
         }
-        for (i in 0 until fprCount) {
-            fprTable[i] = LuaPointer(regs[gprCount + i], this)
+        ctx["args"] = argsTable
+        ctx["callback_id"] = LuaPointer(callbackId, this)
+        val handle = state.handle
+        if (handle != 0L) {
+            ctx["hook_handle"] = LuaPointer(handle, this)
         }
-        for (i in 0 until stackCount) {
-            stackTable[i] = LuaPointer(regs[gprCount + fprCount + i], this)
-        }
-
-        ctx["raw"] = rawTable
-        ctx["fpr"] = fprTable
-        ctx["stack"] = stackTable
 
         try {
             onEnter.call(ctx)
@@ -90,74 +147,52 @@ class NativeLib {
             e.printStackTrace()
         }
 
-        val newRegs = LongArray(regs.size)
+        val newBits = LongArray(argBits.size)
         var changed = false
-        for (i in 0 until gprCount) {
-            val v = LuaPointer.unwrap(ctx[i])
-            newRegs[i] = v
-            if (v != regs[i]) changed = true
+        for (i in cfg.argTypes.indices) {
+            val bits = packInvokeBits(cfg.argTypes[i], argsTable[i + 1])
+            newBits[i] = bits
+            if (bits != argBits[i]) {
+                changed = true
+            }
         }
-        for (i in 0 until fprCount) {
-            val v = LuaPointer.unwrap(fprTable[i])
-            val idx = gprCount + i
-            newRegs[idx] = v
-            if (v != regs[idx]) changed = true
-        }
-        for (i in 0 until stackCount) {
-            val v = LuaPointer.unwrap(stackTable[i])
-            val idx = gprCount + fprCount + i
-            newRegs[idx] = v
-            if (v != regs[idx]) changed = true
-        }
-
-        return if (changed) newRegs else null
+        return if (changed) newBits else null
     }
 
-    fun onNativeLeave(index: Int, retval: Long): Long {
-        val cfg = hookCallbacks[index] ?: return retval
-        val onLeave = cfg.onLeave ?: return retval
-
-        val arg = when (cfg.retType) {
-            RET_FLOAT -> LuaValue.valueOf(java.lang.Float.intBitsToFloat(retval.toInt()).toDouble())
-            RET_DOUBLE -> LuaValue.valueOf(java.lang.Double.longBitsToDouble(retval))
-            RET_VOID -> LuaValue.NIL
-            else -> LuaPointer(retval, this)
-        }
-
+    fun onNativeLeave(callbackId: Long, retval: Long): Long {
+        val state = resolveHookCallbackState(callbackId) ?: return retval
+        val cfg = state.config
         try {
-            val result = onLeave.call(arg)
-            if (!result.isnil()) {
-                return when (cfg.retType) {
-                    RET_FLOAT -> java.lang.Float.floatToIntBits(result.todouble().toFloat())
-                        .toLong()
+            val onLeave = cfg.onLeave ?: return retval
 
-                    RET_DOUBLE -> java.lang.Double.doubleToLongBits(result.todouble())
-                    RET_VOID -> retval
-                    else -> LuaPointer.unwrap(result)
-                }
+            val arg = decodeNativeValue(cfg.returnType, retval)
+            val result = onLeave.call(arg)
+            if (!result.isnil() && cfg.returnType != TYPE_VOID) {
+                return packInvokeBits(cfg.returnType, result)
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            releaseHookCallback(callbackId, state)
         }
         return retval
     }
-
     // --- LuaPointer ---
     class LuaPointer(val address: Long, private val lib: NativeLib) : LuaUserdata(address) {
 
-        // 重写 get 实现 "." 调用
+        // ?? get ?? "." ??
 
         override fun get(key: LuaValue): LuaValue {
             val name = key.tojstring()
 
-            // 每次访问 ptr.xxx 时，返回一个闭包，直接使用当前的 address
-            // 这样 Lua 调用时就不需要传 self (即不需要冒号)
+            // ???? ptr.xxx ???????????????? address
+            // ?? Lua ???????? self (??????)
             return when (name) {
                 // ptr.read_s32([offset])
                 "read_s32" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
-                        val offset = args.optint(1, 0) // arg1 就是 offset
-                        val data = lib.safeRead(address + offset, 4) ?: return ZERO
+                        val offset = args.optint(1, 0) // arg1 ?? offset
+                        val data = lib.readMemory(address + offset, 4) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf(bb.int.toDouble())
                     }
@@ -167,7 +202,7 @@ class NativeLib {
                 "read_u32" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 4) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 4) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf((bb.int.toLong() and 0xFFFFFFFFL).toDouble())
                     }
@@ -177,7 +212,7 @@ class NativeLib {
                 "read_s64" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 8) ?: return LuaPointer(0, lib)
+                        val data = lib.readMemory(address + offset, 8) ?: return LuaPointer(0, lib)
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return LuaPointer(bb.long, lib)
                     }
@@ -187,7 +222,7 @@ class NativeLib {
                 "read_u64" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 8) ?: return LuaPointer(0, lib)
+                        val data = lib.readMemory(address + offset, 8) ?: return LuaPointer(0, lib)
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return LuaPointer(bb.long, lib)
                     }
@@ -198,28 +233,28 @@ class NativeLib {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
                         val size = lib.pointerSize()
-                        val data = lib.safeRead(address + offset, size) ?: return LuaPointer(0, lib)
+                        val data = lib.readMemory(address + offset, size) ?: return LuaPointer(0, lib)
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         val v = if (size == 8) bb.long else (bb.int.toLong() and 0xFFFFFFFFL)
                         return LuaPointer(v, lib)
                     }
                 }
 
-                // ptr.read_cstr([max_len]) - 读取 C 风格字符串 (char*)
-                "read_cstr" -> object : VarArgFunction() {
+                // ptr.read_cstring([max_len])
+                "read_cstring" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val maxLen = args.optint(1, 512)
-                        val data = lib.safeRead(address, maxLen) ?: return NIL
+                        val data = lib.readMemory(address, maxLen) ?: return NIL
                         var len = 0
                         while (len < data.size && data[len] != 0.toByte()) len++
                         return valueOf(String(data, 0, len))
                     }
                 }
 
-                "read_cstr_utf8" -> object : VarArgFunction() {
+                "read_cstring_utf8" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val maxLen = args.optint(1, 512)
-                        val data = lib.safeRead(address, maxLen) ?: return NIL
+                        val data = lib.readMemory(address, maxLen) ?: return NIL
                         var len = 0
                         while (len < data.size && data[len] != 0.toByte()) len++
                         return valueOf(String(data, 0, len, Charsets.UTF_8))
@@ -230,7 +265,7 @@ class NativeLib {
                 "read_u8" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 1) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 1) ?: return ZERO
                         return valueOf((data[0].toInt() and 0xFF).toDouble())
                     }
                 }
@@ -239,7 +274,7 @@ class NativeLib {
                 "read_s8" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 1) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 1) ?: return ZERO
                         return valueOf(data[0].toInt().toDouble())
                     }
                 }
@@ -248,7 +283,7 @@ class NativeLib {
                 "read_s16" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 2) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 2) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf(bb.short.toDouble())
                     }
@@ -258,7 +293,7 @@ class NativeLib {
                 "read_u16" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 2) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 2) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf((bb.short.toInt() and 0xFFFF).toDouble())
                     }
@@ -268,7 +303,7 @@ class NativeLib {
                 "read_f32" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 4) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 4) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf(bb.float.toDouble())
                     }
@@ -278,18 +313,18 @@ class NativeLib {
                 "read_f64" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
-                        val data = lib.safeRead(address + offset, 8) ?: return ZERO
+                        val data = lib.readMemory(address + offset, 8) ?: return ZERO
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         return valueOf(bb.double)
                     }
                 }
 
-                // ptr.read_byte_array(size, [offset]) - 读取原始字节数组
+                // ptr.read_byte_array(size, [offset]) - ????????
                 "read_byte_array" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val size = args.checkint(1)
                         val offset = args.optint(2, 0)
-                        val data = lib.safeRead(address + offset, size) ?: return NIL
+                        val data = lib.readMemory(address + offset, size) ?: return NIL
                         val table = LuaTable()
                         for (i in data.indices) {
                             table[i + 1] = valueOf((data[i].toInt() and 0xFF).toDouble())
@@ -305,7 +340,7 @@ class NativeLib {
                         val v = args.checkint(1)
                         val offset = args.optint(2, 0)
                         return valueOf(
-                            lib.safeWrite(
+                            lib.writeMemory(
                                 address + offset,
                                 byteArrayOf(v.toByte())
                             )
@@ -318,7 +353,7 @@ class NativeLib {
                         val v = args.checkint(1)
                         val offset = args.optint(2, 0)
                         return valueOf(
-                            lib.safeWrite(
+                            lib.writeMemory(
                                 address + offset,
                                 byteArrayOf(v.toByte())
                             )
@@ -333,7 +368,7 @@ class NativeLib {
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
                             .putShort(v.toShort())
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
                 // ptr.write_u16(val, [offset])
@@ -343,7 +378,7 @@ class NativeLib {
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
                             .putShort(v.toShort())
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
 
@@ -353,7 +388,7 @@ class NativeLib {
                         val v = args.checkint(1)
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(v)
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
                 // ptr.write_u32(val, [offset])
@@ -363,7 +398,7 @@ class NativeLib {
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
                             .putInt((v and 0xFFFFFFFFL).toInt())
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
 
@@ -373,7 +408,7 @@ class NativeLib {
                         val v = unwrap(args.arg(1))
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(v)
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
                 // ptr.write_u64(val, [offset])
@@ -382,7 +417,7 @@ class NativeLib {
                         val v = unwrap(args.arg(1))
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(v)
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
                 // ptr.write_ptr(val, [offset])
@@ -393,7 +428,7 @@ class NativeLib {
                         val size = lib.pointerSize()
                         val bb = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
                         if (size == 8) bb.putLong(v) else bb.putInt((v and 0xFFFFFFFFL).toInt())
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
 
@@ -403,7 +438,7 @@ class NativeLib {
                         val v = args.checkdouble(1).toFloat()
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(v)
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
 
@@ -413,11 +448,11 @@ class NativeLib {
                         val v = args.checkdouble(1)
                         val offset = args.optint(2, 0)
                         val bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putDouble(v)
-                        return valueOf(lib.safeWrite(address + offset, bb.array()))
+                        return valueOf(lib.writeMemory(address + offset, bb.array()))
                     }
                 }
 
-                // ptr.write_byte_array(table, [offset]) - 写入字节数组
+                // ptr.write_byte_array(table, [offset]) - ??????
                 "write_byte_array" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val table = args.checktable(1)
@@ -427,58 +462,58 @@ class NativeLib {
                         for (i in 1..len) {
                             bytes[i - 1] = table[i].checkint().toByte()
                         }
-                        return valueOf(lib.safeWrite(address + offset, bytes))
+                        return valueOf(lib.writeMemory(address + offset, bytes))
                     }
                 }
 
-                // ptr.write_cstr(str)
-                "write_cstr" -> object : VarArgFunction() {
+                // ptr.write_cstring(str)
+                "write_cstring" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val s = args.checkjstring(1)
                         val bytes = s.toByteArray()
                         val withNull = bytes.copyOf(bytes.size + 1)
-                        return valueOf(lib.safeWrite(address, withNull))
+                        return valueOf(lib.writeMemory(address, withNull))
                     }
                 }
 
-                "write_cstr_utf8" -> object : VarArgFunction() {
+                "write_cstring_utf8" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val s = args.checkjstring(1)
                         val bytes = s.toByteArray(Charsets.UTF_8)
                         val withNull = bytes.copyOf(bytes.size + 1)
-                        return valueOf(lib.safeWrite(address, withNull))
+                        return valueOf(lib.writeMemory(address, withNull))
                     }
                 }
 
-                // ptr.is_null() - 检查指针是否为空
+                // ptr.is_null() - ????????
                 "is_null" -> object : ZeroArgFunction() {
                     override fun call(): LuaValue {
                         return valueOf(address == 0L)
                     }
                 }
 
-                // ptr.not_null() - 检查指针是否非空
+                // ptr.not_null() - ????????
                 "not_null" -> object : ZeroArgFunction() {
                     override fun call(): LuaValue {
                         return valueOf(address != 0L)
                     }
                 }
 
-                // ptr.to_hex() - 支持无参调用
+                // ptr.to_hex() - ??????
                 "to_hex" -> object : ZeroArgFunction() {
                     override fun call(): LuaValue {
                         return valueOf(java.lang.Long.toHexString(address).uppercase())
                     }
                 }
 
-                // ptr.to_int() - 获取指针地址本身作为整数
+                // ptr.to_int() - ????????????
                 "to_int" -> object : ZeroArgFunction() {
                     override fun call(): LuaValue {
                         return valueOf(address.toDouble())
                     }
                 }
 
-                // ptr.to_long() - 获取指针地址本身作为 long (返回 LuaPointer 以保持精度)
+                // ptr.to_long() - ?????????? long (?? LuaPointer ?????)
                 "to_long" -> object : ZeroArgFunction() {
                     override fun call(): LuaValue {
                         return LuaPointer(address, lib)
@@ -489,7 +524,7 @@ class NativeLib {
                 "hexdump" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val size = args.optint(1, 256)
-                        val data = lib.safeRead(address, size)
+                        val data = lib.readMemory(address, size)
                             ?: return valueOf(
                                 "Cannot read memory at 0x${
                                     java.lang.Long.toHexString(
@@ -500,32 +535,32 @@ class NativeLib {
 
                         val sb = StringBuilder()
                         val hexPart = StringBuilder()
-                        // 暂存当前行的字节，用于最后转 String
+                        // ?????????????? String
                         val lineBytes = java.io.ByteArrayOutputStream()
 
                         for (i in data.indices) {
                             val b = data[i].toInt() and 0xFF
 
-                            // 拼接 Hex
+                            // ?? Hex
                             hexPart.append(String.format("%02X ", b))
 
-                            // 收集字节用于显示文本
+                            // ??????????
                             lineBytes.write(data[i].toInt())
 
-                            // 每 16 字节换一行，或者读到了最后
+                            // ? 16 ?????????????
                             if ((i + 1) % 16 == 0 || i == data.size - 1) {
-                                // 补齐 Hex 部分的空格 (如果最后一行不满16字节)
+                                // ?? Hex ????? (????????16??)
                                 while (hexPart.length < 48) {
                                     hexPart.append("   ")
                                 }
 
-                                // 尝试用 UTF-8 解码这一行
+                                // ??? UTF-8 ?????
                                 val rawString = String(lineBytes.toByteArray(), Charsets.UTF_8)
                                 val safeString = StringBuilder()
 
-                                // 过滤控制字符，保留中文
+                                // ???????????
                                 for (char in rawString) {
-                                    // 只要不是控制字符(如换行、退格)，或者是空格，都显示
+                                    // ????????(??????)??????????
                                     if (!Character.isISOControl(char) || char == ' ') {
                                         safeString.append(char)
                                     } else {
@@ -533,7 +568,7 @@ class NativeLib {
                                     }
                                 }
 
-                                // 输出
+                                // ??
                                 val offset = (i / 16) * 16
                                 sb.append(
                                     String.format(
@@ -544,7 +579,7 @@ class NativeLib {
                                     )
                                 )
 
-                                // 重置缓冲区
+                                // ?????
                                 hexPart.setLength(0)
                                 lineBytes.reset()
                             }
@@ -570,28 +605,28 @@ class NativeLib {
                     }
                 }
 
-                // ptr.set(value) - 直接设置指针值 (用于修改 args 中的参数)
+                // ptr.set(value) - ??????? (???? args ????)
                 "set" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
-                        // 返回新的 LuaPointer，调用者需要赋值回 args
+                        // ???? LuaPointer????????? args
                         val newVal = unwrap(args.arg(1))
                         return LuaPointer(newVal, lib)
                     }
                 }
 
-                // ptr.deref() - 解引用指针 (读取指针指向的地址)
+                // ptr.deref() - ????? (?????????)
                 "deref" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val offset = args.optint(1, 0)
                         val size = lib.pointerSize()
-                        val data = lib.safeRead(address + offset, size) ?: return LuaPointer(0, lib)
+                        val data = lib.readMemory(address + offset, size) ?: return LuaPointer(0, lib)
                         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
                         val v = if (size == 8) bb.long else (bb.int.toLong() and 0xFFFFFFFFL)
                         return LuaPointer(v, lib)
                     }
                 }
 
-                // ptr.and(mask) - 位与操作
+                // ptr.and(mask) - ????
                 "and" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val mask = unwrap(args.arg(1))
@@ -599,7 +634,7 @@ class NativeLib {
                     }
                 }
 
-                // ptr.or(mask) - 位或操作
+                // ptr.or(mask) - ????
                 "or" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val mask = unwrap(args.arg(1))
@@ -607,7 +642,7 @@ class NativeLib {
                     }
                 }
 
-                // ptr.xor(mask) - 位异或操作
+                // ptr.xor(mask) - ?????
                 "xor" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val mask = unwrap(args.arg(1))
@@ -615,7 +650,7 @@ class NativeLib {
                     }
                 }
 
-                // ptr.shl(bits) - 左移
+                // ptr.shl(bits) - ??
                 "shl" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val bits = args.checkint(1)
@@ -623,7 +658,7 @@ class NativeLib {
                     }
                 }
 
-                // ptr.shr(bits) - 右移
+                // ptr.shr(bits) - ??
                 "shr" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val bits = args.checkint(1)
@@ -631,11 +666,21 @@ class NativeLib {
                     }
                 }
 
-                // ptr.equals(other) - 比较两个指针
+                // ptr.equals(other) - ??????
                 "equals" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
                         val other = unwrap(args.arg(1))
                         return valueOf(address == other)
+                    }
+                }
+
+                "unhook" -> object : VarArgFunction() {
+                    override fun invoke(args: Varargs): LuaValue {
+                        return if (lib.isLoaded && address != 0L && lib.unhook(address)) {
+                            TRUE
+                        } else {
+                            FALSE
+                        }
                     }
                 }
 
@@ -669,7 +714,7 @@ class NativeLib {
         }
     }
 
-    // --- Lua API 注册 ---
+    // --- Lua API ?? ---
     fun toLuaTable(): LuaTable {
         val t = LuaTable()
 
@@ -703,34 +748,34 @@ class NativeLib {
         memory["read_f32"] = memProxy("read_f32")
         memory["read_f64"] = memProxy("read_f64")
         memory["read_ptr"] = memProxy("read_ptr")
-        memory["read_cstr"] = memProxy("read_cstr")
-        memory["read_cstr_utf8"] = memProxy("read_cstr_utf8")
+        memory["read_cstring"] = memProxy("read_cstring")
+        memory["read_cstring_utf8"] = memProxy("read_cstring_utf8")
 
-        memory["read_lp_utf8"] = object : VarArgFunction() {
+        memory["read_len_prefixed_utf8"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
                 val maxLen = args.optint(2, 512)
-                val lenData = safeRead(addr, 1) ?: return NIL
+                val lenData = readMemory(addr, 1) ?: return NIL
                 val len = lenData[0].toInt() and 0xFF
                 if (len == 0) return valueOf("")
                 val readLen = if (len > maxLen) maxLen else len
-                val data = safeRead(addr + 1, readLen) ?: return NIL
-                return valueOf(String(data, 0, data.size))
+                val data = readMemory(addr + 1, readLen) ?: return NIL
+                return valueOf(String(data, 0, data.size, Charsets.UTF_8))
             }
         }
 
-        memory["read_auto_utf8"] = object : VarArgFunction() {
+        memory["read_utf8_auto"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
-                val lenData = safeRead(addr, 1) ?: return memory["read_cstr"].invoke(args).arg1()
+                val lenData = readMemory(addr, 1) ?: return memory["read_cstring_utf8"].invoke(args).arg1()
                 val len = lenData[0].toInt() and 0xFF
                 if (len in 1..0x7F) {
                     val data =
-                        safeRead(addr + 1, len) ?: return memory["read_cstr"].invoke(args).arg1()
-                    val s = String(data, 0, data.size)
+                        readMemory(addr + 1, len) ?: return memory["read_cstring_utf8"].invoke(args).arg1()
+                    val s = String(data, 0, data.size, Charsets.UTF_8)
                     if (s.length == len) return valueOf(s)
                 }
-                return memory["read_cstr"].invoke(args).arg1()
+                return memory["read_cstring_utf8"].invoke(args).arg1()
             }
         }
 
@@ -746,14 +791,14 @@ class NativeLib {
         memory["write_ptr"] = memProxy("write_ptr")
         memory["write_f32"] = memProxy("write_f32")
         memory["write_f64"] = memProxy("write_f64")
-        memory["write_cstr"] = memProxy("write_cstr")
-        memory["write_cstr_utf8"] = memProxy("write_cstr_utf8")
+        memory["write_cstring"] = memProxy("write_cstring")
+        memory["write_cstring_utf8"] = memProxy("write_cstring_utf8")
 
-        memory["alloc_utf8_string"] = object : VarArgFunction() {
+        memory["alloc_cstring_utf8"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (!isLoaded) return LuaPointer(0, this@NativeLib)
                 val s = args.checkjstring(1)
-                return LuaPointer(mallocString(s), this@NativeLib)
+                return LuaPointer(allocCStringUtf8(s), this@NativeLib)
             }
         }
         memory["alloc"] = object : VarArgFunction() {
@@ -761,7 +806,7 @@ class NativeLib {
                 if (!isLoaded) return LuaPointer(0, this@NativeLib)
                 val size = args.checkint(1)
                 if (size <= 0) return LuaPointer(0, this@NativeLib)
-                return LuaPointer(malloc(size), this@NativeLib)
+                return LuaPointer(alloc(size), this@NativeLib)
             }
         }
         memory["free"] = object : VarArgFunction() {
@@ -771,192 +816,491 @@ class NativeLib {
             }
         }
 
-        memory["write_lp_utf8"] = object : VarArgFunction() {
+        memory["write_len_prefixed_utf8"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
                 val s = args.checkjstring(2)
-                val bytes = s.toByteArray()
+                val bytes = s.toByteArray(Charsets.UTF_8)
                 val len = bytes.size
                 val maxLen = args.optint(3, len)
                 val writeLen = if (len > maxLen) maxLen else len
                 val buf = ByteArray(writeLen + 1)
                 buf[0] = (writeLen and 0xFF).toByte()
                 System.arraycopy(bytes, 0, buf, 1, writeLen)
-                return valueOf(safeWrite(addr, buf))
+                return valueOf(writeMemory(addr, buf))
             }
         }
 
         t["memory"] = memory
 
-        t["ptr"] = object : VarArgFunction() {
+        t["pointer"] = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
                 return LuaPointer(addr, this@NativeLib)
             }
         }
 
-        t["module_base"] = object : VarArgFunction() {
+        val findModuleBaseLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (!isLoaded) return LuaPointer(0, this@NativeLib)
-                val base = moduleBase(args.checkjstring(1))
+                val base = findModuleBase(args.checkjstring(1))
                 return LuaPointer(base, this@NativeLib)
             }
         }
 
-        t["getModuleBase"] = object : VarArgFunction() {
+        val findMapBaseLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                if (!isLoaded) return ZERO
-                val name = args.checkjstring(1)
-                val field = args.checkjstring(2)
-                return valueOf(getModuleBase(name, field).toDouble())
+                if (!isLoaded) return LuaPointer(0, this@NativeLib)
+                val moduleExpr = args.checkjstring(1)
+                val perms = args.checkjstring(2)
+                return LuaPointer(findMapBase(moduleExpr, perms), this@NativeLib)
             }
         }
 
-        t["resolve_symbol"] = object : VarArgFunction() {
+        val findSymbolLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                if (!isLoaded) return ZERO
+                if (!isLoaded) return LuaPointer(0, this@NativeLib)
                 val module = args.checkjstring(1)
-                val name = args.checkjstring(2)
-                return valueOf(resolveSymbol(module, name).toDouble())
+                val symbol = args.checkjstring(2)
+                return LuaPointer(findSymbol(module, symbol), this@NativeLib)
             }
         }
 
-        t["readPoint"] = object : VarArgFunction() {
+        val readPointerChainLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                if (!isLoaded) return ZERO
-                val ptr = LuaPointer.unwrap(args.arg(1))
-                val offsetsTable = args.checktable(2)
-                val count = offsetsTable.length()
-                val offsets = LongArray(count)
-                for (i in 0 until count) {
-                    offsets[i] = offsetsTable.get(i + 1).tolong()
-                }
-                return valueOf(readPoint(ptr, offsets).toDouble())
+                if (!isLoaded) return LuaPointer(0, this@NativeLib)
+                val base = LuaPointer.unwrap(args.arg(1))
+                val offsets = parseLongArray(args.checktable(2))
+                return LuaPointer(readPointerChain(base, offsets), this@NativeLib)
             }
         }
 
-        t["get_module_base"] = t["module_base"]
-
-        t["new_function"] = object : VarArgFunction() {
+        val callFunctionLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 val addr = LuaPointer.unwrap(args.arg(1))
-                val retTypeStr = args.optjstring(2, "void")
-                val argTypes = args.arg(3)
-                
-                val retType = when(retTypeStr.lowercase()) {
-                    "int", "s32", "u32", "s64", "u64", "long", "ptr", "pointer" -> RET_INT
-                    "float" -> RET_FLOAT
-                    "double" -> RET_DOUBLE
-                    "void" -> RET_VOID
-                    else -> RET_INT
+                val returnType = parseCanonicalInvocationReturnType(args.arg(2), 2)
+                val argTypes = parseCanonicalInvocationArgTypes(args.checktable(3), 3)
+                val valuesTable = args.checktable(4)
+                if (valuesTable.length() != argTypes.size) {
+                    argerror(4, "arg_values length must match arg_types")
                 }
-                
-                val argTypeList = ArrayList<String>()
-                if (argTypes.istable()) {
-                    val n = argTypes.length()
-                    for(i in 0 until n) {
-                        argTypeList.add(argTypes.get(i+1).tojstring())
-                    }
+                if (!isLoaded) return decodeInvokeResult(returnType, 0L)
+                val argBits = packInvokeArgs(argTypes, valuesTable)
+                val retBits = callFunction(addr, returnType, argTypes, argBits)
+                return decodeInvokeResult(returnType, retBits)
+            }
+        }
+        val bindFunctionLuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                val addr = LuaPointer.unwrap(args.arg(1))
+                val returnType = parseCanonicalInvocationReturnType(args.arg(2), 2)
+                val argTypeSpec = args.arg(3)
+                if (!argTypeSpec.isnil() && !argTypeSpec.istable()) {
+                    argerror(3, "arg_types must be a table")
                 }
-                
+                val argTypes = if (argTypeSpec.isnil()) {
+                    IntArray(0)
+                } else {
+                    parseCanonicalInvocationArgTypes(argTypeSpec.checktable(), 3)
+                }
                 return object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
-                        val gprs = LongArray(8)
-                        val fprs = DoubleArray(8)
-                        val stack = ArrayList<Long>()
-                        var gprIdx = 0
-                        var fprIdx = 0
-                        
-                        for(i in 0 until argTypeList.size) {
-                            val type = argTypeList[i]
-                            val luaVal = args.arg(i+1)
-                            
-                            when(type) {
-                                "int", "long", "ptr", "pointer" -> {
-                                    val v = LuaPointer.unwrap(luaVal)
-                                    if(gprIdx < 8) {
-                                        gprs[gprIdx++] = v
-                                    } else {
-                                        stack.add(v)
-                                    }
-                                }
-                                "float", "double" -> {
-                                    val v = luaVal.todouble()
-                                    if(fprIdx < 8) {
-                                        fprs[fprIdx++] = v
-                                    } else {
-                                        // Stack slots are 64-bit
-                                        // If float, packed in low 32 bits?
-                                        // If double, packed in 64 bits.
-                                        if (type == "float") {
-                                            val bits = java.lang.Float.floatToRawIntBits(v.toFloat()).toLong()
-                                            stack.add(bits and 0xFFFFFFFFL)
-                                        } else {
-                                            val bits = java.lang.Double.doubleToRawLongBits(v)
-                                            stack.add(bits)
-                                        }
-                                    }
-                                }
-                            }
+                        if (args.narg() != argTypes.size) {
+                            return error("expected ${argTypes.size} args, got ${args.narg()}")
                         }
-                        
-                        // Handle variable args if more args provided than types? 
-                        // User might just provide "int" for everything in varargs context.
-                        // For now strict mapping.
-                        
-                        val stackArray = LongArray(stack.size) { stack[it] }
-                        
-                        val retVal = invoke(addr, gprs, fprs, stackArray, retType)
-                        
-                        return when(retType) {
-                            RET_VOID -> NIL
-                            RET_INT -> LuaPointer(retVal, this@NativeLib)
-                            RET_FLOAT -> valueOf(java.lang.Float.intBitsToFloat(retVal.toInt()).toDouble())
-                            RET_DOUBLE -> valueOf(java.lang.Double.longBitsToDouble(retVal))
-                            else -> LuaPointer(retVal, this@NativeLib)
+                        if (!isLoaded) return decodeInvokeResult(returnType, 0L)
+                        val argBits = LongArray(argTypes.size) { index ->
+                            packInvokeBits(argTypes[index], args.arg(index + 1))
                         }
+                        val retBits = callFunction(addr, returnType, argTypes, argBits)
+                        return decodeInvokeResult(returnType, retBits)
                     }
                 }
             }
         }
-
-        t["hook"] = object : VarArgFunction() {
+        val hookLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
                 if (!isLoaded) return FALSE
                 val addr = LuaPointer.unwrap(args.arg(1))
                 if (addr == 0L) return FALSE
-                val cbs = args.arg(2).checktable()
-
-                val ret = cbs["ret"]
-                val retType = when {
-                    ret.isnumber() -> ret.toint()
-                    ret.isstring() -> when (ret.tojstring().lowercase()) {
-                        "int", "ptr", "pointer" -> RET_INT
-                        "float" -> RET_FLOAT
-                        "double" -> RET_DOUBLE
-                        "void" -> RET_VOID
-                        else -> RET_INT
+                val config = args.arg(2).checktable()
+                val callbackId = nextCallbackId.getAndIncrement()
+                val canonicalReturnType = config["return_type"]
+                val returnType = if (!canonicalReturnType.isnil()) {
+                    val parsed = parseCanonicalTypeSpec(canonicalReturnType)
+                    if (parsed == null) {
+                        argerror(2, "return_type must be a valid native type")
                     }
+                    parsed!!
+                } else {
+                    parseHookReturnType(config)
+                }
+                val canonicalArgTypes = config["arg_types"]
+                val argTypes = if (!canonicalArgTypes.isnil()) {
+                    if (!canonicalArgTypes.istable()) {
+                        argerror(2, "arg_types must be a table")
+                    }
+                    val parsed = parseTypeListStrict(canonicalArgTypes)
+                    if (parsed == null) {
+                        argerror(2, "arg_types must contain only valid native types")
+                    }
+                    parsed!!
+                } else {
+                    parseHookArgTypes(config)
+                }
+                if (hookSignatureUsesStackArgs(argTypes, isProcess64Bit())) {
+                    argerror(2, "hook signatures with stack-passed args are not supported yet")
+                }
+                val hookState = HookCallbackState(
+                    HookConfig(
+                        firstPresent(config, "on_enter", "onEnter").optfunction(null),
+                        firstPresent(config, "on_leave", "onLeave").optfunction(null),
+                        returnType,
+                        argTypes
+                    )
+                )
+                pendingHookCallbacks[callbackId] = hookState
 
-                    else -> RET_INT
+                val handle = hook(addr, returnType, argTypes, callbackId)
+                if (handle == 0L) {
+                    pendingHookCallbacks.remove(callbackId, hookState)
+                    return FALSE
                 }
 
-                val argc = if (cbs["argc"].isnumber()) cbs["argc"].toint() else 0
+                hookState.handle = handle
+                hookCallbacks[handle] = hookState
+                callbackStates[callbackId] = hookState
+                callbackHandles[callbackId] = handle
+                handleCallbacks[handle] = callbackId
+                pendingHookCallbacks.remove(callbackId, hookState)
+                return LuaPointer(handle, this@NativeLib)
+            }
+        }
 
-                val id = registerGenericHook(addr, retType, argc)
-                if (id >= 0) {
-                    hookCallbacks[id] = HookConfig(
-                        cbs["onEnter"].optfunction(null),
-                        cbs["onLeave"].optfunction(null),
-                        retType,
-                        argc
-                    )
+        val unhookLuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return FALSE
+                val handle = LuaPointer.unwrap(args.arg(1))
+                if (handle == 0L) return FALSE
+                val removed = unhook(handle)
+                if (removed) {
+                    hookCallbacks.remove(handle)
+                    val callbackId = handleCallbacks.remove(handle)
+                    if (callbackId != null) {
+                        callbackHandles.remove(callbackId)
+                        retireHookCallback(callbackId)
+                    }
                     return TRUE
                 }
                 return FALSE
             }
         }
+        val readJStringUtf8LuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return NIL
+                val envPtr = LuaPointer.unwrap(args.arg(1))
+                val jstringRef = LuaPointer.unwrap(args.arg(2))
+                if (envPtr == 0L || jstringRef == 0L) return NIL
+                val text = readJStringUtf8(envPtr, jstringRef) ?: return NIL
+                return valueOf(text)
+            }
+        }
+        val readManagedJStringUtf8LuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return NIL
+                val ref = LuaPointer.unwrap(args.arg(1))
+                if (ref == 0L) return NIL
+                val text = readManagedJStringUtf8(ref) ?: return NIL
+                return valueOf(text)
+            }
+        }
+        val createManagedJStringUtf8LuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return LuaPointer(0, this@NativeLib)
+                val text = args.checkjstring(1)
+                return LuaPointer(createManagedJStringUtf8(text), this@NativeLib)
+            }
+        }
+        val retainManagedRefLuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return LuaPointer(0, this@NativeLib)
+                val envPtr = LuaPointer.unwrap(args.arg(1))
+                val ref = LuaPointer.unwrap(args.arg(2))
+                if (envPtr == 0L || ref == 0L) return LuaPointer(0, this@NativeLib)
+                return LuaPointer(retainManagedRef(envPtr, ref), this@NativeLib)
+            }
+        }
+        val releaseManagedRefLuaFn = object : VarArgFunction() {
+            override fun invoke(args: Varargs): LuaValue {
+                if (!isLoaded) return NIL
+                val ref = LuaPointer.unwrap(args.arg(1))
+                if (ref != 0L) {
+                    releaseManagedRef(ref)
+                }
+                return NIL
+            }
+        }
+
+        t["find_module_base"] = findModuleBaseLuaFn
+        t["find_map_base"] = findMapBaseLuaFn
+        t["find_symbol"] = findSymbolLuaFn
+        t["read_pointer_chain"] = readPointerChainLuaFn
+        t["call_function"] = callFunctionLuaFn
+        t["bind_function"] = bindFunctionLuaFn
+        t["hook"] = hookLuaFn
+        t["unhook"] = unhookLuaFn
+        t["read_jstring_utf8"] = readJStringUtf8LuaFn
+        t["read_managed_jstring_utf8"] = readManagedJStringUtf8LuaFn
+        t["create_managed_jstring_utf8"] = createManagedJStringUtf8LuaFn
+        t["retain_managed_ref"] = retainManagedRefLuaFn
+        t["release_managed_ref"] = releaseManagedRefLuaFn
         return t
+    }
+
+    private fun resolveHookCallbackState(callbackId: Long): HookCallbackState? {
+        callbackStates[callbackId]?.let { return it }
+        return pendingHookCallbacks[callbackId]
+    }
+
+    private fun retainHookCallback(callbackId: Long): HookCallbackState? {
+        val now = System.nanoTime()
+        return callbackStates.computeIfPresent(callbackId) { _, state ->
+            state.inFlightCount.incrementAndGet()
+            state.lastActivityNanos = now
+            state
+        } ?: pendingHookCallbacks.computeIfPresent(callbackId) { _, state ->
+            state.inFlightCount.incrementAndGet()
+            state.lastActivityNanos = now
+            state
+        }
+    }
+
+    private fun releaseHookCallback(callbackId: Long, state: HookCallbackState) {
+        val remaining = state.inFlightCount.decrementAndGet()
+        if (remaining < 0) {
+            state.inFlightCount.incrementAndGet()
+            return
+        }
+        state.lastActivityNanos = System.nanoTime()
+        if (state.retired && remaining == 0) {
+            scheduleRetiredHookCleanup(callbackId, state, RETIRED_CALLBACK_GRACE_NANOS)
+        }
+    }
+
+    private fun retireHookCallback(callbackId: Long) {
+        val state = callbackStates[callbackId] ?: pendingHookCallbacks[callbackId] ?: return
+        state.retired = true
+        state.lastActivityNanos = System.nanoTime()
+        scheduleRetiredHookCleanup(callbackId, state, RETIRED_CALLBACK_GRACE_NANOS)
+    }
+
+    private fun scheduleRetiredHookCleanup(callbackId: Long, state: HookCallbackState, delayNanos: Long) {
+        retiredHookCleanupExecutor.schedule(
+            { tryCleanupRetiredHookCallback(callbackId, state) },
+            delayNanos.coerceAtLeast(0L),
+            TimeUnit.NANOSECONDS
+        )
+    }
+
+    private fun tryCleanupRetiredHookCallback(callbackId: Long, state: HookCallbackState) {
+        if (!state.retired || state.inFlightCount.get() != 0) {
+            return
+        }
+        val idleNanos = System.nanoTime() - state.lastActivityNanos
+        if (idleNanos < RETIRED_CALLBACK_GRACE_NANOS) {
+            scheduleRetiredHookCleanup(callbackId, state, RETIRED_CALLBACK_GRACE_NANOS - idleNanos)
+            return
+        }
+        cleanupRetiredHookCallback(callbackId, state)
+    }
+
+    private fun cleanupRetiredHookCallback(callbackId: Long, state: HookCallbackState) {
+        callbackStates.remove(callbackId, state)
+        pendingHookCallbacks.remove(callbackId, state)
+    }
+
+    private fun firstPresent(config: LuaValue, vararg keys: String): LuaValue {
+        for (key in keys) {
+            val value = config[key]
+            if (!value.isnil()) {
+                return value
+            }
+        }
+        return LuaValue.NIL
+    }
+
+    private fun luaArgError(argIndex: Int, message: String): Nothing {
+        throw LuaError("bad argument #$argIndex ($message)")
+    }
+
+    private fun parseLongArray(value: LuaValue): LongArray {
+        if (!value.istable()) {
+            return LongArray(0)
+        }
+        val table = value.checktable()
+        val count = table.length()
+        return LongArray(count) { index ->
+            table.get(index + 1).tolong()
+        }
+    }
+
+    private fun parseHookReturnType(config: LuaValue): Int {
+        val canonicalValue = firstPresent(config, "return_type")
+        if (!canonicalValue.isnil()) {
+            return parseTypeSpec(canonicalValue, TYPE_I32)
+        }
+        val legacyValue = firstPresent(config, "ret")
+        return parseTypeSpec(legacyValue, TYPE_I32, legacyHookReturnType = true)
+    }
+
+    private fun parseCanonicalTypeSpec(value: LuaValue): Int? {
+        return when {
+            value.isnumber() -> value.toint().takeIf(::isValidNativeType)
+            value.isstring() -> parseInvokeTypeOrNull(value.tojstring())
+            else -> null
+        }
+    }
+
+    private fun parseCanonicalArgTypeSpec(value: LuaValue): Int? {
+        return parseCanonicalTypeSpec(value)?.takeUnless { it == TYPE_VOID }
+    }
+
+    private fun parseTypeListStrict(value: LuaValue): IntArray? {
+        if (!value.istable()) {
+            return null
+        }
+        val table = value.checktable()
+        val count = table.length()
+        val types = IntArray(count)
+        for (index in 0 until count) {
+            val parsed = parseCanonicalArgTypeSpec(table.get(index + 1)) ?: return null
+            types[index] = parsed
+        }
+        return types
+    }
+
+    private fun parseCanonicalInvocationReturnType(value: LuaValue, argIndex: Int): Int {
+        if (value.isnil()) {
+            return TYPE_VOID
+        }
+        val parsed = parseCanonicalTypeSpec(value)
+        if (parsed == null) {
+            luaArgError(argIndex, "return type must be a valid native type")
+        }
+        return parsed!!
+    }
+
+    private fun parseCanonicalInvocationArgTypes(value: LuaValue, argIndex: Int): IntArray {
+        val parsed = parseTypeListStrict(value)
+        if (parsed == null) {
+            luaArgError(argIndex, "arg_types must contain only valid native types")
+        }
+        return parsed!!
+    }
+    private fun parseTypeSpec(
+        value: LuaValue,
+        defaultType: Int,
+        legacyHookReturnType: Boolean = false
+    ): Int {
+        return when {
+            value.isnil() -> defaultType
+            value.isnumber() -> if (legacyHookReturnType) {
+                when (value.toint()) {
+                    0 -> TYPE_I32
+                    1 -> TYPE_F32
+                    3 -> TYPE_F64
+                    4 -> TYPE_VOID
+                    else -> value.toint()
+                }
+            } else {
+                value.toint()
+            }
+            value.isstring() -> parseInvokeType(value.tojstring())
+            else -> defaultType
+        }
+    }
+
+    private fun parseHookArgTypes(config: LuaValue): IntArray {
+        val canonicalArgs = firstPresent(config, "arg_types")
+        if (canonicalArgs.istable()) {
+            return parseTypeList(canonicalArgs)
+        }
+        val legacyArgs = firstPresent(config, "args")
+        if (legacyArgs.istable()) {
+            return parseTypeList(legacyArgs)
+        }
+        val argc = if (config["argc"].isnumber()) config["argc"].toint().coerceAtLeast(0) else 0
+        return IntArray(argc) { TYPE_PTR }
+    }
+
+    private fun parseTypeList(value: LuaValue, defaultType: Int = TYPE_I32): IntArray {
+        if (!value.istable()) {
+            return IntArray(0)
+        }
+        val table = value.checktable()
+        val count = table.length()
+        return IntArray(count) { index ->
+            parseTypeSpec(table.get(index + 1), defaultType)
+        }
+    }
+
+    private fun packInvokeArgs(argTypes: IntArray, valueTable: LuaValue): LongArray {
+        if (!valueTable.istable()) {
+            return LongArray(argTypes.size)
+        }
+        val table = valueTable.checktable()
+        return LongArray(argTypes.size) { index ->
+            packInvokeBits(argTypes[index], table.get(index + 1))
+        }
+    }
+
+    private fun decodeNativeValue(type: Int, bits: Long): LuaValue {
+        return when (type) {
+            TYPE_VOID -> LuaValue.NIL
+            TYPE_F32 -> LuaValue.valueOf(java.lang.Float.intBitsToFloat((bits and 0xFFFFFFFFL).toInt()).toDouble())
+            TYPE_F64 -> LuaValue.valueOf(java.lang.Double.longBitsToDouble(bits))
+            TYPE_I32 -> LuaValue.valueOf(bits.toInt().toDouble())
+            TYPE_U32 -> LuaValue.valueOf((bits and 0xFFFFFFFFL).toDouble())
+            else -> LuaPointer(bits, this)
+        }
+    }
+
+    private fun parseInvokeType(typeName: String): Int {
+        return parseInvokeTypeOrNull(typeName) ?: TYPE_I32
+    }
+
+    private fun parseInvokeTypeOrNull(typeName: String): Int? {
+        typeName.toIntOrNull()?.let { return it.takeIf(::isValidNativeType) }
+        return when (typeName.lowercase()) {
+            "void" -> TYPE_VOID
+            "int", "i32", "s32" -> TYPE_I32
+            "uint", "u32" -> TYPE_U32
+            "long", "i64", "s64" -> TYPE_I64
+            "ulong", "u64" -> TYPE_U64
+            "ptr", "pointer" -> TYPE_PTR
+            "float", "f32" -> TYPE_F32
+            "double", "f64" -> TYPE_F64
+            else -> null
+        }
+    }
+
+    private fun isValidNativeType(type: Int): Boolean {
+        return type in TYPE_VOID..TYPE_F64
+    }
+
+    private fun packInvokeBits(type: Int, value: LuaValue): Long {
+        return when (type) {
+            TYPE_VOID -> 0L
+            TYPE_F32 -> java.lang.Float.floatToRawIntBits(value.todouble().toFloat()).toLong() and 0xFFFFFFFFL
+            TYPE_F64 -> java.lang.Double.doubleToRawLongBits(value.todouble())
+            TYPE_I32, TYPE_U32 -> LuaPointer.unwrap(value) and 0xFFFFFFFFL
+            TYPE_I64, TYPE_U64, TYPE_PTR -> LuaPointer.unwrap(value)
+            else -> LuaPointer.unwrap(value)
+        }
+    }
+
+    private fun decodeInvokeResult(returnType: Int, bits: Long): LuaValue {
+        return decodeNativeValue(returnType, bits)
     }
 
     private fun isProcess64Bit(): Boolean {
@@ -970,3 +1314,5 @@ class NativeLib {
 
     private fun pointerSize(): Int = if (isProcess64Bit()) 8 else 4
 }
+
+
