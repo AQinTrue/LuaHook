@@ -177,6 +177,25 @@ class NativeLib {
         }
         return retval
     }
+
+    private fun cleanupHookTracking(handle: Long) {
+        hookCallbacks.remove(handle)
+        val callbackId = handleCallbacks.remove(handle)
+        if (callbackId != null) {
+            callbackHandles.remove(callbackId)
+            retireHookCallback(callbackId)
+        }
+    }
+
+    private fun unhookTrackedHandle(handle: Long): Boolean {
+        if (!isLoaded || handle == 0L) return false
+        val removed = unhook(handle)
+        if (removed) {
+            cleanupHookTracking(handle)
+        }
+        return removed
+    }
+
     // --- LuaPointer ---
     class LuaPointer(val address: Long, private val lib: NativeLib) : LuaUserdata(address) {
 
@@ -676,7 +695,7 @@ class NativeLib {
 
                 "unhook" -> object : VarArgFunction() {
                     override fun invoke(args: Varargs): LuaValue {
-                        return if (lib.isLoaded && address != 0L && lib.unhook(address)) {
+                        return if (lib.unhookTrackedHandle(address)) {
                             TRUE
                         } else {
                             FALSE
@@ -979,17 +998,8 @@ class NativeLib {
 
         val unhookLuaFn = object : VarArgFunction() {
             override fun invoke(args: Varargs): LuaValue {
-                if (!isLoaded) return FALSE
                 val handle = LuaPointer.unwrap(args.arg(1))
-                if (handle == 0L) return FALSE
-                val removed = unhook(handle)
-                if (removed) {
-                    hookCallbacks.remove(handle)
-                    val callbackId = handleCallbacks.remove(handle)
-                    if (callbackId != null) {
-                        callbackHandles.remove(callbackId)
-                        retireHookCallback(callbackId)
-                    }
+                if (unhookTrackedHandle(handle)) {
                     return TRUE
                 }
                 return FALSE
