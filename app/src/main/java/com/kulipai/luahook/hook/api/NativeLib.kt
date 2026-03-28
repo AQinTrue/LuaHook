@@ -942,6 +942,7 @@ class NativeLib {
                 if (!isLoaded) return FALSE
                 val addr = LuaPointer.unwrap(args.arg(1))
                 if (addr == 0L) return FALSE
+                val resolvedAddr = resolveHookTargetAddress(addr)
                 val config = args.arg(2).checktable()
                 val callbackId = nextCallbackId.getAndIncrement()
                 val canonicalReturnType = config["return_type"]
@@ -980,7 +981,7 @@ class NativeLib {
                 )
                 pendingHookCallbacks[callbackId] = hookState
 
-                val handle = hook(addr, returnType, argTypes, callbackId)
+                val handle = hook(resolvedAddr, returnType, argTypes, callbackId)
                 if (handle == 0L) {
                     pendingHookCallbacks.remove(callbackId, hookState)
                     return FALSE
@@ -1311,6 +1312,15 @@ class NativeLib {
 
     private fun decodeInvokeResult(returnType: Int, bits: Long): LuaValue {
         return decodeNativeValue(returnType, bits)
+    }
+
+    private fun resolveHookTargetAddress(addr: Long): Long {
+        if (!isLoaded || addr == 0L || !isProcess64Bit()) {
+            return addr
+        }
+
+        val firstBytes = readMemory(addr, 8) ?: return addr
+        return NativeHookAddressResolver.resolveArm64BranchWrapperTarget(addr, firstBytes) ?: addr
     }
 
     private fun isProcess64Bit(): Boolean {
