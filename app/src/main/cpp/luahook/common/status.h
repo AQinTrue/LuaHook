@@ -1,0 +1,11 @@
+#pragma once
+
+enum LhStatus {
+  LH_OK = 0,
+  LH_ERR_INVALID_ARG = -1,
+  LH_ERR_UNSUPPORTED_ARCH = -2,
+  LH_ERR_NOT_FOUND = -3,
+  LH_ERR_ALREADY_EXISTS = -4,
+  LH_ERR_HOOK_FAILED = -5,
+  LH_ERR_INTERNAL = -6,
+};
